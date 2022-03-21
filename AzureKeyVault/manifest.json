@@ -1,0 +1,18 @@
+{
+  "extensions": {
+    "Keyfactor.Orchestrators.Extensions.IOrchestratorJobExtension": {
+      "CertStores.AKV.Inventory": {
+        "assemblypath": "Keyfactor.Extensions.Orchestrators.AKV.dll",
+        "TypeFullName": "Keyfactor.Extensions.Orchestrator.AzureKeyVault.Inventory"
+      },
+      "CertStores.AKV.Discovery": {
+        "assemblypath": "Keyfactor.Extensions.Orchestrators.AKV.dll",
+        "TypeFullName": "Keyfactor.Extensions.Orchestrator.AzureKeyVault.Discovery"
+      },
+      "CertStores.AKV.Management": {
+        "assemblypath": "Keyfactor.Extensions.Orchestrators.AKV.dll",
+        "TypeFullName": "Keyfactor.Extensions.Orchestrator.AzureKeyVault.Management"
+      }
+    }
+  }
+}
