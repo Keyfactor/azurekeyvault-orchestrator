@@ -13,12 +13,12 @@
 // limitations under the License.
 
 using Keyfactor.Orchestrators.Extensions;
+using Newtonsoft.Json;
 
 namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 {
     public abstract class AzureKeyVaultJob<T> : IOrchestratorJobExtension
-    {
-        protected JobConfiguration _config;
+    {        
         public string ExtensionName => AzureKeyVaultConstants.STORE_TYPE_NAME;
 
         internal protected virtual AzureClient AzClient { get; set; }
@@ -32,6 +32,41 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         internal protected virtual string ResourceGroupName { get; set; }
 
         internal protected string VaultURL => $"https://{VaultName}.vault.azure.net/";
+
+        public void InitializeStore(ManagementJobConfiguration config)
+        {
+            ResourceId = config.CertificateStoreDetails.StorePath;
+            SubscriptionId = ResourceId.Split('/')[2];
+
+            DirectoryId = config.ServerUsername.Split(',')[0]; //username should contain "<tenantId guid> <app id guid>"
+            ApplicationId = config.ServerUsername.Split(',')[1];
+            ClientSecret = config.ServerPassword;
+
+            dynamic properties = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());
+
+            ResourceGroupName = properties.ResourceGroupName;
+            VaultName = properties.VaultName;
+            ApiObjectId = properties.APIObjectId;
+
+            AzClient ??= new AzureClient(ApplicationId, DirectoryId, ClientSecret, VaultURL);
+        }
+        public void InitializeStore(InventoryJobConfiguration config)
+        {
+            ResourceId = config.CertificateStoreDetails.StorePath;
+            SubscriptionId = config.CertificateStoreDetails.ClientMachine;
+
+            DirectoryId = config.ServerUsername.Split()[0]; //username should contain "<tenantId guid> <app id guid>"
+            ApplicationId = config.ServerUsername.Split()[1];
+            ClientSecret = config.ServerPassword;
+
+            dynamic properties = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());
+
+            ResourceGroupName = properties.ResourceGroupName;
+            VaultName = properties.VaultName;
+            ApiObjectId = properties.APIObjectId;
+
+            AzClient ??= new AzureClient(ApplicationId, DirectoryId, ClientSecret, VaultURL);
+        }
     }
 }
 

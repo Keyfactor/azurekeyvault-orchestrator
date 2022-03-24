@@ -31,22 +31,10 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         readonly ILogger logger = LogHandler.GetClassLogger<Management>();
 
         public JobResult ProcessJob(ManagementJobConfiguration config)
-        {            
-            ResourceId = config.CertificateStoreDetails.StorePath;
-            VaultName = ResourceId.Split('/').Last();
-            SubscriptionId = ResourceId.Split('/')[1];
-
-            DirectoryId = config.ServerUsername.Split(',')[0]; //username should contain "<tenantId guid> <app id guid>"
-            ApplicationId = config.ServerUsername.Split(',')[1];
-            ClientSecret = config.ServerPassword;
-
-            dynamic properties = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());
-
-            ApiObjectId = properties.APIObjectId;
-
-            AzClient ??= new AzureClient(ApplicationId, DirectoryId, ClientSecret, VaultURL);
-
+        {
             logger.LogDebug($"Begin Management...");
+
+            InitializeStore(config);
 
             JobResult complete = new JobResult()
             {

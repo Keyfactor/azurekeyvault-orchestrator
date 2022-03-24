@@ -341,3 +341,8 @@ healthchecksdb
 
 # License header template file
 *.licenseheader
+/testcert.p7b
+/privkey.pem
+/key.pem
+/cert.pem
+/cert.csr

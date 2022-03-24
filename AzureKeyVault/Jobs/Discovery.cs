@@ -30,38 +30,32 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         {
             logger.LogDebug($"Begin Discovery...");
 
+            SubscriptionId = config.ClientMachine;
+            DirectoryId = config.ServerUsername.Split()[0]; //username should contain "<tenantId guid> <app id guid>"
+            ApplicationId = config.ServerUsername.Split()[1];
+            ClientSecret = config.ServerPassword;
+
             var complete = new JobResult() { JobHistoryId = config.JobHistoryId, Result = OrchestratorJobStatusJobResult.Failure };
             var keyVaults = new List<string>();
-                        
+
             // Server credentials
-            DirectoryId = config.ServerUsername.Split(',')[0]; //username should contain "<tenantId guid> <app id guid>"
-            ApplicationId = config.ServerUsername.Split(',')[1];
-            ClientSecret = config.ServerPassword;
             AzClient ??= new AzureClient(ApplicationId, DirectoryId, ClientSecret);
 
-            string[] subscriptionIds = config.JobProperties.GetValueOrDefault("dirs")
-                .ToString().Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-            
-            //string[] apiObjectId = properties.extensions.Value.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-            //string[] ignoredDirs = properties.ignoreddirs.Value.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-            //string[] filesTosearch = properties.patterns.Value.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            //string[] subscriptionIds = config.JobProperties.GetValueOrDefault("dirs")
+            //    .ToString().Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
 
-            AzClient ??= new AzureClient(ApplicationId, DirectoryId, ClientSecret);
-
-            foreach (var subscriptionId in subscriptionIds)
+            try
             {
-                try
-                {
-                    var result = AzClient.GetVaults(subscriptionId).Result;
-                    foreach (var keyVault in result.Vaults)
-                        keyVaults.Add(keyVault.Name);
-                }
-                catch (Exception ex)
-                {
-                    complete.FailureMessage = ex.Message;
-                    return complete;
-                    throw;
-                }
+                var result = AzClient.GetVaults(SubscriptionId).Result;
+                foreach (var keyVault in result.Vaults)
+                    keyVaults.Add(keyVault.Id);
+
+            }
+            catch (Exception ex)
+            {
+                complete.FailureMessage = ex.Message;
+                return complete;
+                throw;
             }
 
             sdr.Invoke(keyVaults);

@@ -153,6 +153,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         public virtual async Task<_DiscoveryResult> GetVaults(string subscriptionId)
         {
             string result = string.Empty;
+            HttpClient ??= new HttpClient();
 
             var uri = $"https://management.azure.com/subscriptions/{subscriptionId}/resources?%24filter=resourceType%20eq%20%27Microsoft.KeyVault%2Fvaults%27&api-version=2018-05-01";
             var token = await AcquireTokenBySPN(tenantId, applicationId, clientSecret);
@@ -164,6 +165,8 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
         private async Task<string> AcquireTokenBySPN(string tenantId, string clientId, string clientSecret)
         {
+            HttpClient ??= new HttpClient();
+
             const string ARMResource = "https://management.azure.com/";
             const string TokenEndpoint = "https://login.windows.net/{0}/oauth2/token";
             const string SPNPayload = "resource={0}&client_id={1}&grant_type=client_credentials&client_secret={2}";

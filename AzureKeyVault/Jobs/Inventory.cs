@@ -30,18 +30,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         {
             logger.LogDebug($"Begin Inventory...");
 
-            /// sample ResourceId:
-            /// /subscriptions/b3114ff1-bb92-45b6-9bd6-e4a1eed8c91e/resourceGroups/azure_sentinel_evaluation/providers/Microsoft.KeyVault/vaults/akv-vault
-            
-            ResourceId = config.CertificateStoreDetails.StorePath;
-            VaultName = ResourceId.Split('/').Last();
-            SubscriptionId = ResourceId.Split('/')[2];
-                       
-            // Server credentials
-            DirectoryId = config.ServerUsername.Split(',')[0]; //username should contain "<tenantId guid> <app id guid>"
-            ApplicationId = config.ServerUsername.Split(',')[1];
-            ClientSecret = config.ServerPassword;             
-            AzClient ??= new AzureClient(ApplicationId, DirectoryId, ClientSecret, VaultURL);
+            InitializeStore(config);
 
             List<CurrentInventoryItem> inventoryItems = new List<CurrentInventoryItem>();
 
