@@ -16,12 +16,14 @@
 using System;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
 using Microsoft.Azure.Management.KeyVault.Models;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+using Azure.Identity;
+using Azure.ResourceManager;
 
 namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 {
@@ -29,7 +31,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
     public class Management : AzureKeyVaultJob<Management>, IManagementJobExtension
     {
         readonly ILogger logger = LogHandler.GetClassLogger<Management>();
-
+        private ArmClient armClient { get; set; }
         public JobResult ProcessJob(ManagementJobConfiguration config)
         {
             logger.LogDebug($"Begin Management...");
@@ -46,7 +48,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             {
                 case CertStoreOperationType.Create:
                     logger.LogDebug($"Begin Management > Create...");
-                    complete = PerformCreateVault(config.JobHistoryId);
+                    complete = PerformCreateVault(config.JobHistoryId).Result;
                     break;
                 case CertStoreOperationType.Add:
                     logger.LogDebug($"Begin Management > Add...");
@@ -63,22 +65,21 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
         #region Create
 
-        protected virtual JobResult PerformCreateVault(long jobHistoryId)
+        protected async Task<JobResult> PerformCreateVault(long jobHistoryId)
         {
             Vault createVaultResult;
             var jobResult = new JobResult() { JobHistoryId = jobHistoryId, Result = OrchestratorJobStatusJobResult.Failure };
             try
             {
-                createVaultResult = AzClient.CreateVault(SubscriptionId, ResourceGroupName, VaultName, ApiObjectId).Result;
+                createVaultResult = await AzClient.CreateVault(SubscriptionId, ResourceGroupName, VaultName, ApiObjectId);
             }
-
             catch (Exception ex)
             {
                 jobResult.FailureMessage = ex.Message;
                 return jobResult;
             }
 
-            if (createVaultResult.Id.Contains(VaultName))
+            if (createVaultResult.Id != string.Empty && createVaultResult.Id.Contains(VaultName))
             {
                 jobResult.Result = OrchestratorJobStatusJobResult.Success;
             }
@@ -183,7 +184,6 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             {
                 complete.FailureMessage = $"An error occured while removing {alias} from {ExtensionName}: " + ex.Message;
             }
-
             return complete;
         }
 

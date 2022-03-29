@@ -38,8 +38,8 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             ResourceId = config.CertificateStoreDetails.StorePath;
             SubscriptionId = ResourceId.Split('/')[2];
 
-            DirectoryId = config.ServerUsername.Split(',')[0]; //username should contain "<tenantId guid> <app id guid>"
-            ApplicationId = config.ServerUsername.Split(',')[1];
+            DirectoryId = config.ServerUsername.Split()[0]; //username should contain "<tenantId guid> <app id guid>"
+            ApplicationId = config.ServerUsername.Split()[1];
             ClientSecret = config.ServerPassword;
 
             dynamic properties = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());
