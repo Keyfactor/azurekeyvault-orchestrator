@@ -29,27 +29,17 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         public JobResult ProcessJob(DiscoveryJobConfiguration config, SubmitDiscoveryUpdate sdr)
         {
             logger.LogDebug($"Begin Discovery...");
-
-            SubscriptionId = config.ClientMachine;
-            DirectoryId = config.ServerUsername.Split()[0]; //username should contain "<tenantId guid> <app id guid>"
-            ApplicationId = config.ServerUsername.Split()[1];
-            ClientSecret = config.ServerPassword;
+            InitializeStore(config);
 
             var complete = new JobResult() { JobHistoryId = config.JobHistoryId, Result = OrchestratorJobStatusJobResult.Failure };
             var keyVaults = new List<string>();
 
             // Server credentials
-            AzClient ??= new AzureClient(ApplicationId, DirectoryId, ClientSecret);
-
-            //string[] subscriptionIds = config.JobProperties.GetValueOrDefault("dirs")
-            //    .ToString().Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            AzClient = new AzureClient(VaultProperties);
 
             try
             {
-                var result = AzClient.GetVaults(SubscriptionId).Result;
-                foreach (var keyVault in result.Vaults)
-                    keyVaults.Add(keyVault.Id);
-
+                keyVaults = AzClient.GetVaults().Result;
             }
             catch (Exception ex)
             {
@@ -63,34 +53,5 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             complete.Result = OrchestratorJobStatusJobResult.Success;
             return complete;
         }
-    }
-
-    public class _DiscoveryResult
-    {
-        [JsonProperty("value")]
-        public List<_AKV_Location> Vaults { get; set; }
-    }
-
-    public class _AKV_Location
-    {
-        [JsonProperty("id")]
-        public string Id { get; set; }
-
-        [JsonProperty("name")]
-        public string Name { get; set; }
-
-        [JsonProperty("type")]
-        public string Type { get; set; }
-
-        [JsonProperty("location")]
-        public string location { get; set; }
-
-        [JsonProperty("tags")]
-        public _Tags Tags { get; set; }
-    }
-
-    public class _Tags
-    {
-        public List<string> Values { get; set; }
-    }
+    }   
 }

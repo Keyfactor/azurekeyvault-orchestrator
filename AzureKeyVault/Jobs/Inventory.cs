@@ -36,9 +36,9 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
             try
             {
-                logger.LogDebug($"Making Request for {0}...", VaultURL);
+                logger.LogDebug($"Making Request for {0}...", VaultProperties.VaultURL);
 
-                inventoryItems = AzClient.GetCertificatesAsync(VaultURL).Result?.ToList();
+                inventoryItems = AzClient.GetCertificatesAsync().Result?.ToList();
 
                 logger.LogDebug($"Found {inventoryItems.Count()} Total Certificates in Azure Key Vault.");
             }

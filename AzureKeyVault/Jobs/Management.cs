@@ -31,7 +31,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
     public class Management : AzureKeyVaultJob<Management>, IManagementJobExtension
     {
         readonly ILogger logger = LogHandler.GetClassLogger<Management>();
-        private ArmClient armClient { get; set; }
+        
         public JobResult ProcessJob(ManagementJobConfiguration config)
         {
             logger.LogDebug($"Begin Management...");
@@ -47,7 +47,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             switch (config.OperationType)
             {
                 case CertStoreOperationType.Create:
-                    logger.LogDebug($"Begin Management > Create...");
+                    logger.LogDebug($"Begin Management > Create...");                    
                     complete = PerformCreateVault(config.JobHistoryId).Result;
                     break;
                 case CertStoreOperationType.Add:
@@ -71,7 +71,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             var jobResult = new JobResult() { JobHistoryId = jobHistoryId, Result = OrchestratorJobStatusJobResult.Failure };
             try
             {
-                createVaultResult = await AzClient.CreateVault(SubscriptionId, ResourceGroupName, VaultName, ApiObjectId);
+                createVaultResult = await AzClient.CreateVault();
             }
             catch (Exception ex)
             {
@@ -79,7 +79,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 return jobResult;
             }
 
-            if (createVaultResult.Id != string.Empty && createVaultResult.Id.Contains(VaultName))
+            if (createVaultResult.Id != string.Empty && createVaultResult.Id.Contains(VaultProperties.VaultName))
             {
                 jobResult.Result = OrchestratorJobStatusJobResult.Success;
             }
@@ -98,8 +98,6 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         {
             var complete = new JobResult() { Result = OrchestratorJobStatusJobResult.Failure, JobHistoryId = jobHistoryId };
 
-            X509Certificate2 certToAdd = null;
-
             if (!string.IsNullOrWhiteSpace(pfxPassword)) // This is a PFX Entry
             {
                 if (string.IsNullOrWhiteSpace(alias))
@@ -110,24 +108,15 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
                 try
                 {
-                    certToAdd = GenerateCertificate(pfxPassword, entryContents);
-                }
-                catch (Exception ex)
-                {
-                    complete.FailureMessage = $"An error occured trying to create decode the provided certificate with alias {alias}: " + ex.Message;
-                }
-
-                try
-                {
                     // uploadCollection is either not null or an exception was thrown.
-                    var success = AzClient.ImportCertificateAsync(ResourceId, alias, certToAdd).Result;
-
+                    var cert = AzClient.ImportCertificateAsync(alias, entryContents, pfxPassword).Result;
+                                        
                     // Ensure the return object has a AKV version tag, and Thumbprint
-                    if (!string.IsNullOrEmpty(success.Properties.Version) &&
-                        !string.IsNullOrEmpty(string.Concat(success.Properties.X509Thumbprint.Select(i => i.ToString("X2"))))
+                    if (!string.IsNullOrEmpty(cert.Properties.Version) &&
+                        !string.IsNullOrEmpty(string.Concat(cert.Properties.X509Thumbprint.Select(i => i.ToString("X2"))))
                     )
                     {
-                        complete.Result = OrchestratorJobStatusJobResult.Success;
+                        complete.Result = OrchestratorJobStatusJobResult.Success;                        
                     }
                     else
                     {
@@ -189,11 +178,11 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
         #endregion
 
-        protected virtual X509Certificate2 GenerateCertificate(string pfxPassword, string content)
-        {
-            byte[] pfxBytes = Convert.FromBase64String(content);
-            return new X509Certificate2(pfxBytes, pfxPassword, X509KeyStorageFlags.Exportable);
-        }
+        //protected virtual X509Certificate2 GenerateCertificate(string pfxPassword, string content)
+        //{
+        //    byte[] pfxBytes = Convert.FromBase64String(content);
+        //    return new X509Certificate2(pfxBytes, pfxPassword, X509KeyStorageFlags.Exportable);
+        //}
     }
 }
 

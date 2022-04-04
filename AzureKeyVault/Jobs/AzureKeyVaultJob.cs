@@ -18,55 +18,32 @@ using Newtonsoft.Json;
 namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 {
     public abstract class AzureKeyVaultJob<T> : IOrchestratorJobExtension
-    {        
+    {
         public string ExtensionName => AzureKeyVaultConstants.STORE_TYPE_NAME;
 
         internal protected virtual AzureClient AzClient { get; set; }
-        internal protected virtual string ResourceId { get; set; }
-        internal protected virtual string ApiObjectId { get; set; }
-        internal protected virtual string DirectoryId { get; set; }
-        internal protected virtual string ClientSecret { get; set; }
-        internal protected virtual string ApplicationId { get; set; }
-        internal protected virtual string SubscriptionId { get; set; }
-        internal protected virtual string VaultName { get; set; }
-        internal protected virtual string ResourceGroupName { get; set; }
+        internal protected virtual AkvProperties VaultProperties { get; set; }
 
-        internal protected string VaultURL => $"https://{VaultName}.vault.azure.net/";
-
-        public void InitializeStore(ManagementJobConfiguration config)
+        public void InitializeStore(dynamic config)
         {
-            ResourceId = config.CertificateStoreDetails.StorePath;
-            SubscriptionId = ResourceId.Split('/')[2];
+            VaultProperties = new AkvProperties();
+            if (config.GetType().GetProperty("ClientMachine") != null)
+                VaultProperties.SubscriptionId = config.ClientMachine;
 
-            DirectoryId = config.ServerUsername.Split()[0]; //username should contain "<tenantId guid> <app id guid>"
-            ApplicationId = config.ServerUsername.Split()[1];
-            ClientSecret = config.ServerPassword;
+            VaultProperties.TenantId = config.ServerUsername.Split()[0]; //username should contain "<tenantId guid> <app id guid>"            
+            VaultProperties.ApplicationId = config.ServerUsername.Split()[1];
+            VaultProperties.ClientSecret = config.ServerPassword;
 
-            dynamic properties = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());
-
-            ResourceGroupName = properties.ResourceGroupName;
-            VaultName = properties.VaultName;
-            ApiObjectId = properties.APIObjectId;
-
-            AzClient ??= new AzureClient(ApplicationId, DirectoryId, ClientSecret, VaultURL);
-        }
-        public void InitializeStore(InventoryJobConfiguration config)
-        {
-            ResourceId = config.CertificateStoreDetails.StorePath;
-            SubscriptionId = config.CertificateStoreDetails.ClientMachine;
-
-            DirectoryId = config.ServerUsername.Split()[0]; //username should contain "<tenantId guid> <app id guid>"
-            ApplicationId = config.ServerUsername.Split()[1];
-            ClientSecret = config.ServerPassword;
-
-            dynamic properties = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());
-
-            ResourceGroupName = properties.ResourceGroupName;
-            VaultName = properties.VaultName;
-            ApiObjectId = properties.APIObjectId;
-
-            AzClient ??= new AzureClient(ApplicationId, DirectoryId, ClientSecret, VaultURL);
-        }
+            if (config.GetType().GetProperty("CertificateStoreDetails") != null)
+            {
+                VaultProperties.StorePath = config.CertificateStoreDetails?.StorePath;
+                dynamic properties = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());
+                VaultProperties.ResourceGroupName = properties.ResourceGroupName;
+                VaultProperties.VaultName = properties.VaultName;
+                VaultProperties.ObjectId = properties.APIObjectId;
+            }
+            AzClient ??= new AzureClient(VaultProperties);
+        }        
     }
 }
 
