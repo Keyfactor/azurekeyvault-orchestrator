@@ -28,6 +28,7 @@ To provision access to the KeyVault instance, we will:
 1) [Create a Service Principle in Azure Active Directory](#create-a-service-principle)
 1) [Assign it sufficient permissions for KeyVault operations](#assign-permissions)
 1) [Generate an Access Token for Authenticating](#generate-an-access-token)
+1) [Store the server credentials in Keyfactor](#store-the-server-credentials-in-keyfactor)
 
 
 #### Create a Service Principle
@@ -46,13 +47,33 @@ This is required to create an App Registration in Azure Active Directory.
 <img src="/Images/app-registration.PNG" width="200">
 
 1) Once the entity has been created, you should be directed to the overview view.
-![App Registration Overview](/Images/app-registration-overview.png)
-1) Copy the _Application (client) ID_, _Object ID_, and _Directory (tenant) ID_.  We will need these later.
-
+![App Registration Overview](/Images/managed-app-link.png)
+1) From here, copy the _Directory (tenant) ID_.
+1) Click on the underlined link above.  You should see the managed application details that look similar to the below screen shot.
+![App registration object Id](/Images/objectId.png)
+1) Copy the _Application (client) ID_, _Object ID_.
+1) Now we have a App registration and values for  _Directory (tenant) ID_, _Application (client) ID_ and _Object ID_.  These will be used by the integration for authentication to Azure.
 
 #### Assign Permissions
-Now that we have created our app registration / service principle entity, we need to make sure it has sufficient permissions for certificate operations.
-In order to be able to perform certificate operations on the Keyvault, we will have to assign Certificate Permissions to the Application Entity that we created above.
+
+In order to be able to discover and create new Azure KeyVault certificate stores, the app principal that we created must be provided with the "KeyVault Administrator" role at the *Resource Group* level.[^1]
+_If there are multiple resource groups that will contain Key Vaults to be managed, you should repeat for each._
+
+Here are the steps for assigning this role.
+
+1) Navigate to the Azure portal and select a resource group that will contain the KeyVaults we would like to manage.
+1) Select "Access control (IAM)" from the left menu.
+1) Click "Add", then "Add Role Assignment" to create a new role assignment
+![Resource Group Add Role](/Images/resource-group-add-role.PNG)
+1) Search and Select the "Key Vault Administrator" role
+1) Search and Select the principal we created.
+![Select Principal](/Images/rg-role-select-principal.PNG)
+1) Click "Review and Assign" and save the role assignment.
+
+[^1]: If discovery and create store functionality is not neeeded, it is also possible to manage individual certificate stores without the need to provide resource group level authority.  The steps to do this are outlined below.
+
+#### Assign Permissions for an Individual Key Vault 
+Following the below steps will provide our service principal with the ability to manage keys in an existing vault, without providing it the elevated permissions required for discovering existing vaults or creating new ones.  If you've completed the steps in the previous section for the resource group that contains the Key Vault(s) you would like to manage, the below steps are not necessary.
 
 1) Navigate to the Azure Portal and then to your instance of the Azure Keyvault.
 1) Go to "Access Policies" in the navigation menu for the Key vault.
@@ -70,18 +91,50 @@ In order to be able to perform certificate operations on the Keyvault, we will h
 
 #### Generate an Access Token
 
+For authenticating to Azure via our App Registration, we will need to generate an access token.
 
+1) Navigate to the App Registration we created earlier, in Azure Active Directory.
+1) Select "Certificates & Secrets" from the left menu.
+1) Click "+ New client secret"
+1) Give it a description such as "Keyfactor access"
+1) Select a valid expiration
+1) Click "Add".
+1) Copy the "Value" of the secret before navigating away.
 
----
+Now we have our App registration created in Azure, and we have the following values
+
+- *TenantId*
+- *ApplicationId*
+- *ObjectId*
+- *ClientSecret*
+
+We will store these values securely in Keyfactor in subsequent steps.
 
 ### Create the Store Type in Keyfactor
 
----
+Now we can navigate to the Keyfactor platform and create the store type for Azure Key Vault.
 
+1) Navigate to your instance of Keyfactor and log in with a user that has Administrator priveledges.
+1) Click on the gear icon in the top left and navigate to "Certificate Store Types".
+![Cert Store Types Menu](/Images/cert-store-types-menu.png)
+1) Click "Add" to open the Add Certificate Store dialog.
+1) Name the new store type "Azure KeyVault" and give it the short name of "AKV".
+1) The Azure KeyVault integration supports the following job types: *Inventory, Add, Remove, Create and Discovery*.  Select from these the capabilities you would like to utilize.
+1) Make sure that "Needs Server" is checked.
+![Cert Store Types Menu](/Images/cert-store-type.png)
+1) Navigate to the *Custom Fields* tab and add the following fields:
+  - Vault Name (VaultName) - _required_
+  - Resource Group Name (ResourceGroupName) - _required_
+
+### Store the Server Credentials in Keyfactor
+
+---
 ### Install the Extension on the Orchestrator
 
 
 ---
+
+### Discover Certificate Stores
 
 ### Create the Certificate Store
 

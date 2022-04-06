@@ -30,8 +30,9 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             if (config.GetType().GetProperty("ClientMachine") != null)
                 VaultProperties.SubscriptionId = config.ClientMachine;
 
-            VaultProperties.TenantId = config.ServerUsername.Split()[0]; //username should contain "<tenantId guid> <app id guid>"            
+            VaultProperties.TenantId = config.ServerUsername.Split()[0]; //username should contain "<tenantId guid> <app id guid> <object Id>"            
             VaultProperties.ApplicationId = config.ServerUsername.Split()[1];
+            VaultProperties.ObjectId = config.ServerUsername.Split()[2];
             VaultProperties.ClientSecret = config.ServerPassword;
 
             if (config.GetType().GetProperty("CertificateStoreDetails") != null)
@@ -40,7 +41,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 dynamic properties = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());
                 VaultProperties.ResourceGroupName = properties.ResourceGroupName;
                 VaultProperties.VaultName = properties.VaultName;
-                VaultProperties.ObjectId = properties.APIObjectId;
+                //VaultProperties.ObjectId = properties.APIObjectId;
             }
             AzClient ??= new AzureClient(VaultProperties);
         }        

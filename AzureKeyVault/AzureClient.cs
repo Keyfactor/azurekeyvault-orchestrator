@@ -19,6 +19,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Azure;
 using Azure.Identity;
+using Azure.Security.KeyVault.Administration;
 using Azure.Security.KeyVault.Certificates;
 using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
@@ -91,12 +92,8 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                         {
                             Certificates = new List<string>
                             {
-                                "get", "list", "delete", "create", "import", "update", "managecontacts", "getissuers",
-                                "listissuers", "setissuers", "deleteissuers", "manageissuers", "recover","purge"
+                               CertificatePermissions.All
                             },
-                            Keys = new List<string>(),
-                            Secrets = new List<string>(),
-                            Storage = new List<string>()
                         },
                         TenantId = new Guid(VaultProperties.TenantId)
                     } }
@@ -107,6 +104,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             try
             {
                 logger.LogInformation("Begin create vault...");
+
                 newVault = await vaults.BeginCreateOrUpdateAsync(VaultProperties.ResourceGroupName, VaultProperties.VaultName, vaultParameters); //this takes a bit of time to run
             }
             catch (Exception ex)
@@ -176,21 +174,25 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             return resources.Select(v => v.Id).ToList();
         }
 
-        
+
         private async Task SetManagementPermissionsForService()
-        {        
+        {
+            KeyVaultAccessControlClient client = new KeyVaultAccessControlClient(new Uri(VaultProperties.VaultURL), new ClientSecretCredential(VaultProperties.TenantId, VaultProperties.ApplicationId, VaultProperties.ClientSecret));
+
             var vaults = KvManagementClient.Vaults;
 
             var permissions = new Permissions
             {
-                Certificates = new List<string>() { CertificatePermissions.All },
+                Certificates = new List<string>() {
+                    CertificatePermissions.All
+                }
             };
             var accessPolicyEntry = new AccessPolicyEntry(new Guid(VaultProperties.TenantId), VaultProperties.ObjectId, permissions);
             var accessPolicyProperties = new VaultAccessPolicyProperties(new[] { accessPolicyEntry });
             var accessPolicyParameters = new VaultAccessPolicyParameters(accessPolicyProperties);
             try
             {
-                await vaults.UpdateAccessPolicyAsync(VaultProperties.ResourceGroupName, VaultProperties.VaultName, AccessPolicyUpdateKind.Add, accessPolicyParameters);
+                await vaults.UpdateAccessPolicyAsync(VaultProperties.ResourceGroupName, VaultProperties.VaultName, AccessPolicyUpdateKind.Replace, accessPolicyParameters);
                 //force refresh of clients to get a new access token to refresh authority.
                 _mgmtClient = null;
                 _certClient = null;
