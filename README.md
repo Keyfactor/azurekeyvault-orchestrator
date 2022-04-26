@@ -88,7 +88,7 @@ Here are the steps for assigning this role.
      ![Select Principal](/Images/rg-role-select-principal.PNG)
 1) Click "Review and Assign" and save the role assignment.
 
-[^1]: If discovery and create store functionality are not neeeded, it is also possible to manage individual certificate stores without the need to provide resource group level authority.  The steps to do assign permissions for an individual Azure Keyvault are described [here].(#assign-permissions-for-an-individual-key-vault).
+[^1]: If discovery and create store functionality are not neeeded, it is also possible to manage individual certificate stores without the need to provide resource group level authority.  The steps to do assign permissions for an individual Azure Keyvault are described [here](#assign-permissions-for-an-individual-key-vault).
 
 #### Assign Permissions for an Individual Key Vault
 
