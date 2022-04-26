@@ -12,7 +12,7 @@ This integration allows the orchestrator to act as a client with access to an in
 
 ## Setup and Configuration
 
-The high level steps required to configure the Azure Keyvault Orchestrator extension are
+The high level steps required to configure the Azure Keyvault Orchestrator extension are:
 
 1) [Configure the Azure KeyVault for client access](#configure-the-azure-keyvault-for-client-access)
 1) [Create the Store Type in Keyfactor](#create-the-store-type-in-keyfactor)
@@ -43,7 +43,7 @@ This is required to create an App Registration in Azure Active Directory.
 1) Select "App registrations" from the menu.
 1) Click "+ New registration"
 1) Give it a name such as "keyfactor-akv" and leave the first radio button selected
-<img src="/Images/app-registration.PNG" width="200">
+     ![App Registration Overview](/Images/app-registration.PNG)
 
 1) Once the entity has been created, you should be directed to the overview view.
      ![App Registration Overview](/Images/managed-app-link.png)
@@ -71,7 +71,7 @@ Here are the steps for assigning this role.
      ![Select Principal](/Images/rg-role-select-principal.PNG)
 1) Click "Review and Assign" and save the role assignment.
 
-[^1]: If discovery and create store functionality is not neeeded, it is also possible to manage individual certificate stores without the need to provide resource group level authority.  The steps to do this are outlined below.
+[^1]: If discovery and create store functionality are not neeeded, it is also possible to manage individual certificate stores without the need to provide resource group level authority.  The steps to do this are outlined below.
 
 #### Assign Permissions for an Individual Key Vault
 
@@ -81,15 +81,15 @@ Following the below steps will provide our service principal with the ability to
 1) Go to "Access Policies" in the navigation menu for the Key vault.
 1) Click "+ Add Access Policy"
 1) In the first drop-down, you can select "Certificate Management".  This will select all certificate management permissions.
-     ![Permission List](/Images/cert-mgmt-perm-list.png)
+     ![Permission List](/Images/cert-mgmt-perm-list.PNG)
 1) Click "Select Principal" to open the search pane.
 1) Find the Application Registration we created above, select it, and click "Select".
-     ![Select Principal](/Images/select-principal.png)
+     ![Select Principal](/Images/select-principal.PNG)
 1) Leave "Authorized application" unselected.
 1) Click "Add".
 1) After you are redirected to the "Access policies" view, you should see the App Registration listed under "APPLICATION".
 1) Click "Save" at the top of this view.
-     ![Select Principal](/Images/save-access-policy.png)
+     ![Select Principal](/Images/save-access-policy.PNG)
 
 #### Generate an Access Token
 
@@ -156,9 +156,8 @@ Now that we have the extension registered on the Orchestrator, we can navigate b
 1) Navigate to "Locations > Certificate Stores"
      ![Locations Cert Stores](/Images/locations-certstores.png)
 1) Click the "Discover" tab, and then the "Schedule" button.
-     ![Discovery Schedule](/Images/discovery-schedule.png)
+     ![Discovery Schedule](/Images/discover-schedule.png)
 
-     
 #### Store the Server Credentials in Keyfactor
 
 ### Create the Certificate Store
