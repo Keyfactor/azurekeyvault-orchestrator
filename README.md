@@ -197,7 +197,7 @@ Now that we have the extension registered on the Orchestrator, we can navigate b
 
 1) Approve the orchestrator if necessary.
 
-#### Run the discovery job
+#### Create the discovery job
 
 1) Navigate to "Locations > Certificate Stores"
 
@@ -207,7 +207,50 @@ Now that we have the extension registered on the Orchestrator, we can navigate b
 
      ![Discovery Schedule](/Images/discover-schedule.png)
 
+1) You should see the form for creating the Discovery job.
+
+     ![Discovery Form](/Images/discovery-form.png)
+
 #### Store the Server Credentials in Keyfactor
+
+The first thing we'll need to do is store the server credentials that will be used by the extension.
+The combination of fields required to interact with the Azure KeyVault are:
+
+- Subscription ID
+- Tenant (or Directory) ID
+- Application ID (of the service principal)
+- Object ID (of the service principal)
+- Client Secret
+
+This integration expects the above values to be included in the server credentials in the following way:
+
+- **Client Machine**: `<subscription id>` (GUID)
+
+- **User**: `<tenantId> <app id guid> <object Id>` (GUID's separated by spaces)
+
+- **Password**: `<client secret>`
+
+Follow these steps to store the values:
+
+1) Enter the _Subscription ID_ in the **Client Machine** field.
+
+     ![Discovery Form](/Images/discovery-form-client-machine.png)
+
+1) Click "Change Credentials" to open up the Server Credentials form.
+
+     ![Change Credentials](/Images/change-credentials-form.png)
+
+1) Click "UPDATE SERVER USERNAME" and Enter the three GUIDs corresponding to **Tenant ID**, **App ID** and **Object ID** for the Server Username.  
+     example: `c9ed4b45-9f70-418a-aa58-f04c80848ca9 6e5de0a7-318a-46ed-ba46-a62b3ff28f55 5261a31a-5d8c-4d1e-93d0-bec81a786f75`
+
+      ![Set Username](/Images/server-creds-username.png)
+
+1) Enter again to confirm, and click save.
+
+1) Click "UPDATE SERVER PASSWORD" and update the value with the **Client Secret** following the same steps as above.
+
+1) Set up a time to run the discovery job, leave the remaining fields blank and click "DONE".
+
 
 ### Create the Certificate Store
 

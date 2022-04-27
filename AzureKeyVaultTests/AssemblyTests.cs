@@ -28,7 +28,7 @@ namespace AzureKeyVaultTests
             }
             else
             {
-                Type extensionType = typeof();
+                Type extensionType = typeof(Keyfactor.Extensions.Orchestrator.AzureKeyVault);
 
                 List<Type> extensionClasses = GetLoadableTypes(assembly)
                     .Where(type => type.GetInterfaces().Any(i => i.FullName == extensionType.FullName) // Checking just the fully-qualified namespace/class, no assembly version

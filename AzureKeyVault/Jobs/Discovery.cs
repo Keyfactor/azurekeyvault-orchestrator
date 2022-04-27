@@ -18,7 +18,6 @@ using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 {

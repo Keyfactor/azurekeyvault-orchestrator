@@ -15,15 +15,12 @@
 
 using System;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
 using Microsoft.Azure.Management.KeyVault.Models;
 using Microsoft.Extensions.Logging;
-using Azure.Identity;
-using Azure.ResourceManager;
 
 namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 {

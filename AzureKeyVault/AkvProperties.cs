@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
+﻿namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 {
     public class AkvProperties
     {

@@ -41,7 +41,6 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 dynamic properties = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());
                 VaultProperties.ResourceGroupName = properties.ResourceGroupName;
                 VaultProperties.VaultName = properties.VaultName;
-                //VaultProperties.ObjectId = properties.APIObjectId;
             }
             AzClient ??= new AzureClient(VaultProperties);
         }        
