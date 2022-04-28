@@ -2,11 +2,11 @@
 
 ## Orchestrator Extension
 
-The Azure KeyVault Orchestrator allows for management of certificates within an Azure Key Vault. Discovery, Inventory and Management functions are supported.
+The Azure Keyvault Orchestrator allows for management of certificates within an Azure Key Vault. Discovery, Inventory and Management functions are supported.
 
 ## About the Keyfactor Azure Keyvault Integration
 
-This integration allows the orchestrator to act as a client with access to an instance of the Azure Key Vault; allowing you to manage your certificates stored in the Azure KeyVault via Keyfactor.
+This integration allows the orchestrator to act as a client with access to an instance of the Azure Key Vault; allowing you to manage your certificates stored in the Azure Keyvault via Keyfactor.
 
 ---
 
@@ -14,7 +14,7 @@ This integration allows the orchestrator to act as a client with access to an in
 
 The high level steps required to configure the Azure Keyvault Orchestrator extension are:
 
-1) [Configure the Azure KeyVault for client access](#configure-the-azure-keyvault-for-client-access)
+1) [Configure the Azure Keyvault for client access](#configure-the-azure-keyvault-for-client-access)
 
 1) [Create the Store Type in Keyfactor](#create-the-store-type-in-keyfactor)
 
@@ -24,13 +24,13 @@ The high level steps required to configure the Azure Keyvault Orchestrator exten
 
 ---
 
-### Configure the Azure KeyVault for client access
+### Configure the Azure Keyvault for client access
 
-To provision access to the KeyVault instance, we will:
+To provision access to the Keyvault instance, we will:
 
 1) [Create a Service Principle in Azure Active Directory](#create-a-service-principle)
 
-1) [Assign it sufficient permissions for KeyVault operations](#assign-permissions)
+1) [Assign it sufficient permissions for Keyvault operations](#assign-permissions)
 
 1) [Generate an Access Token for Authenticating](#generate-an-access-token)
 
@@ -38,7 +38,7 @@ To provision access to the KeyVault instance, we will:
 
 #### Create a Service Principle
 
-For the Orchestrator to be able to interact with the instance of Azure KeyVault, we will need to create an entity in Azure that will encapsulate the permissions we would like to grant it.  In Azure, these intermediate entities are referred to as app registrations and they provision authority for external application access.
+For the Orchestrator to be able to interact with the instance of Azure Keyvault, we will need to create an entity in Azure that will encapsulate the permissions we would like to grant it.  In Azure, these intermediate entities are referred to as app registrations and they provision authority for external application access.
 To learn more about application and service principals, refer to [this article](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal).
 
 **In order to complete these steps, you must have the _Owner_ role for the Azure subscription, at least temporarily.**
@@ -72,12 +72,12 @@ This is required to create an App Registration in Azure Active Directory.
 
 #### Assign Permissions
 
-In order to be able to discover and create new Azure KeyVault certificate stores, the app principal that we created must be provided with the "KeyVault Administrator" role at the _Resource Group_ level.[^1]
+In order to be able to discover and create new Azure Keyvault certificate stores, the app principal that we created must be provided with the "Keyvault Administrator" role at the _Resource Group_ level.[^1]
 _If there are multiple resource groups that will contain Key Vaults to be managed, you should repeat for each._
 
 Here are the steps for assigning this role.
 
-1) Navigate to the Azure portal and select a resource group that will contain the KeyVaults we would like to manage.
+1) Navigate to the Azure portal and select a resource group that will contain the Keyvaults we would like to manage.
 1) Select "Access control (IAM)" from the left menu.
 1) Click "Add", then "Add Role Assignment" to create a new role assignment
 
@@ -153,9 +153,9 @@ Now we can navigate to the Keyfactor platform and create the store type for Azur
 
 1) Click "Add" to open the Add Certificate Store dialog.
 
-1) Name the new store type "Azure KeyVault" and give it the short name of "AKV".
+1) Name the new store type "Azure Keyvault" and give it the short name of "AKV".
 
-1) The Azure KeyVault integration supports the following job types: _Inventory, Add, Remove, Create and Discovery_.  Select from these the capabilities you would like to utilize.
+1) The Azure Keyvault integration supports the following job types: _Inventory, Add, Remove, Create and Discovery_.  Select from these the capabilities you would like to utilize.
 
 1) Make sure that "Needs Server" is checked.
 
@@ -167,7 +167,7 @@ Now we can navigate to the Keyfactor platform and create the store type for Azur
 
 ### Install the Extension on the Orchestrator
 
-The process for installing an extension for the universal orchestrator differs from the process of installing an extension for the Windows orchestrator.  Follow the below steps to register the Azure KeyVault integration with your instance of the universal orchestrator.
+The process for installing an extension for the universal orchestrator differs from the process of installing an extension for the Windows orchestrator.  Follow the below steps to register the Azure Keyvault integration with your instance of the universal orchestrator.
 
 1) Stop the Universal Orchestrator service.
 
@@ -214,7 +214,7 @@ Now that we have the extension registered on the Orchestrator, we can navigate b
 #### Store the Server Credentials in Keyfactor
 
 The first thing we'll need to do is store the server credentials that will be used by the extension.
-The combination of fields required to interact with the Azure KeyVault are:
+The combination of fields required to interact with the Azure Keyvault are:
 
 - Subscription ID
 - Tenant (or Directory) ID
@@ -249,20 +249,71 @@ Follow these steps to store the values:
 
 1) Click "UPDATE SERVER PASSWORD" and update the value with the **Client Secret** following the same steps as above.
 
-1) Set up a time to run the discovery job, leave the remaining fields blank and click "DONE".
+1) Select a time to run the discovery job.
 
+1) Enter a comma-separated list of resource group names if you would like to limit the discovery process to a subset of resource groups.  Otherwise enter "AKV" into the **Directories to Search** field.  
 
-### Create the Certificate Store
+1) Leave the remaining fields blank and click "DONE".
 
-<!-- 
-The following are the parameter names and a description of the values needed to configure the Azure Keyvault Orchestrator Extension.
+#### Approve the Certificate Store
 
-| Initialization parameter | Description |
-| :---: | --- | :---: | --- |
-| Client Machine | This should be the Azure Subscription Id
-| APIObjectId | The base64 encode API registration key from BeyondTrust | AccountID | The ID number of the account on the system, whose password will be retrieved |
-| Username | The username that the API request will be run as. This user needs to have sufficient permissions on the API key and the credentials to request |
-| Username | The username that the API request will be run as. This user needs to have sufficient permissions on the API key and the credentials to request |
-| Username | The username that the API request will be run as. This user needs to have sufficient permissions on the API key and the credentials to request |
-| Username | The username that the API request will be run as. This user needs to have sufficient permissions on the API key and the credentials to request |
-| Username | The username that the API request will be run as. This user needs to have sufficient permissions on the API key and the credentials to request | -->
+When the Discovery job runs successfully, it will list the existing Azure Keyvaults that are acessible by our service principle.
+
+In this example, our job returned four Azure Keyvaults.
+
+![Discovery Results](/Images/discovery-result.png)
+
+The store path of each vault is the Azure Resource Identifier, and contains the following information:
+
+![Discovery Results](/Images/storepath.png)
+
+To add one of these results to Keyfactor as a certificate store:
+
+1) Double-click the row that corresponds to the Azure Keyvault in the discovery results (you can also select the row and click "approve").
+
+1) In the dialog window, enter the Vault Name and Resource Group Name from the store path value above.
+
+     ![Approve Cert Store](/Images/approve-cert-store.png)
+
+1) Select a container to store the certificates for this cert store (optional)
+
+1) Click "SAVE".
+
+### Add an individual Azure Keyvault certificate store
+
+You can also add a certificate store that corresponds to an Azure Keyvault individually without the need to run the discovery / approval workflow.
+The steps to do this are:
+
+1) Navigate to "Locations > Certificate Stores"
+
+1) Click "ADD"
+
+     ![Approve Cert Store](/Images/cert-store-add-button.png)
+
+1) Enter the values corresponding to the Azure Keyvault instance.
+
+- **Category**: Azure Keyvault
+- **Container**: _optional_
+- **Client Machine**: Azure Subscription Id.  
+
+  - Note: These will only have to be entered once, even if adding multiple certificate stores.
+  - Follow the steps [here](#store-the-server-credentials-in-keyfactor) to enter them.
+
+- **Store Path**: This is the Azure Resource Identifier for the Keyvault.  Copied from Azure, or created a new Keyvault (see below).  
+- **VaultName**: This is the name of the new or existing Azure Keyvault.
+- **ResourceGroupName**: The name of the Azure Resource Group that contains the Keyvault.
+
+If the vault already exists in azure:
+The store path can be found by navigating to the existing Keyvault resource in Azure and clicking "Properties" in the left menu.
+
+![Resource Id](/Images/resource-id.png)
+
+If the Keyvault does not exist in Azure, and you would like to create it:
+
+- Enter a value for the store path in the following format:
+
+`/subscriptions/{subscription id}/resourceGroups/{resource group for keyvault}/providers/Microsoft.KeyVault/vaults/{new name}`
+
+- For a non-existing Keyvault that you would like to create in Azure, make sure you have the "Create Certificate Store" box checked.
+
+![Add Vault](/Images/add-vault.png)
