@@ -4,7 +4,11 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <AssemblyName>Keyfactor.Extensions.Orchestrators.AKV</AssemblyName>
     <RootNamespace>Keyfactor.Extensions.Orchestrator.AzureKeyVault</RootNamespace>
-	  <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies> 
+	  <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+	  <SignAssembly>false</SignAssembly>
+	  <Copyright />
+	  <PackageLicenseExpression></PackageLicenseExpression>
+	  <PackageLicenseFile>LICENSE-2.0.txt</PackageLicenseFile> 
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -31,6 +35,10 @@
   <ItemGroup>
     <None Update="manifest.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\..\..\OneDrive - Keyfactor\Desktop\LICENSE-2.0.txt">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
     </None>
   </ItemGroup>
 
