@@ -317,3 +317,9 @@ If the Keyvault does not exist in Azure, and you would like to create it:
 - For a non-existing Keyvault that you would like to create in Azure, make sure you have the "Create Certificate Store" box checked.
 
 ![Add Vault](/Images/add-vault.png)
+
+---
+
+### License
+
+[Apache](https://apache.org/licenses/LICENSE-2.0)
