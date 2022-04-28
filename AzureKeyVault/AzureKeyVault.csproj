@@ -7,8 +7,8 @@
 	  <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
 	  <SignAssembly>false</SignAssembly>
 	  <Copyright />
-	  <PackageLicenseExpression></PackageLicenseExpression>
-	  <PackageLicenseFile>LICENSE-2.0.txt</PackageLicenseFile> 
+	  <PackageLicenseExpression>https://apache.org/licenses/LICENSE-2.0</PackageLicenseExpression>
+	  <PackageLicenseFile></PackageLicenseFile> 
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -35,10 +35,6 @@
   <ItemGroup>
     <None Update="manifest.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="..\..\..\..\OneDrive - Keyfactor\Desktop\LICENSE-2.0.txt">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
     </None>
   </ItemGroup>
 
