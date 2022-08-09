@@ -1,24 +1,3 @@
-# Azure Key Vault Orchestrator
-
-This integration allows the orchestrator to act as a client with access to an instance of the Azure Key Vault; allowing you to manage your certificates stored in the Azure Keyvault via Keyfactor.
-
-#### Integration status: Production - Ready for use in production environments.
-
-## About the Keyfactor Universal Orchestrator Capability
-
-This repository contains a Universal Orchestrator Capability which is a plugin to the Keyfactor Universal Orchestrator. Within the Keyfactor Platform, Orchestrators are used to manage “certificate stores” &mdash; collections of certificates and roots of trust that are found within and used by various applications.
-
-The Universal Orchestrator is part of the Keyfactor software distribution and is available via the Keyfactor customer portal. For general instructions on installing Capabilities, see the “Keyfactor Command Orchestrator Installation and Configuration Guide” section of the Keyfactor documentation. For configuration details of this specific Capability, see below in this readme.
-
-The Universal Orchestrator is the successor to the Windows Orchestrator. This Capability plugin only works with the Universal Orchestrator and does not work with the Windows Orchestrator.
-
----
-
-
-
-
----
-
 ## Setup and Configuration
 
 The high level steps required to configure the Azure Keyvault Orchestrator extension are:
@@ -332,4 +311,3 @@ If the Keyvault does not exist in Azure, and you would like to create it:
 ### License
 
 [Apache](https://apache.org/licenses/LICENSE-2.0)
-
