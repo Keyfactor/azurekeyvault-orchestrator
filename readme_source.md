@@ -1,7 +1,3 @@
-## About the Keyfactor Azure Keyvault Integration
-
-This integration allows the orchestrator to act as a client with access to an instance of the Azure Key Vault; allowing you to manage your certificates stored in the Azure Keyvault via Keyfactor.
-
 ## Setup and Configuration
 
 The high level steps required to configure the Azure Keyvault Orchestrator extension are:
