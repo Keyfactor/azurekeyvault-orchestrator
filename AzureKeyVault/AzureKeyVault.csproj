@@ -1,37 +1,39 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-    <AssemblyName>Keyfactor.Extensions.Orchestrators.AKV</AssemblyName>
-    <RootNamespace>Keyfactor.Extensions.Orchestrator.AzureKeyVault</RootNamespace>
-	  <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies> 
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<AssemblyName>Keyfactor.Extensions.Orchestrators.AKV</AssemblyName>
+		<RootNamespace>Keyfactor.Extensions.Orchestrator.AzureKeyVault</RootNamespace>
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants></DefineConstants>
-  </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<DefineConstants></DefineConstants>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Azure.Identity" Version="1.5.0" />
-    <PackageReference Include="Azure.ResourceManager" Version="1.0.0-beta.5" />
-    <PackageReference Include="Azure.ResourceManager.Resources" Version="1.0.0-beta.3" />
-    <PackageReference Include="Azure.Security.KeyVault.Administration" Version="4.1.0" />
-    <PackageReference Include="Azure.Security.KeyVault.Certificates" Version="4.3.0" />
-    <PackageReference Include="Keyfactor.Common" Version="2.3.6" />
-    <PackageReference Include="Keyfactor.Logging" Version="1.1.1" />
-    <PackageReference Include="Keyfactor.Orchestrators.Common" Version="3.1.2" />
-    <PackageReference Include="Keyfactor.Orchestrators.IOrchestratorJobExtensions" Version="0.6.0" />
-    <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.7" />
-    <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="1.38.0" />
-    <PackageReference Include="Microsoft.Azure.Management.KeyVault" Version="3.1.0" />
-    <PackageReference Include="Microsoft.Azure.Management.ResourceManager.Fluent" Version="1.38.0" />
-    <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.9" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Azure.Identity" Version="1.5.0" />
+		<PackageReference Include="Azure.ResourceManager" Version="1.0.0-beta.5" />
+		<PackageReference Include="Azure.ResourceManager.Resources" Version="1.0.0-beta.3" />
+		<PackageReference Include="Azure.Security.KeyVault.Administration" Version="4.1.0" />
+		<PackageReference Include="Azure.Security.KeyVault.Certificates" Version="4.3.0" />
+		<PackageReference Include="Keyfactor.Common" Version="2.3.6" />
+		<PackageReference Include="Keyfactor.Logging" Version="1.1.1" />
+		<PackageReference Include="Keyfactor.Orchestrators.Common" Version="3.1.2" />
+		<PackageReference Include="Keyfactor.Orchestrators.IOrchestratorJobExtensions" Version="0.6.0" />
+		<PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.7" />
+		<PackageReference Include="Microsoft.Azure.Management.Fluent" Version="1.38.0" />
+		<PackageReference Include="Microsoft.Azure.Management.KeyVault" Version="3.1.0" />
+		<PackageReference Include="Microsoft.Azure.Management.ResourceManager.Fluent" Version="1.38.0" />
+		<PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.9" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <None Update="manifest.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
+	<ItemGroup>
+		<None Update="manifest.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
 
 </Project>
