@@ -2,13 +2,13 @@
 
 	<PropertyGroup>
 		<TargetFramework>netcoreapp3.1</TargetFramework>
-    		<AssemblyName>Keyfactor.Extensions.Orchestrators.AKV</AssemblyName>
-    		<RootNamespace>Keyfactor.Extensions.Orchestrator.AzureKeyVault</RootNamespace>
-	  	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-	  	<SignAssembly>false</SignAssembly>
-	  	<Copyright />
-	  	<PackageLicenseExpression>https://apache.org/licenses/LICENSE-2.0</PackageLicenseExpression>
-	  	<PackageLicenseFile></PackageLicenseFile> 
+    <AssemblyName>Keyfactor.Extensions.Orchestrators.AKV</AssemblyName>
+    <RootNamespace>Keyfactor.Extensions.Orchestrator.AzureKeyVault</RootNamespace>
+	  <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+	  <SignAssembly>false</SignAssembly>
+	  <Copyright />
+	  <PackageLicenseExpression>https://apache.org/licenses/LICENSE-2.0</PackageLicenseExpression>
+	  <PackageLicenseFile></PackageLicenseFile> 
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
 	</PropertyGroup>
