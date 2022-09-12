@@ -37,7 +37,7 @@ The high level steps required to configure the Azure Keyvault Orchestrator exten
 
 To provision access to the Keyvault instance, we will:
 
-1) [Create a Service Principle in Azure Active Directory](#create-a-service-principle)
+1) [Create a Service Principal in Azure Active Directory](#create-a-service-principal)
 
 1) [Assign it sufficient permissions for Keyvault operations](#assign-permissions)
 
@@ -45,7 +45,7 @@ To provision access to the Keyvault instance, we will:
 
 1) [Store the server credentials in Keyfactor](#store-the-server-credentials-in-keyfactor)
 
-#### Create a Service Principle
+#### Create a Service Principal
 
 For the Orchestrator to be able to interact with the instance of Azure Keyvault, we will need to create an entity in Azure that will encapsulate the permissions we would like to grant it.  In Azure, these intermediate entities are referred to as app registrations and they provision authority for external application access.
 To learn more about application and service principals, refer to [this article](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal).
@@ -266,7 +266,7 @@ Follow these steps to store the values:
 
 #### Approve the Certificate Store
 
-When the Discovery job runs successfully, it will list the existing Azure Keyvaults that are acessible by our service principle.
+When the Discovery job runs successfully, it will list the existing Azure Keyvaults that are acessible by our service principal.
 
 In this example, our job returned four Azure Keyvaults.
 
