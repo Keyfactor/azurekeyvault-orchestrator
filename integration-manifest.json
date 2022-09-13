@@ -3,6 +3,6 @@
   "integration_type": "orchestrator",
   "name": "Azure Key Vault Orchestrator",
   "status": "pilot",
-  "link_github": true,
+  "link_github": false,
   "description": "This integration allows the orchestrator to act as a client with access to an instance of the Azure Key Vault; allowing you to manage your certificates stored in the Azure Keyvault via Keyfactor."
 }
