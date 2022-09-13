@@ -97,11 +97,45 @@ Here are the steps for assigning this role.
      ![Select Principal](/Images/rg-role-select-principal.PNG)
 1) Click "Review and Assign" and save the role assignment.
 
-[^1]: If discovery and create store functionality are not neeeded, it is also possible to manage individual certificate stores without the need to provide resource group level authority.  The steps to do assign permissions for an individual Azure Keyvault are described [here](#assign-permissions-for-an-individual-key-vault).
+[^1]: If discovery and create store functionality are not neeeded, it is also possible to manage individual certificate stores without the need to provide resource group level authority.  The steps to do assign permissions for an individual Azure Keyvault are described [here](#assign-permissions-for-an-individual-key-vault-via-access-policy) for vaults using Access Policy based permissions and [here](#assign-permissions-for-an-individual-key-vault-via-rbac) for Individual Key Vaults using Role-Based Access Control (RBAC).
 
-#### Assign Permissions for an Individual Key Vault
+#### Assign Permissions for an Individual Key Vault via RBAC
 
-Following the below steps will provide our service principal with the ability to manage keys in an existing vault, without providing it the elevated permissions required for discovering existing vaults or creating new ones.  If you've completed the steps in the previous section for the resource group that contains the Key Vault(s) you would like to manage, the below steps are not necessary.
+If you only need to manage a single instance of a Key Vault and do not require creation and discovery of new Key Vaults, you can provision access to the specific instance without needing to provide the service principal the "Keyvault Administrator" role at the resource group level.
+
+Follow the below steps in order to provide management access for our service principal to a specific instance of a Key Vault:
+
+1) Navigate to the Azure Portal and then to your instance of the Azure Keyvault
+
+1) Go to "Access control (IAM)" in the navigation menu for the Key vault.
+
+1) Click on "Add role assignment"
+
+     ![Vault RBAC](/Images/vault-rbac.png)
+
+1) Find the Keyvault Administrator role in the list.  Select it and click "Next"
+
+    ![Vault RBAC KVAdmin](/Images/vault-rbac-kvadmin.png)
+
+1) On the next screen, click "Select members" and then search for the service principal we created above.
+
+    ![Vault RBAC principal](/Images/vault-rbac-principal.png)
+
+ 1) Select the service principal, click "select", and then "Next"
+
+ 1) On the final screen, you should see something similar to the following:
+
+     ![Vault RBAC final](/Images/vault-rbac-final.png)
+
+ 1) Click "Review + assign" to finish assigning the role of Keyvault Administrator for this Key Vault to our service principal account.
+
+
+#### Assign Permissions for an Individual Key Vault via Access Policy
+
+Access to an Azure Key Vault instance can be granted via Role Based Access Control (RBAC) or with class Azure Resource Access Policies.  The below steps are for provisioning access to a single 
+instance of a Key Vault using Access Policies.  If you are using RBAC at the resource group level (necessary for discovery and creating new Key Vaults via Keyfactor) we recommend following RBAC (above).  Alternatively, you will need to assign explicit permissions to the service principal for any Key Vault that is using Access Policy for Access Control if the Key Vault should be managed with Keyfactor.
+
+Following the below steps will provide our service principal with the ability to manage keys in an existing vault, without providing it the elevated permissions required for discovering existing vaults or creating new ones.  If you've completed the steps in the previous section for the resource group that contains the Key Vault(s) you would like to manage and the Key Vault(s) are using RBAC, the below steps are not necessary.
 
 1) Navigate to the Azure Portal and then to your instance of the Azure Keyvault.
 
