@@ -167,7 +167,7 @@ We will store these values securely in Keyfactor in subsequent steps.
 
 Now we can navigate to the Keyfactor platform and create the store type for Azure Key Vault.
 
-1) Navigate to your instance of Keyfactor and log in with a user that has Administrator priveledges.
+1) Navigate to your instance of Keyfactor and log in with a user that has Administrator privileges.
 
 1) Click on the gear icon in the top left and navigate to "Certificate Store Types".
 
@@ -184,8 +184,8 @@ Now we can navigate to the Keyfactor platform and create the store type for Azur
      ![Cert Store Types Menu](/Images/cert-store-type.png)
 
 1) Navigate to the _Custom Fields_ tab and add the following fields
-     - Vault Name (VaultName) - _required_
-     - Resource Group Name (ResourceGroupName) - _required_
+     - Name: "**VaultName**", Display Name: "**Vault Name**", Required: **true** (checked)
+     - Name: "**ResourceGroupName**", Display Name: "**Resource Group Name**", Required: **true** (checked)
 
 ### Install the Extension on the Orchestrator
 
