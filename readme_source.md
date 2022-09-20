@@ -2,6 +2,8 @@
 
 The high level steps required to configure the Azure Keyvault Orchestrator extension are:
 
+1) [Migrating from the Windows Orchestrator for Azure KeyVault](#migrating-from-the-windows-orchestrator-for-azure-keyvault)
+
 1) [Configure the Azure Keyvault for client access](#configure-the-azure-keyvault-for-client-access)
 
 1) [Create the Store Type in Keyfactor](#create-the-store-type-in-keyfactor)
@@ -10,7 +12,46 @@ The high level steps required to configure the Azure Keyvault Orchestrator exten
 
 1) [Create the Certificate Store](#create-the-certificate-store)
 
+_Note that the certificate store type used by this Universal Orchestrator support for Azure Keyvault is not compatible with the certificate store type used by with Windows Orchestrator version for Azure Keyvault. 
+If your Keyfactor instance has used the Windows Orchestrator for Azure Keyvault, a specific migration process is required. 
+See [Migrating from the Windows Orchestrator for Azure KeyVault](#migrating-from-the-windows-orchestrator-for-azure-keyvault) section below._
+
+
 ---
+
+### Migrating from the Windows Orchestrator for Azure KeyVault
+
+If you were previously using the Azure Keyvault extension for the **Windows** Orchestrator, it is necessary to remove the Store Type definition as well as any Certificate stores that use the previous store type.
+This is because the store type parameters have changed in order to facilitate the Discovery and Create functionality.
+
+If you have an existing AKV store type that was created for use with the Windows Orchestrator, follow the following steps to remove:
+
+#### If the Windows Orchestrator should still manage other cert store types:
+
+If the Windows Orchestrator will still be used to manage some store types, we will remove only the Azure Keyvault functionality
+
+1) On the Windows Orchestrator host machine, run the Keyfactor Agent Configuration Wizard
+1) Proceed through the steps to "Select Features"
+1) Expand "Cert Stores" and un-check "Azure Keyvault"
+1) Click "Apply Configuration"
+
+1) Open the Keyfactor Platform and navigate to **Orchestrators > Management**
+1) Confirm that "AKV" no longer appears under "Capabilities"
+1) If it still shows up, try restarting the Windows orchestrator service, and then disapproving and re-approving the Orchestrator.
+1) Navigate to **Locations > Certificate Stores**
+1) Select any stores with the Category "Azure Keyvault" and click "DELETE" to remove them from Keyfactor.
+1) Navigate to the Administrative menu (gear icon) and then **> Certificate Store Types**
+1) Select Azure Keyvault, click "DELETE" and confirm.
+
+#### If the Windows Orchestrator can be retired completely:
+
+1) Navigate to **Orchestrators > Management** and select the Windows Orchestrator from the list.
+1) With the orchestrator selected, click the "RESET" button at the top of the list
+1) Click "OK" to confirm that you will remove all jobs and certificate stores associated to this orchestrator.
+1) Navigate to the the Administrative (gear icon in the top right) and then **Certificate Store Types**
+1) Select "Azure Keyvault", click "DELETE" and confirm.
+
+Note: Any Azure Keyvault certificate stores removed can be re-added once the Universal Orchestrator is configured with the AKV capability.
 
 ### Configure the Azure Keyvault for client access
 
