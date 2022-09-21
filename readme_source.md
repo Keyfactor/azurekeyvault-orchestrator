@@ -26,7 +26,7 @@ This is because the store type parameters have changed in order to facilitate th
 
 If you have an existing AKV store type that was created for use with the Windows Orchestrator, you will need to follow the steps in one of the below sections in order to transfer the capability to the Universal Orchestrator.
 
-> **Note**
+> :warning:
 > Before removing the certificate stores, view their configuration details and copy the values.
 > Copying the values in the store parameters will save time when re-creating the stores.
 
