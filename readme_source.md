@@ -24,11 +24,17 @@ See [Migrating from the Windows Orchestrator for Azure KeyVault](#migrating-from
 If you were previously using the Azure Keyvault extension for the **Windows** Orchestrator, it is necessary to remove the Store Type definition as well as any Certificate stores that use the previous store type.
 This is because the store type parameters have changed in order to facilitate the Discovery and Create functionality.
 
-If you have an existing AKV store type that was created for use with the Windows Orchestrator, follow the following steps to remove:
+If you have an existing AKV store type that was created for use with the Windows Orchestrator, you will need to follow the steps in one of the below sections in order to transfer the capability to the Universal Orchestrator.
+
+> **Note**
+> Before removing the certificate stores, view their configuration details and copy the values.
+> Copying the values in the store parameters will save time when re-creating the stores.
+
+Follow the below steps to remove the AKV capability from **each** active Windows Orchestrator that supports it:
 
 #### If the Windows Orchestrator should still manage other cert store types:
 
-If the Windows Orchestrator will still be used to manage some store types, we will remove only the Azure Keyvault functionality
+*If the Windows Orchestrator will still be used to manage some store types, we will remove only the Azure Keyvault functionality.*
 
 1) On the Windows Orchestrator host machine, run the Keyfactor Agent Configuration Wizard
 1) Proceed through the steps to "Select Features"
@@ -37,21 +43,30 @@ If the Windows Orchestrator will still be used to manage some store types, we wi
 
 1) Open the Keyfactor Platform and navigate to **Orchestrators > Management**
 1) Confirm that "AKV" no longer appears under "Capabilities"
-1) If it still shows up, try restarting the Windows orchestrator service, and then disapproving and re-approving the Orchestrator.
+1) Navigate to **Orchestrators > Management**, select the orchestrator and click "DISAPPROVE" to disapprove it and cancel pending jobs.
 1) Navigate to **Locations > Certificate Stores**
 1) Select any stores with the Category "Azure Keyvault" and click "DELETE" to remove them from Keyfactor.
 1) Navigate to the Administrative menu (gear icon) and then **> Certificate Store Types**
 1) Select Azure Keyvault, click "DELETE" and confirm.
+1) Navigate to **Orchestrators > Management**, select the orchestrator and click "APPROVE" to re-approve it for use.
+ 
+1) Repeat these steps for any other Windows Orchestrators that support the AKV store type.
 
 #### If the Windows Orchestrator can be retired completely:
 
+*If the Windows Orchestrator is being completely replaced with the Universal Orchestrator, we can remove all associated stores and jobs.*
+
 1) Navigate to **Orchestrators > Management** and select the Windows Orchestrator from the list.
 1) With the orchestrator selected, click the "RESET" button at the top of the list
+1) Make sure the orchestrator is still selected, and click "DISAPPROVE".
 1) Click "OK" to confirm that you will remove all jobs and certificate stores associated to this orchestrator.
 1) Navigate to the the Administrative (gear icon in the top right) and then **Certificate Store Types**
 1) Select "Azure Keyvault", click "DELETE" and confirm.
+1) Repeat these steps for any other Windows Orchestrators that support the AKV store type (if they can also be retired).
 
 Note: Any Azure Keyvault certificate stores removed can be re-added once the Universal Orchestrator is configured with the AKV capability.
+
+--- 
 
 ### Configure the Azure Keyvault for client access
 
