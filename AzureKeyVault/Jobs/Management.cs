@@ -129,7 +129,6 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                         complete.FailureMessage += " - " + ex.InnerException.Message;
                 }
             }
-
             else  // Non-PFX
             {
                 complete.FailureMessage = "Certificate to add must be in a .PFX file format.";
