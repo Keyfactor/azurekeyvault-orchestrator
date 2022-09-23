@@ -28,7 +28,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
     public class Management : AzureKeyVaultJob<Management>, IManagementJobExtension
     {
         readonly ILogger logger = LogHandler.GetClassLogger<Management>();
-        
+
         public JobResult ProcessJob(ManagementJobConfiguration config)
         {
             logger.LogDebug($"Begin Management...");
@@ -44,7 +44,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             switch (config.OperationType)
             {
                 case CertStoreOperationType.Create:
-                    logger.LogDebug($"Begin Management > Create...");                    
+                    logger.LogDebug($"Begin Management > Create...");
                     complete = PerformCreateVault(config.JobHistoryId).Result;
                     break;
                 case CertStoreOperationType.Add:
@@ -105,22 +105,21 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
                 try
                 {
-                    // uploadCollection is either not null or an exception was thrown.
                     var cert = AzClient.ImportCertificateAsync(alias, entryContents, pfxPassword).Result;
-                                        
+
                     // Ensure the return object has a AKV version tag, and Thumbprint
                     if (!string.IsNullOrEmpty(cert.Properties.Version) &&
                         !string.IsNullOrEmpty(string.Concat(cert.Properties.X509Thumbprint.Select(i => i.ToString("X2"))))
                     )
                     {
-                        complete.Result = OrchestratorJobStatusJobResult.Success;                        
+                        complete.Result = OrchestratorJobStatusJobResult.Success;
                     }
                     else
                     {
+                        // uploadCollection is either not null or an exception was thrown.
                         complete.FailureMessage = $"Unable to add {alias} to {ExtensionName}. Check your network connection, ensure the password is correct, and that your API connection information is correct.";
                     }
                 }
-
                 catch (Exception ex)
                 {
                     complete.FailureMessage = $"An error occured while adding {alias} to {ExtensionName}: " + ex.Message;
