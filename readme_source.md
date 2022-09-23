@@ -2,6 +2,8 @@
 
 The high level steps required to configure the Azure Keyvault Orchestrator extension are:
 
+1) [Migrating from the Windows Orchestrator for Azure KeyVault](#migrating-from-the-windows-orchestrator-for-azure-keyvault)
+
 1) [Configure the Azure Keyvault for client access](#configure-the-azure-keyvault-for-client-access)
 
 1) [Create the Store Type in Keyfactor](#create-the-store-type-in-keyfactor)
@@ -10,13 +12,67 @@ The high level steps required to configure the Azure Keyvault Orchestrator exten
 
 1) [Create the Certificate Store](#create-the-certificate-store)
 
+_Note that the certificate store type used by this Universal Orchestrator support for Azure Keyvault is not compatible with the certificate store type used by with Windows Orchestrator version for Azure Keyvault. 
+If your Keyfactor instance has used the Windows Orchestrator for Azure Keyvault, a specific migration process is required. 
+See [Migrating from the Windows Orchestrator for Azure KeyVault](#migrating-from-the-windows-orchestrator-for-azure-keyvault) section below._
+
+
 ---
+
+### Migrating from the Windows Orchestrator for Azure KeyVault
+
+If you were previously using the Azure Keyvault extension for the **Windows** Orchestrator, it is necessary to remove the Store Type definition as well as any Certificate stores that use the previous store type.
+This is because the store type parameters have changed in order to facilitate the Discovery and Create functionality.
+
+If you have an existing AKV store type that was created for use with the Windows Orchestrator, you will need to follow the steps in one of the below sections in order to transfer the capability to the Universal Orchestrator.
+
+> :warning:
+> Before removing the certificate stores, view their configuration details and copy the values.
+> Copying the values in the store parameters will save time when re-creating the stores.
+
+Follow the below steps to remove the AKV capability from **each** active Windows Orchestrator that supports it:
+
+#### If the Windows Orchestrator should still manage other cert store types:
+
+*If the Windows Orchestrator will still be used to manage some store types, we will remove only the Azure Keyvault functionality.*
+
+1) On the Windows Orchestrator host machine, run the Keyfactor Agent Configuration Wizard
+1) Proceed through the steps to "Select Features"
+1) Expand "Cert Stores" and un-check "Azure Keyvault"
+1) Click "Apply Configuration"
+
+1) Open the Keyfactor Platform and navigate to **Orchestrators > Management**
+1) Confirm that "AKV" no longer appears under "Capabilities"
+1) Navigate to **Orchestrators > Management**, select the orchestrator and click "DISAPPROVE" to disapprove it and cancel pending jobs.
+1) Navigate to **Locations > Certificate Stores**
+1) Select any stores with the Category "Azure Keyvault" and click "DELETE" to remove them from Keyfactor.
+1) Navigate to the Administrative menu (gear icon) and then **> Certificate Store Types**
+1) Select Azure Keyvault, click "DELETE" and confirm.
+1) Navigate to **Orchestrators > Management**, select the orchestrator and click "APPROVE" to re-approve it for use.
+ 
+1) Repeat these steps for any other Windows Orchestrators that support the AKV store type.
+
+#### If the Windows Orchestrator can be retired completely:
+
+*If the Windows Orchestrator is being completely replaced with the Universal Orchestrator, we can remove all associated stores and jobs.*
+
+1) Navigate to **Orchestrators > Management** and select the Windows Orchestrator from the list.
+1) With the orchestrator selected, click the "RESET" button at the top of the list
+1) Make sure the orchestrator is still selected, and click "DISAPPROVE".
+1) Click "OK" to confirm that you will remove all jobs and certificate stores associated to this orchestrator.
+1) Navigate to the the Administrative (gear icon in the top right) and then **Certificate Store Types**
+1) Select "Azure Keyvault", click "DELETE" and confirm.
+1) Repeat these steps for any other Windows Orchestrators that support the AKV store type (if they can also be retired).
+
+Note: Any Azure Keyvault certificate stores removed can be re-added once the Universal Orchestrator is configured with the AKV capability.
+
+--- 
 
 ### Configure the Azure Keyvault for client access
 
 To provision access to the Keyvault instance, we will:
 
-1) [Create a Service Principle in Azure Active Directory](#create-a-service-principle)
+1) [Create a Service Principal in Azure Active Directory](#create-a-service-principal)
 
 1) [Assign it sufficient permissions for Keyvault operations](#assign-permissions)
 
@@ -24,7 +80,7 @@ To provision access to the Keyvault instance, we will:
 
 1) [Store the server credentials in Keyfactor](#store-the-server-credentials-in-keyfactor)
 
-#### Create a Service Principle
+#### Create a Service Principal
 
 For the Orchestrator to be able to interact with the instance of Azure Keyvault, we will need to create an entity in Azure that will encapsulate the permissions we would like to grant it.  In Azure, these intermediate entities are referred to as app registrations and they provision authority for external application access.
 To learn more about application and service principals, refer to [this article](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal).
@@ -76,11 +132,45 @@ Here are the steps for assigning this role.
      ![Select Principal](/Images/rg-role-select-principal.PNG)
 1) Click "Review and Assign" and save the role assignment.
 
-[^1]: If discovery and create store functionality are not neeeded, it is also possible to manage individual certificate stores without the need to provide resource group level authority.  The steps to do assign permissions for an individual Azure Keyvault are described [here](#assign-permissions-for-an-individual-key-vault).
+[^1]: If discovery and create store functionality are not neeeded, it is also possible to manage individual certificate stores without the need to provide resource group level authority.  The steps to do assign permissions for an individual Azure Keyvault are described [here](#assign-permissions-for-an-individual-key-vault-via-access-policy) for vaults using Access Policy based permissions and [here](#assign-permissions-for-an-individual-key-vault-via-rbac) for Individual Key Vaults using Role-Based Access Control (RBAC).
 
-#### Assign Permissions for an Individual Key Vault
+#### Assign Permissions for an Individual Key Vault via RBAC
 
-Following the below steps will provide our service principal with the ability to manage keys in an existing vault, without providing it the elevated permissions required for discovering existing vaults or creating new ones.  If you've completed the steps in the previous section for the resource group that contains the Key Vault(s) you would like to manage, the below steps are not necessary.
+If you only need to manage a single instance of a Key Vault and do not require creation and discovery of new Key Vaults, you can provision access to the specific instance without needing to provide the service principal the "Keyvault Administrator" role at the resource group level.
+
+Follow the below steps in order to provide management access for our service principal to a specific instance of a Key Vault:
+
+1) Navigate to the Azure Portal and then to your instance of the Azure Keyvault
+
+1) Go to "Access control (IAM)" in the navigation menu for the Key vault.
+
+1) Click on "Add role assignment"
+
+     ![Vault RBAC](/Images/vault-rbac.png)
+
+1) Find the Keyvault Administrator role in the list.  Select it and click "Next"
+
+    ![Vault RBAC KVAdmin](/Images/vault-rbac-kvadmin.png)
+
+1) On the next screen, click "Select members" and then search for the service principal we created above.
+
+    ![Vault RBAC principal](/Images/vault-rbac-principal.png)
+
+ 1) Select the service principal, click "select", and then "Next"
+
+ 1) On the final screen, you should see something similar to the following:
+
+     ![Vault RBAC final](/Images/vault-rbac-final.png)
+
+ 1) Click "Review + assign" to finish assigning the role of Keyvault Administrator for this Key Vault to our service principal account.
+
+
+#### Assign Permissions for an Individual Key Vault via Access Policy
+
+Access to an Azure Key Vault instance can be granted via Role Based Access Control (RBAC) or with class Azure Resource Access Policies.  The below steps are for provisioning access to a single 
+instance of a Key Vault using Access Policies.  If you are using RBAC at the resource group level (necessary for discovery and creating new Key Vaults via Keyfactor) we recommend following RBAC (above).  Alternatively, you will need to assign explicit permissions to the service principal for any Key Vault that is using Access Policy for Access Control if the Key Vault should be managed with Keyfactor.
+
+Following the below steps will provide our service principal with the ability to manage keys in an existing vault, without providing it the elevated permissions required for discovering existing vaults or creating new ones.  If you've completed the steps in the previous section for the resource group that contains the Key Vault(s) you would like to manage and the Key Vault(s) are using RBAC, the below steps are not necessary.
 
 1) Navigate to the Azure Portal and then to your instance of the Azure Keyvault.
 
@@ -133,7 +223,7 @@ We will store these values securely in Keyfactor in subsequent steps.
 
 Now we can navigate to the Keyfactor platform and create the store type for Azure Key Vault.
 
-1) Navigate to your instance of Keyfactor and log in with a user that has Administrator priveledges.
+1) Navigate to your instance of Keyfactor and log in with a user that has Administrator privileges.
 
 1) Click on the gear icon in the top left and navigate to "Certificate Store Types".
 
@@ -150,8 +240,8 @@ Now we can navigate to the Keyfactor platform and create the store type for Azur
      ![Cert Store Types Menu](/Images/cert-store-type.png)
 
 1) Navigate to the _Custom Fields_ tab and add the following fields
-     - Vault Name (VaultName) - _required_
-     - Resource Group Name (ResourceGroupName) - _required_
+     - Name: "**VaultName**", Display Name: "**Vault Name**", Required: **true** (checked)
+     - Name: "**ResourceGroupName**", Display Name: "**Resource Group Name**", Required: **true** (checked)
 
 ### Install the Extension on the Orchestrator
 
@@ -245,7 +335,7 @@ Follow these steps to store the values:
 
 #### Approve the Certificate Store
 
-When the Discovery job runs successfully, it will list the existing Azure Keyvaults that are acessible by our service principle.
+When the Discovery job runs successfully, it will list the existing Azure Keyvaults that are acessible by our service principal.
 
 In this example, our job returned four Azure Keyvaults.
 

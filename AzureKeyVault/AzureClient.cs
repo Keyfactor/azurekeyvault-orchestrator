@@ -122,9 +122,9 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             try
             {
                 var bytes = Convert.FromBase64String(contents);
-                var x509 = new X509Certificate2(bytes, pfxPassword, X509KeyStorageFlags.Exportable);
-                var cert = await CertClient.ImportCertificateAsync(new ImportCertificateOptions(certName, x509.RawData));
-
+                var x509 = new X509Certificate2(bytes, pfxPassword, X509KeyStorageFlags.Exportable);                
+                var certWithKey = x509.Export(X509ContentType.Pkcs12);
+                var cert = await CertClient.ImportCertificateAsync(new ImportCertificateOptions(certName, certWithKey));
                 return cert;
             }
             catch (Exception ex)
