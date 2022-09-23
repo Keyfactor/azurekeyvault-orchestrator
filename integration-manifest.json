@@ -3,6 +3,29 @@
   "integration_type": "orchestrator",
   "name": "Azure Key Vault Orchestrator",
   "status": "production",
+  "update_catalog": true,
   "link_github": true,
-  "description": "This integration allows the orchestrator to act as a client with access to an instance of the Azure Key Vault; allowing you to manage your certificates stored in the Azure Keyvault via Keyfactor."
+  "description": "This integration allows the orchestrator to act as a client with access to an instance of the Azure Key Vault; allowing you to manage your certificates stored in the Azure Keyvault via Keyfactor.",
+  "about": {
+    "orchestrator": {
+      "win": {
+        "supportsCreateStore": true,
+        "supportsDiscovery": true,
+        "supportsManagementAdd": true,
+        "supportsManagementRemove": true,
+        "supportsReenrollment": false,
+        "supportsInventory": true,
+        "platformSupport": "Unused"
+      },
+      "linux": {
+        "supportsCreateStore": true,
+        "supportsDiscovery": true,
+        "supportsManagementAdd": true,
+        "supportsManagementRemove": true,
+        "supportsReenrollment": false,
+        "supportsInventory": true,
+        "platformSupport": "Unused"
+      }
+    }
+  }
 }
