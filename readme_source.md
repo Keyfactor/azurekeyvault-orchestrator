@@ -239,6 +239,14 @@ Now we can navigate to the Keyfactor platform and create the store type for Azur
 
      ![Cert Store Types Menu](/Images/cert-store-type.png)
 
+1) Navigate to the _Advanced_ tab and set the following values:
+     - Store Path Type: **Freeform**
+     - Supports Custom Alias: **Required**
+     - Private Key Handling: **Required**
+     - PFX Password Style: **Default**
+
+    ![Cert Store Types Menu](/Images/store-type-fields-advanced.png)
+
 1) Navigate to the _Custom Fields_ tab and add the following fields
      - Name: "**VaultName**", Display Name: "**Vault Name**", Required: **true** (checked)
      - Name: "**ResourceGroupName**", Display Name: "**Resource Group Name**", Required: **true** (checked)
