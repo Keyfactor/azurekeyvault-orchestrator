@@ -5,6 +5,7 @@
   "status": "production",
   "update_catalog": true,
   "link_github": true,
+  "support_level": "kf-supported",
   "description": "This integration allows the orchestrator to act as a client with access to an instance of the Azure Key Vault; allowing you to manage your certificates stored in the Azure Keyvault via Keyfactor.",
   "about": {
     "orchestrator": {
