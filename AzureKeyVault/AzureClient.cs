@@ -121,9 +121,15 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         {
             try
             {
+
                 var bytes = Convert.FromBase64String(contents);
-                var x509 = new X509Certificate2(bytes, pfxPassword, X509KeyStorageFlags.Exportable);                
-                var certWithKey = x509.Export(X509ContentType.Pkcs12);
+                var certCollection = RetrieveCertificates(bytes, pfxPassword);
+
+                //var x509 = new X509Certificate2(bytes, pfxPassword, X509KeyStorageFlags.Exportable);
+                //var certWithKey = x509.Export(X509ContentType.Pkcs12);
+
+                var certWithKey = certCollection.Export(X509ContentType.Pkcs12);
+                
                 var cert = await CertClient.ImportCertificateAsync(new ImportCertificateOptions(certName, certWithKey));
                 return cert;
             }
@@ -200,6 +206,42 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             catch (Exception ex)
             {
                 logger.LogError("Unable to set access policy on Vault", ex);
+                throw;
+            }
+        }
+
+        public X509Certificate2Collection RetrieveCertificates(byte[] binaryCertificates, string storePassword)
+        {
+            try
+            {
+                X509Certificate2Collection certCollection = new X509Certificate2Collection();
+
+                if (binaryCertificates.Length > 50)
+                {
+                    certCollection.Import(binaryCertificates, storePassword, X509KeyStorageFlags.Exportable);
+
+                    X509Certificate2 certWithKey = null;
+                    foreach (X509Certificate2 cert in certCollection)
+                    {
+                        if (cert.HasPrivateKey)
+                        {
+                            certWithKey = cert;
+                            break;
+                        }
+                    }
+
+                    if (certWithKey != null)
+                    {
+                        certCollection.Remove(certWithKey);
+                        certCollection.Insert(0, certWithKey);
+                    }
+                }
+
+                return certCollection;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Error attempting to retrieve certificate chain.", ex);
                 throw;
             }
         }
