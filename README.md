@@ -6,13 +6,12 @@ This integration allows the orchestrator to act as a client with access to an in
 
 ## About the Keyfactor Universal Orchestrator Capability
 
-This repository contains a Universal Orchestrator Extension which is a plugin to the Keyfactor Universal Orchestrator. Within the Keyfactor Platform, Orchestrators are used to manage “certificate stores” &mdash; collections of certificates and roots of trust that are found within and used by various applications.
+This repository contains a Universal Orchestrator Capability which is a plugin to the Keyfactor Universal Orchestrator. Within the Keyfactor Platform, Orchestrators are used to manage “certificate stores” &mdash; collections of certificates and roots of trust that are found within and used by various applications.
 
 The Universal Orchestrator is part of the Keyfactor software distribution and is available via the Keyfactor customer portal. For general instructions on installing Capabilities, see the “Keyfactor Command Orchestrator Installation and Configuration Guide” section of the Keyfactor documentation. For configuration details of this specific Capability, see below in this readme.
 
 The Universal Orchestrator is the successor to the Windows Orchestrator. This Capability plugin only works with the Universal Orchestrator and does not work with the Windows Orchestrator.
 
----
 
 
 ## Support for Azure Key Vault Orchestrator
@@ -22,6 +21,9 @@ Azure Key Vault Orchestrator is supported by Keyfactor for Keyfactor customers. 
 ###### To report a problem or suggest a new feature, use the **[Issues](../../issues)** tab. If you want to contribute actual bug fixes or proposed enhancements, use the **[Pull requests](../../pulls)** tab.
 ___
 
+
+
+---
 
 
 
@@ -40,6 +42,7 @@ The Keyfactor Universal Orchestrator may be installed on either Windows or Linux
 
 
 ---
+
 
 ## Setup and Configuration
 
