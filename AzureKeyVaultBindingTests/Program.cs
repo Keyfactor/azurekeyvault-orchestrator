@@ -110,40 +110,7 @@ namespace AzureKeyVaultBindingTests
 
         public void BindCertificateToAppService(KeyVaultCertificateWithPolicy cert)
         {
-            string hostname = GetHostname();
-            X509Certificate2 ssCert = GetSelfSignedCert(hostname);
-            
-            WebSiteResource site = AppServiceClient.GetSiteResourceFromHostname(hostname);
-            
-            ArmClient armClient = new ArmClient(new DefaultAzureCredential());
-            SubscriptionResource subscription = armClient.GetSubscriptions().Get(_resourceGroupId.SubscriptionId);
-            ResourceGroupResource resourceGroup = subscription.GetResourceGroups().Get(_resourceGroupId.ResourceGroupName);
-
-            try
-            {
-                resourceGroup.GetAppCertificates().CreateOrUpdate(WaitUntil.Completed, cert.Name, new AppCertificateData(site.Data.Location)
-                {
-                    Password = "FooBar",
-                    PfxBlob = ssCert.Export(X509ContentType.Pfx, "FooBar"),
-                    ServerFarmId = site.Data.AppServicePlanId,
-                }).WaitForCompletion();
-            } catch (System.ArgumentException e)
-            {
-                // Do nothing because it's gonna fail
-                Console.Write("Uploaded certificate\n");
-            }
-
-            AppCertificateResource appCert = AppServiceClient.GetCertificateResourceByName(cert.Name);
-
-            AppServiceClient.UpdateCertificateBinding(_appServiceResourceId, appCert,
-                HostNameBindingSslState.SniEnabled);
-            
-            AppServiceClient.RemoveCertificateBinding(_appServiceResourceId, appCert);
-
-            AppServiceClient.RemoveCertificate(cert.Name);
-
-            // This is the only thing that needs to be called
-            //AppServiceClient.UpdateCertificateBinding(_keyVaultResourceId, cert);
+            AppServiceClient.UpdateCertificateBinding(_keyVaultResourceId, cert);
         }
 
         public void VerifyCertificateBinding(string name)
