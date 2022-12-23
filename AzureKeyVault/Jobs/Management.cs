@@ -16,6 +16,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Azure.Core;
 using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
@@ -95,42 +96,48 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         {
             var complete = new JobResult() { Result = OrchestratorJobStatusJobResult.Failure, JobHistoryId = jobHistoryId };
 
-            if (!string.IsNullOrWhiteSpace(pfxPassword)) // This is a PFX Entry
-            {
-                if (string.IsNullOrWhiteSpace(alias))
-                {
-                    complete.FailureMessage = "You must supply an alias for the certificate.";
-                    return complete;
-                }
-
-                try
-                {
-                    var cert = AzClient.ImportCertificateAsync(alias, entryContents, pfxPassword).Result;
-
-                    // Ensure the return object has a AKV version tag, and Thumbprint
-                    if (!string.IsNullOrEmpty(cert.Properties.Version) &&
-                        !string.IsNullOrEmpty(string.Concat(cert.Properties.X509Thumbprint.Select(i => i.ToString("X2"))))
-                    )
-                    {
-                        complete.Result = OrchestratorJobStatusJobResult.Success;
-                    }
-                    else
-                    {
-                        // uploadCollection is either not null or an exception was thrown.
-                        complete.FailureMessage = $"Unable to add {alias} to {ExtensionName}. Check your network connection, ensure the password is correct, and that your API connection information is correct.";
-                    }
-                }
-                catch (Exception ex)
-                {
-                    complete.FailureMessage = $"An error occured while adding {alias} to {ExtensionName}: " + ex.Message;
-
-                    if (ex.InnerException != null)
-                        complete.FailureMessage += " - " + ex.InnerException.Message;
-                }
-            }
-            else  // Non-PFX
+            if (string.IsNullOrWhiteSpace(pfxPassword)) // This is a PFX Entry
             {
                 complete.FailureMessage = "Certificate to add must be in a .PFX file format.";
+                return complete;
+            }
+
+            if (string.IsNullOrWhiteSpace(alias))
+            {
+                complete.FailureMessage = "You must supply an alias for the certificate.";
+                return complete;
+            }
+
+            try
+            {
+                // Import certificate into Azure Key Vault
+                var cert = AzClient.ImportCertificateAsync(alias, entryContents, pfxPassword).Result;
+                
+                // Update app service bindings if necessary
+                if (VaultProperties.AutoUpdateAppServiceBindings)
+                {
+                    AppServicesClient.UpdateCertificateBinding(new ResourceIdentifier(VaultProperties.StorePath), cert);
+                }
+                
+                // Ensure the return object has a AKV version tag, and Thumbprint
+                if (!string.IsNullOrEmpty(cert.Properties.Version) &&
+                    !string.IsNullOrEmpty(string.Concat(cert.Properties.X509Thumbprint.Select(i => i.ToString("X2"))))
+                   )
+                {
+                    complete.Result = OrchestratorJobStatusJobResult.Success;
+                }
+                else
+                {
+                    // uploadCollection is either not null or an exception was thrown.
+                    complete.FailureMessage = $"Unable to add {alias} to {ExtensionName}. Check your network connection, ensure the password is correct, and that your API connection information is correct.";
+                }
+            }
+            catch (Exception ex)
+            {
+                complete.FailureMessage = $"An error occured while adding {alias} to {ExtensionName}: " + ex.Message;
+
+                if (ex.InnerException != null)
+                    complete.FailureMessage += " - " + ex.InnerException.Message;
             }
 
             return complete;
@@ -152,6 +159,14 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
             try
             {
+                if (VaultProperties.AutoUpdateAppServiceBindings)
+                {
+                    // If auto binding is enabled for the store, we need to remove the binding from the app service first
+                    AppServicesClient.RemoveCertificateBinding(AzClient.GetCertificate(alias));
+                    // Then delete the app service certificate
+                    AppServicesClient.RemoveCertificate(alias);
+                }
+                
                 var result = AzClient.DeleteCertificateAsync(alias).Result;
 
                 if (result.Value.Name == alias)

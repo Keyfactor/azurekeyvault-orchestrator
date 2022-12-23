@@ -167,6 +167,12 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             }
             return inventoryItems;
         }
+        
+        public virtual KeyVaultCertificateWithPolicy GetCertificate(string secretName)
+        {
+            var cert = CertClient.GetCertificate(secretName);
+            return cert.Value;
+        }
 
         public virtual async Task<List<string>> GetVaults()
         {
