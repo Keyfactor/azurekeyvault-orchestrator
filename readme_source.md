@@ -250,6 +250,7 @@ Now we can navigate to the Keyfactor platform and create the store type for Azur
 1) Navigate to the _Custom Fields_ tab and add the following fields
      - Name: "**VaultName**", Display Name: "**Vault Name**", Required: **true** (checked)
      - Name: "**ResourceGroupName**", Display Name: "**Resource Group Name**", Required: **true** (checked)
+     - Name: "**AutoUpdateBindings**", Display Name: "**Auto Update AppService Bindings**", Type: **bool**, Default Value: **false**, Required: **false** (unchecked)
 
 ### Install the Extension on the Orchestrator
 
@@ -388,6 +389,8 @@ The steps to do this are:
 - **Store Path**: This is the Azure Resource Identifier for the Keyvault.  Copied from Azure, or created a new Keyvault (see below).  
 - **VaultName**: This is the name of the new or existing Azure Keyvault.
 - **ResourceGroupName**: The name of the Azure Resource Group that contains the Keyvault.
+- **AutoUpdateBindings**: Set to _true_ if you would like the extension to automatically update the certificate bindings when a certificate is imported into the Keyvault.
+   - Note: If this is set to _true_, the Azure Key Vault needs additional policies. See [the bindings permission section](#permissions-required-for-auto-app-service-binding-updates) for more information.
 
 If the vault already exists in azure:
 The store path can be found by navigating to the existing Keyvault resource in Azure and clicking "Properties" in the left menu.
@@ -404,6 +407,24 @@ If the Keyvault does not exist in Azure, and you would like to create it:
 
 ![Add Vault](/Images/add-vault.png)
 
+### Permissions Required for Auto App Service Binding Updates
+
+Azure App Service resources can be configured to use custom domains and TLS certificates. With the default Azure Key Vault orchestrator extension,
+the certificate bindings are not automatically updated when a certificate is imported into the Key Vault. This can be done manually by the user, but
+it is not ideal. When enabled, the extension will automatically import the AKV certificate as an App Service certificate and update the certificate bindings for any App Service resources whose
+domain name matches one of the certificate's DNS Subject Alternative Names (SANs). It's required that the app service be in the same resource group as the Key Vault.
+
+To enable this feature, create **Access Policies** to grant _read_ permission to the `Microsoft.Azure.WebSites` and `Microsoft.Azure.CertificateRegistration` resource providers.
+This should be done using the same method used [to assign access to an individual key vault](#assign-permissions-for-an-individual-key-vault-via-access-policy), where the application name
+is replaced by the object ID or name shown below:
+
+- Microsoft Azure App Service/Microsoft.Azure.WebSites
+   - Object ID: abfa0a7c-a6b6-4736-8310-5855508787cd (Same for all Azure subscriptions)
+   - Object ID: 6a02c803-dafd-4136-b4c3-5a6f318b4714 (Azure Government cloud environments)
+- Microsoft.Azure.CertificateRegistration
+   - Object ID: ed47c2a1-bd23-4341-b39c-f4fd69138dd3
+
+To access resources in the resource group, the service principal also needs to have _maintain_ permissions over the resource group.
 
 ---
 
