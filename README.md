@@ -30,8 +30,6 @@ ___
 
 ## Platform Specific Notes
 
-The minimum version of the Universal Orchestrator Framework needed to run this version of the extension is 
-
 The Keyfactor Universal Orchestrator may be installed on either Windows or Linux based platforms. The certificate operations supported by a capability may vary based what platform the capability is installed on. The table below indicates what capabilities are supported based on which platform the encompassing Universal Orchestrator is running.
 | Operation | Win | Linux |
 |-----|-----|------|
@@ -41,6 +39,7 @@ The Keyfactor Universal Orchestrator may be installed on either Windows or Linux
 |Supports Discovery|&check; |&check; |
 |Supports Renrollment|  |  |
 |Supports Inventory|&check; |&check; |
+
 
 
 
@@ -299,6 +298,8 @@ Now we can navigate to the Keyfactor platform and create the store type for Azur
 1) Navigate to the _Custom Fields_ tab and add the following fields
      - Name: "**VaultName**", Display Name: "**Vault Name**", Required: **true** (checked)
      - Name: "**ResourceGroupName**", Display Name: "**Resource Group Name**", Required: **true** (checked)
+     - Name: "**AutoUpdateBindings**", Display Name: "**Auto Update AppService Bindings**", Type: **bool**, Default Value: **false**, Required: **false** (unchecked)
+       - See the [auto update bindings](#auto-app-service-binding-updates) and [associated permission section](#permissions-required-for-auto-app-service-binding-updates) for more information.
 
 ### Install the Extension on the Orchestrator
 
@@ -437,6 +438,8 @@ The steps to do this are:
 - **Store Path**: This is the Azure Resource Identifier for the Keyvault.  Copied from Azure, or created a new Keyvault (see below).  
 - **VaultName**: This is the name of the new or existing Azure Keyvault.
 - **ResourceGroupName**: The name of the Azure Resource Group that contains the Keyvault.
+- **AutoUpdateBindings**: Set to _true_ if you would like the extension to automatically update the certificate bindings when a certificate is imported into the Keyvault.
+   - Note: If this is set to _true_, the Azure Key Vault and Service Principal need additional policies. See the [auto update bindings](#auto-app-service-binding-updates) and [associated permission section](#permissions-required-for-auto-app-service-binding-updates) for more information.
 
 If the vault already exists in azure:
 The store path can be found by navigating to the existing Keyvault resource in Azure and clicking "Properties" in the left menu.
@@ -453,6 +456,35 @@ If the Keyvault does not exist in Azure, and you would like to create it:
 
 ![Add Vault](/Images/add-vault.png)
 
+### Auto App Service Binding Updates
+
+Azure App Service resources can be configured to use custom domains and TLS certificates to secure them. Azure's turnkey solution to manage App Service TLS certificates is to purchase a certificate through Azure App Service Certificate Orders.
+When a certificate is purchased through Azure App Service Certificate Orders, the certificate is automatically added to the Key Vault associated with the App Service resource. The certificate is also automatically added to the App Service resource's hostname bindings.
+If a certificate was already purchased through Azure App Service Certificate Orders, Azure Key Vault automatically rotates and otherwise manages the certificate and its usage. However, if a certificate is obtained in another way and then imported into
+an Azure Key Vault, Azure will not assist in the management of the certificate, including automatic updating of App Service hostname bindings, which is not ideal. This is where the Keyfactor Azure Key Vault integration can help. For example, a certificate may be
+used within an organization for multiple purposes, including for TLS on an Azure App Service.
+
+When the "AutoUpdateBindings" option is enabled, the Keyfactor Azure Key Vault extension will automatically find App Services with bound hostnames that match the certificate's DNS SANs and update the hostname bindings. Then, when the certificate is EOL,
+Keyfactor will automatically remove the TLS bindings and remove the App Service Certificate's reference to Azure Key Vault and associated Key Vault certificate entry. Furthermore, if Keyfactor is configured to automatically renew certificates, the
+workflow for removing and re-adding bindings is handled automatically.
+
+This feature is designed to be constrained to the permissions set for the service principal used. Specifically, the extension can only update hostname bindings for App Services inside Resource Groups that the Service Principal has access to. For example, if
+App Services exist in a resource group outside of the desired scope of management, the extension will not update the bindings for those resources.
+
+#### Permissions Required for Auto App Service Binding Updates
+
+To enable this feature, create **Access Policies** to grant _read_ permission to the `Microsoft.Azure.WebSites` and `Microsoft.Azure.CertificateRegistration` resource providers.
+This should be done using the same method used [to assign access to an individual key vault](#assign-permissions-for-an-individual-key-vault-via-access-policy), where the application name
+is replaced by the object ID or name shown below:
+
+- Microsoft Azure App Service/Microsoft.Azure.WebSites
+   - Object ID: abfa0a7c-a6b6-4736-8310-5855508787cd (Same for all Azure subscriptions)
+   - Object ID: 6a02c803-dafd-4136-b4c3-5a6f318b4714 (Azure Government cloud environments)
+- Microsoft.Azure.CertificateRegistration
+   - Object ID: ed47c2a1-bd23-4341-b39c-f4fd69138dd3
+
+To access App Services resources, the service principal created for the Keyfactor Azure Key Vault extension needs to have _maintain_ permissions over any resource groups that contain App Services resources that will be managed by Keyfactor.
+This can be done by adding the service principal to any desired resource group access policies (IAM).
 
 ---
 

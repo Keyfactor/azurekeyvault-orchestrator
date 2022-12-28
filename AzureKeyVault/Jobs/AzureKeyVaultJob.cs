@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Collections.Generic;
 using Keyfactor.Orchestrators.Extensions;
 using Newtonsoft.Json;
 
@@ -23,6 +24,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
         internal protected virtual AzureClient AzClient { get; set; }
         internal protected virtual AkvProperties VaultProperties { get; set; }
+        protected AzureAppServicesClient AppServicesClient { get; set; }
 
         public void InitializeStore(dynamic config)
         {
@@ -41,9 +43,20 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 dynamic properties = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());
                 VaultProperties.ResourceGroupName = properties.ResourceGroupName;
                 VaultProperties.VaultName = properties.VaultName;
+                
+                VaultProperties.AutoUpdateAppServiceBindings = (bool)properties.AutoUpdateBindings;
+                // Make binding variable safe in case Keyfactor expects an older version of the extension
+                if (properties.GetType().GetProperty("AutoUpdateBindings") != null)
+                    VaultProperties.AutoUpdateAppServiceBindings = (bool)properties.AutoUpdateBindings;
             }
             AzClient ??= new AzureClient(VaultProperties);
-        }        
+            
+            // If the store was configured to auto-update app service bindings, create a client to do so
+            if (VaultProperties.AutoUpdateAppServiceBindings)
+            {
+                AppServicesClient ??= new AzureAppServicesClient(VaultProperties);
+            }
+        }
     }
 }
 

@@ -14,8 +14,11 @@
 
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Azure.Core;
+using Azure.Security.KeyVault.Certificates;
 using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
@@ -95,42 +98,61 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         {
             var complete = new JobResult() { Result = OrchestratorJobStatusJobResult.Failure, JobHistoryId = jobHistoryId };
 
-            if (!string.IsNullOrWhiteSpace(pfxPassword)) // This is a PFX Entry
-            {
-                if (string.IsNullOrWhiteSpace(alias))
-                {
-                    complete.FailureMessage = "You must supply an alias for the certificate.";
-                    return complete;
-                }
-
-                try
-                {
-                    var cert = AzClient.ImportCertificateAsync(alias, entryContents, pfxPassword).Result;
-
-                    // Ensure the return object has a AKV version tag, and Thumbprint
-                    if (!string.IsNullOrEmpty(cert.Properties.Version) &&
-                        !string.IsNullOrEmpty(string.Concat(cert.Properties.X509Thumbprint.Select(i => i.ToString("X2"))))
-                    )
-                    {
-                        complete.Result = OrchestratorJobStatusJobResult.Success;
-                    }
-                    else
-                    {
-                        // uploadCollection is either not null or an exception was thrown.
-                        complete.FailureMessage = $"Unable to add {alias} to {ExtensionName}. Check your network connection, ensure the password is correct, and that your API connection information is correct.";
-                    }
-                }
-                catch (Exception ex)
-                {
-                    complete.FailureMessage = $"An error occured while adding {alias} to {ExtensionName}: " + ex.Message;
-
-                    if (ex.InnerException != null)
-                        complete.FailureMessage += " - " + ex.InnerException.Message;
-                }
-            }
-            else  // Non-PFX
+            if (string.IsNullOrWhiteSpace(pfxPassword)) // This is a PFX Entry
             {
                 complete.FailureMessage = "Certificate to add must be in a .PFX file format.";
+                return complete;
+            }
+
+            if (string.IsNullOrWhiteSpace(alias))
+            {
+                complete.FailureMessage = "You must supply an alias for the certificate.";
+                return complete;
+            }
+
+            try
+            {
+                // Import certificate into Azure Key Vault
+                var cert = AzClient.ImportCertificateAsync(alias, entryContents, pfxPassword).Result;
+                
+                // Update app service bindings if necessary
+                if (VaultProperties.AutoUpdateAppServiceBindings)
+                {
+                    List<string> bindingList = (
+                        // Import certificate from Azure Key Vault to Azure App Service
+                        from certificateResource in AppServicesClient.ImportCertificateFromAzureKeyVault(new ResourceIdentifier(VaultProperties.StorePath), cert)
+                        // Bind certificate to any Azure App Service that has a hostname matching the certificate's DNS SAN
+                        select AppServicesClient.UpdateCertificateBinding(certificateResource) into bindings
+                        from binding in bindings
+                        select binding
+                    ).ToList();
+                    
+                    // Print the list of bindings that were updated
+                    if (bindingList.Count > 0)
+                    {
+                        logger.LogInformation($"Updated bindings for the following Azure App Services: {string.Join(", ", bindingList)}");
+                    }
+                }
+                
+                // Ensure the return object has a AKV version tag, and Thumbprint
+                if (!string.IsNullOrEmpty(cert.Properties.Version) &&
+                    !string.IsNullOrEmpty(string.Concat(cert.Properties.X509Thumbprint.Select(i => i.ToString("X2"))))
+                   )
+                {
+                    complete.Result = OrchestratorJobStatusJobResult.Success;
+                }
+                else
+                {
+                    // uploadCollection is either not null or an exception was thrown.
+                    complete.FailureMessage = $"Unable to add {alias} to {ExtensionName}. Check your network connection, ensure the password is correct, and that your API connection information is correct.";
+                }
+            }
+            catch (Exception ex)
+            {
+                complete.FailureMessage = $"An error occured while adding {alias} to {ExtensionName}: " + ex.Message;
+
+                if (ex.InnerException != null)
+                    complete.FailureMessage += " - " + ex.InnerException.Message;
             }
 
             return complete;
@@ -152,6 +174,23 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
             try
             {
+                if (VaultProperties.AutoUpdateAppServiceBindings)
+                {
+                    // If auto binding is enabled for the store, we need to remove the binding from the app service
+                    // before we can delete the certificate from AKV.
+                    
+                    // Get the certificate object using the alias that it's stored under.
+                    KeyVaultCertificateWithPolicy akvCertObject = AzClient.GetCertificate(alias);
+                    
+                    // RemoveCertificateBinding returns a list of thumbprints associated with certificate bindings
+                    // that were removed.
+                    foreach (string bindingRemovalThumb in AppServicesClient.RemoveCertificateBinding(akvCertObject))
+                    {
+                        // Finally, foreach thumbprint that was removed, delete the certificate from Azure App Service.
+                        AppServicesClient.RemoveCertificate(bindingRemovalThumb);
+                    }
+                }
+                
                 var result = AzClient.DeleteCertificateAsync(alias).Result;
 
                 if (result.Value.Name == alias)

@@ -11,5 +11,6 @@
         public string ApplicationId { get; set; }
         public string ObjectId { get; set; }
         public string ClientSecret { get; set; }
+        public bool AutoUpdateAppServiceBindings { get; set; }
     }
 }
