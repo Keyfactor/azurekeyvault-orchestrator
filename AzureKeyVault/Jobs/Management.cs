@@ -14,9 +14,11 @@
 
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Azure.Core;
+using Azure.Security.KeyVault.Certificates;
 using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
@@ -116,7 +118,20 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 // Update app service bindings if necessary
                 if (VaultProperties.AutoUpdateAppServiceBindings)
                 {
-                    AppServicesClient.UpdateCertificateBinding(new ResourceIdentifier(VaultProperties.StorePath), cert);
+                    List<string> bindingList = (
+                        // Import certificate from Azure Key Vault to Azure App Service
+                        from certificateResource in AppServicesClient.ImportCertificateFromAzureKeyVault(new ResourceIdentifier(VaultProperties.StorePath), cert)
+                        // Bind certificate to any Azure App Service that has a hostname matching the certificate's DNS SAN
+                        select AppServicesClient.UpdateCertificateBinding(certificateResource) into bindings
+                        from binding in bindings
+                        select binding
+                    ).ToList();
+                    
+                    // Print the list of bindings that were updated
+                    if (bindingList.Count > 0)
+                    {
+                        logger.LogInformation($"Updated bindings for the following Azure App Services: {string.Join(", ", bindingList)}");
+                    }
                 }
                 
                 // Ensure the return object has a AKV version tag, and Thumbprint
@@ -161,10 +176,19 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             {
                 if (VaultProperties.AutoUpdateAppServiceBindings)
                 {
-                    // If auto binding is enabled for the store, we need to remove the binding from the app service first
-                    AppServicesClient.RemoveCertificateBinding(AzClient.GetCertificate(alias));
-                    // Then delete the app service certificate
-                    AppServicesClient.RemoveCertificate(alias);
+                    // If auto binding is enabled for the store, we need to remove the binding from the app service
+                    // before we can delete the certificate from AKV.
+                    
+                    // Get the certificate object using the alias that it's stored under.
+                    KeyVaultCertificateWithPolicy akvCertObject = AzClient.GetCertificate(alias);
+                    
+                    // RemoveCertificateBinding returns a list of thumbprints associated with certificate bindings
+                    // that were removed.
+                    foreach (string bindingRemovalThumb in AppServicesClient.RemoveCertificateBinding(akvCertObject))
+                    {
+                        // Finally, foreach thumbprint that was removed, delete the certificate from Azure App Service.
+                        AppServicesClient.RemoveCertificate(bindingRemovalThumb);
+                    }
                 }
                 
                 var result = AzClient.DeleteCertificateAsync(alias).Result;
