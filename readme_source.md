@@ -120,9 +120,9 @@ This is required to create an App Registration in Azure Active Directory.
 
      ![App registration object Id](/Images/objectId.png)
 
-1) Copy the _Application (client) ID_, _Object ID_.
+1) Copy the _Application (client) ID_
 
-1) Now we have a App registration and values for  _Directory (tenant) ID_, _Application (client) ID_ and _Object ID_.  These will be used by the integration for authentication to Azure.
+1) Now we have a App registration and values for  _Directory (tenant) ID_, _Application (client) ID_.  These will be used by the integration for authentication to Azure.
 
 #### Assign Permissions
 
@@ -224,7 +224,6 @@ Now we have our App registration created in Azure, and we have the following val
 
 - _TenantId_
 - _ApplicationId_
-- _ObjectId_
 - _ClientSecret_
 
 We will store these values securely in Keyfactor in subsequent steps.
@@ -238,10 +237,15 @@ The two types of managed identities available in Azure are _System_ assigned, an
 - System assigned managed identities are bound to the specific resource and not reassignable.  They are bound to the resource and share the same lifecycle.  
 - User assigned managed identities exist as a standalone entity, independent of a resource, and can therefore be assigned to multiple Azure resources.
 
+Read more about Azure Managed Identities [here](https://learn.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview).
+
+Detailed steps for creating a managed identity and assigning permissions can be found [here](https://learn.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/how-manage-user-assigned-managed-identities?pivots=identity-mi-methods-azp).
+
+Once the User Assigned managed identity has been created, you will need only to enter the Client Id into the Application Id field on the certificate store definition (the Client Secret can be left blank).
 
 #### Authentication via System Assigned Managed Identity
 
-In order to use a _System_ assigned managed identity, the setup steps are the same as for the user assigned managed identity, except that the ApplicationId can be left blank.
+In order to use a _System_ assigned managed identity, the setup steps are the same as for the user assigned managed identity, except that both the  ApplicationId field should also be left blank.
 
 ### Create the Store Type in Keyfactor
 
@@ -265,15 +269,32 @@ Now we can navigate to the Keyfactor platform and create the store type for Azur
 
 1) Navigate to the _Advanced_ tab and set the following values:
      - Store Path Type: **Freeform**
-     - Supports Custom Alias: **Required**
-     - Private Key Handling: **Required**
+     - Supports Custom Alias: **Optional**
+     - Private Key Handling: **Optional**
      - PFX Password Style: **Default**
 
     ![Cert Store Types Menu](/Images/store-type-fields-advanced.png)
 
 1) Navigate to the _Custom Fields_ tab and add the following fields
+     <!---
+     
      - Name: "**VaultName**", Display Name: "**Vault Name**", Required: **true** (checked)
      - Name: "**ResourceGroupName**", Display Name: "**Resource Group Name**", Required: **true** (checked)
+     
+     -->
+
+     | Name | Display Name | Type | Required |
+     | ---- | ------------ | ---- | -------- |
+     | VaultName | Vault Name | String | true |
+     | ResourceGroupName | Resource Group Name | String | true |
+     | SkuType[^sku] | SKU Type | MultipleChoice | true |
+     | TenantId | Tenant ID | String | true |
+     | ClientId | Client ID | String | false |
+     | ClientSecret | Client Secret | Secret | false |
+
+     [^sku]: The SkuType determines the service tier when creating a new instance of Azure KeyVault via the platform.  Valid values include "premium" and "standard".
+        If either option should be available when creating a new KeyVault from the Command platform via creating a new certificate store, then the value to enter for the multiple choice options should be "standard,premium".
+        If your organization requires that one or the other option should always be used, you can limit the options to a single value ("premium" or "standard").
 
 ### Install the Extension on the Orchestrator
 

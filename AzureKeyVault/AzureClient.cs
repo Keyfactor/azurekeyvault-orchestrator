@@ -57,15 +57,15 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 {
                     var credentialOptions = new DefaultAzureCredentialOptions();
 
-                    if (this.VaultProperties.UserAssignedManagedIdentity) // are they using a user assigned identity instead of a system assigned one (default)?
+                    if (!string.IsNullOrEmpty(this.VaultProperties.ClientId)) // are they using a user assigned identity instead of a system assigned one (default)?
                     {
-                        credentialOptions.ManagedIdentityClientId = VaultProperties.ApplicationId;
+                        credentialOptions.ManagedIdentityClientId = VaultProperties.ClientId;
                     }
                     cred = new DefaultAzureCredential(credentialOptions);
                 }
                 else
                 {
-                    cred = new ClientSecretCredential(VaultProperties.TenantId, VaultProperties.ApplicationId, VaultProperties.ClientSecret);
+                    cred = new ClientSecretCredential(VaultProperties.TenantId, VaultProperties.ClientId, VaultProperties.ClientSecret);
                 }
 
                 _certClient = new CertificateClient(new Uri(VaultProperties.VaultURL), credential: cred);
@@ -95,15 +95,15 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                     var credentialOptions = new DefaultAzureCredentialOptions();
 
 
-                    if (!string.IsNullOrEmpty(this.VaultProperties.ApplicationId)) // they have selected a managed identity and provided a client ID, so it is a user assigned identity
+                    if (!string.IsNullOrEmpty(this.VaultProperties.ClientId)) // they have selected a managed identity and provided a client ID, so it is a user assigned identity
                     {
-                        credentialOptions.ManagedIdentityClientId = VaultProperties.ApplicationId;
+                        credentialOptions.ManagedIdentityClientId = VaultProperties.ClientId;
                     }
                     credential = new DefaultAzureCredential(credentialOptions);
                 }
                 else
                 {
-                    credential = new ClientSecretCredential(VaultProperties.TenantId, VaultProperties.ApplicationId, VaultProperties.ClientSecret);
+                    credential = new ClientSecretCredential(VaultProperties.TenantId, VaultProperties.ClientId, VaultProperties.ClientSecret);
                 }
 
                 _mgmtClient = new ArmClient(credential);
@@ -230,28 +230,28 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
         //    var vaults = KvManagementClient.Vaults;
 
-            var permissions = new Permissions
-            {
-                Certificates = new List<string>() {
-                    CertificatePermissions.All
-                }
-            };
-            var accessPolicyEntry = new AccessPolicyEntry(new Guid(VaultProperties.TenantId), VaultProperties.ObjectId, permissions);
-            var accessPolicyProperties = new VaultAccessPolicyProperties(new[] { accessPolicyEntry });
-            var accessPolicyParameters = new VaultAccessPolicyParameters(accessPolicyProperties);
-            try
-            {
-                await vaults.UpdateAccessPolicyAsync(VaultProperties.ResourceGroupName, VaultProperties.VaultName, AccessPolicyUpdateKind.Replace, accessPolicyParameters);
-                //force refresh of clients to get a new access token to refresh authority.
-                _mgmtClient = null;
-                _certClient = null;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError("Unable to set access policy on Vault", ex);
-                throw;
-            }
-        }
+        //    var permissions = new Permissions
+        //    {
+        //        Certificates = new List<string>() {
+        //            CertificatePermissions.All
+        //        }
+        //    };
+        //    var accessPolicyEntry = new AccessPolicyEntry(new Guid(VaultProperties.TenantId), VaultProperties.ObjectId, permissions);
+        //    var accessPolicyProperties = new VaultAccessPolicyProperties(new[] { accessPolicyEntry });
+        //    var accessPolicyParameters = new VaultAccessPolicyParameters(accessPolicyProperties);
+        //    try
+        //    {
+        //        await vaults.UpdateAccessPolicyAsync(VaultProperties.ResourceGroupName, VaultProperties.VaultName, AccessPolicyUpdateKind.Replace, accessPolicyParameters);
+        //        //force refresh of clients to get a new access token to refresh authority.
+        //        _mgmtClient = null;
+        //        _certClient = null;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        logger.LogError("Unable to set access policy on Vault", ex);
+        //        throw;
+        //    }
+        //}
     }
 }
 

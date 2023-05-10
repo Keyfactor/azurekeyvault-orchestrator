@@ -31,7 +31,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 VaultProperties.SubscriptionId = config.ClientMachine;
 
             VaultProperties.TenantId = config.ServerUsername.Split()[0]; //username should contain "<tenantId guid> <app id guid> <object Id>"            
-            VaultProperties.ApplicationId = config.ServerUsername.Split()[1];
+            VaultProperties.ClientId = config.ServerUsername.Split()[1];
             //VaultProperties.ObjectId = config.ServerUsername.Split()[2];
             VaultProperties.ClientSecret = config.ServerPassword;
 
