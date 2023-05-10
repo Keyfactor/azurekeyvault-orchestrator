@@ -80,7 +80,17 @@ To provision access to the Keyvault instance, we will:
 
 1) [Store the server credentials in Keyfactor](#store-the-server-credentials-in-keyfactor)
 
-#### Create a Service Principal
+
+### Authentication options
+
+The Azure KeyVault orchestrator plugin supports several authentication options:
+ - [Service Principal](#authentication-via-service-principal)
+ - [User Assigned Managed Identities](#authentication-via-user-assigned-managed-identity)
+ - [System Assigned Managed Identities](#authentication-via-system-assigned-managed-identity)
+
+ Steps for setting up each option are detailed below.
+
+#### Authentication via Service Principal
 
 For the Orchestrator to be able to interact with the instance of Azure Keyvault, we will need to create an entity in Azure that will encapsulate the permissions we would like to grant it.  In Azure, these intermediate entities are referred to as app registrations and they provision authority for external application access.
 To learn more about application and service principals, refer to [this article](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal).
@@ -218,6 +228,20 @@ Now we have our App registration created in Azure, and we have the following val
 - _ClientSecret_
 
 We will store these values securely in Keyfactor in subsequent steps.
+
+#### Authentication via User Assigned Managed Identity
+
+Authentication has been somewhat simplified with the introduction of Azure Managed Identities.  If the orchestrator is running on an Azure Virtual Machine, Managed identities allow an Azure administrator to 
+assign a managed identity to the virtual machine that can then be used by this orchestrator extension for authentication without the need to issue or manage client secrets.
+
+The two types of managed identities available in Azure are _System_ assigned, and _User_ assigned identities.
+- System assigned managed identities are bound to the specific resource and not reassignable.  They are bound to the resource and share the same lifecycle.  
+- User assigned managed identities exist as a standalone entity, independent of a resource, and can therefore be assigned to multiple Azure resources.
+
+
+#### Authentication via System Assigned Managed Identity
+
+In order to use a _System_ assigned managed identity, the setup steps are the same as for the user assigned managed identity, except that the ApplicationId can be left blank.
 
 ### Create the Store Type in Keyfactor
 
