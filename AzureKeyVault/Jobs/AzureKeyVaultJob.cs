@@ -28,19 +28,23 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         {
             VaultProperties = new AkvProperties();
             if (config.GetType().GetProperty("ClientMachine") != null)
-                VaultProperties.SubscriptionId = config.ClientMachine;
+                VaultProperties.TenantId = config.ClientMachine;
 
-            VaultProperties.TenantId = config.ServerUsername.Split()[0]; //username should contain "<tenantId guid> <app id guid> <object Id>"            
-            VaultProperties.ClientId = config.ServerUsername.Split()[1];
-            //VaultProperties.ObjectId = config.ServerUsername.Split()[2];
-            VaultProperties.ClientSecret = config.ServerPassword;
+            VaultProperties.ClientId = config.ServerUsername ?? null; // can be omitted for system assigned managed identities, required for user assigned or service principal auth
+
+            VaultProperties.ClientSecret = config.ServerPassword ?? null; // can be omitted for managed identities, required for service principal auth
 
             if (config.GetType().GetProperty("CertificateStoreDetails") != null)
             {
                 VaultProperties.StorePath = config.CertificateStoreDetails?.StorePath;
                 dynamic properties = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());
+                VaultProperties.TenantId = properties.TenantId ? properties.TenantId : VaultProperties.TenantId;
+                VaultProperties.TenantId = VaultProperties.TenantId != null ? VaultProperties.TenantId : properties.dirs;
                 VaultProperties.ResourceGroupName = properties.ResourceGroupName;
                 VaultProperties.VaultName = properties.VaultName;
+                VaultProperties.PremiumSKU = "premium".Equals(properties.SkuType, System.StringComparison.OrdinalIgnoreCase);
+                VaultProperties.VaultRegion = properties.VaultRegion ?? "eastus";
+                VaultProperties.VaultRegion = VaultProperties.VaultRegion.ToLower();
             }
             AzClient ??= new AzureClient(VaultProperties);
         }        

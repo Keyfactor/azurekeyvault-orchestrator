@@ -15,7 +15,9 @@
         {
             get
             {
-                return string.IsNullOrEmpty(ClientSecret); //if they don't provide a client secret, assume they are using Azure Managed Identities
+                return string.IsNullOrEmpty(ClientSecret) || ClientSecret.ToLowerInvariant() == "managed"; 
+                // if they don't provide a client secret, assume they are using Azure Managed Identities
+                // if they provide a client id, but "managed" for the secret, they are using a user assigned managed identity.
             }
         }
 

@@ -28,7 +28,6 @@ using Azure.Security.KeyVault.Certificates;
 using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
-using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Extensions.Logging;
 
 namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
@@ -37,8 +36,6 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
     {
         internal protected virtual AkvProperties VaultProperties { get; set; }
         ILogger logger { get; set; }
-
-        bool UseManagedIdentity { get; set; }
 
         private protected virtual CertificateClient CertClient
         {
@@ -186,13 +183,6 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             }
             catch (Exception ex)
             {
-                //if (ex.Message.Contains("does not have certificates list permission"))
-                //{
-                //    await SetManagementPermissionsForService();
-                //    inventory = CertClient.GetPropertiesOfCertificates();
-                //}
-                //else throw;
-
                 logger.LogError("Error performing inventory", ex);
                 throw;
             }
@@ -214,44 +204,26 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
         public virtual async Task<List<string>> GetVaults()
         {
-            SubscriptionResource subscription = await KvManagementClient.GetDefaultSubscriptionAsync();
-            ResourceGroupCollection resourceGroups = subscription.GetResourceGroups();
-            ResourceGroupResource resourceGroup = await resourceGroups.GetAsync(this.VaultProperties.ResourceGroupName);
+            try
+            {
+                SubscriptionResource subscription = await KvManagementClient.GetDefaultSubscriptionAsync();
+                ResourceGroupCollection resourceGroups = subscription.GetResourceGroups();
+                //ResourceGroupResource resourceGroup = await resourceGroups.GetAsync(this.VaultProperties.ResourceGroupName);
+                var vaultNames = new List<string>();
 
-            var vaults = resourceGroup.GetKeyVaults().ToList();
-            //var resources = await vaults.ToList();.ListAsync();
-            return vaults.Select(v => v.Id.ToString()).ToList();
+                resourceGroups.ToList().ForEach(rg =>
+                {
+                    var rgVaults = rg.GetKeyVaults().ToList();
+                    vaultNames.AddRange(rgVaults.Select(v => v.Id.ToString()));
+
+                });
+                return vaultNames;
+            }
+            catch (Exception ex) {
+                logger.LogError("Error getting vaults.", ex);
+                throw;
+            }
         }
-
-
-        //private async Task SetManagementPermissionsForService()
-        //{
-        //    KeyVaultAccessControlClient client = new KeyVaultAccessControlClient(new Uri(VaultProperties.VaultURL), new ClientSecretCredential(VaultProperties.TenantId, VaultProperties.ApplicationId, VaultProperties.ClientSecret));
-
-        //    var vaults = KvManagementClient.Vaults;
-
-        //    var permissions = new Permissions
-        //    {
-        //        Certificates = new List<string>() {
-        //            CertificatePermissions.All
-        //        }
-        //    };
-        //    var accessPolicyEntry = new AccessPolicyEntry(new Guid(VaultProperties.TenantId), VaultProperties.ObjectId, permissions);
-        //    var accessPolicyProperties = new VaultAccessPolicyProperties(new[] { accessPolicyEntry });
-        //    var accessPolicyParameters = new VaultAccessPolicyParameters(accessPolicyProperties);
-        //    try
-        //    {
-        //        await vaults.UpdateAccessPolicyAsync(VaultProperties.ResourceGroupName, VaultProperties.VaultName, AccessPolicyUpdateKind.Replace, accessPolicyParameters);
-        //        //force refresh of clients to get a new access token to refresh authority.
-        //        _mgmtClient = null;
-        //        _certClient = null;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        logger.LogError("Unable to set access policy on Vault", ex);
-        //        throw;
-        //    }
-        //}
     }
 }
 
