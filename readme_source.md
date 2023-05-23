@@ -69,16 +69,6 @@ Note: Any Azure Keyvault certificate stores removed can be re-added once the Uni
 
 ### Configure the Azure Keyvault for client access
 
-To provision access to the Keyvault instance, we will:
-
-1) [Create a Service Principal in Azure Active Directory](#create-a-service-principal)
-
-1) [Assign it sufficient permissions for Keyvault operations](#assign-permissions)
-
-1) [Generate an Access Token for Authenticating](#generate-an-access-token)
-
-1) [Store the server credentials in Keyfactor](#store-the-server-credentials-in-keyfactor)
-
 ### Authentication options
 
 The Azure KeyVault orchestrator plugin supports several authentication options:
@@ -94,8 +84,20 @@ The Azure KeyVault orchestrator plugin supports several authentication options:
 For the Orchestrator to be able to interact with the instance of Azure Keyvault, we will need to create an entity in Azure that will encapsulate the permissions we would like to grant it.  In Azure, these intermediate entities are referred to as app registrations and they provision authority for external application access.
 To learn more about application and service principals, refer to [this article](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal).
 
+To provision access to the Keyvault instance using a service principal identity, we will:
+
+1) [Create a Service Principal in Azure Active Directory](#create-a-service-principal)
+
+1) [Assign it sufficient permissions for Keyvault operations](#assign-permissions)
+
+1) [Generate an Access Token for Authenticating](#generate-an-access-token)
+
+1) [Store the server credentials in Keyfactor](#store-the-server-credentials-in-keyfactor)
+
 **In order to complete these steps, you must have the _Owner_ role for the Azure subscription, at least temporarily.**
 This is required to create an App Registration in Azure Active Directory.
+
+#### Create A Service Principal
 
 1) Log into [your azure portal](https://portal.azure.com)
 
@@ -243,7 +245,7 @@ Once the User Assigned managed identity has been created, you will need only to 
 
 #### Authentication via System Assigned Managed Identity
 
-In order to use a _System_ assigned managed identity, there is no need to enter the 
+In order to use a _System_ assigned managed identity, there is no need to enter the
 
 ### Create the Store Type in Keyfactor
 
@@ -265,7 +267,8 @@ Now we can navigate to the Keyfactor platform and create the store type for Azur
 
      ![Cert Store Types Menu](/Images/cert-store-type.png)
 
-:note: if you are using a system assigned managed identity for authentication, you should leave this unchecked.
+> :warning:
+> if you are using a system assigned managed identity for authentication, you should leave this unchecked.
 
 1) Navigate to the _Advanced_ tab and set the following values:
      - Store Path Type: **Freeform**
@@ -341,7 +344,7 @@ Now that we have the extension registered on the Orchestrator, we can navigate b
 
 #### Store the Server Credentials in Keyfactor
 
-> :note:
+> :warning:
 > The steps for configuring discovery are different for each authentication type.
 
 - For System Assigned managed identity authentication this step can be skipped.  No server credentials are necessary.  The store type should have been set up without "needs server" checked, so the form field should not be present.  
