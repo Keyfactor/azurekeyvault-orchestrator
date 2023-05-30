@@ -18,15 +18,16 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Azure;
+using Azure.Core;
 using Azure.Identity;
-using Azure.Security.KeyVault.Administration;
+using Azure.ResourceManager;
+using Azure.ResourceManager.KeyVault;
+using Azure.ResourceManager.KeyVault.Models;
+using Azure.ResourceManager.Resources;
 using Azure.Security.KeyVault.Certificates;
 using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
-using Microsoft.Azure.Management.KeyVault;
-using Microsoft.Azure.Management.KeyVault.Models;
-using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Extensions.Logging;
 
 namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
@@ -44,13 +45,34 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 {
                     return _certClient;
                 }
-                _certClient = new CertificateClient(new Uri(VaultProperties.VaultURL), credential: new ClientSecretCredential(VaultProperties.TenantId, VaultProperties.ApplicationId, VaultProperties.ClientSecret));
+
+                TokenCredential cred;
+
+                // check to see if they have selected to use an Azure Managed Identity for authentication.
+
+                if (this.VaultProperties.UseAzureManagedIdentity)
+                {
+                    var credentialOptions = new DefaultAzureCredentialOptions();
+
+                    if (!string.IsNullOrEmpty(this.VaultProperties.ClientId)) // are they using a user assigned identity instead of a system assigned one (default)?
+                    {
+                        credentialOptions.ManagedIdentityClientId = VaultProperties.ClientId;
+                    }
+                    cred = new DefaultAzureCredential(credentialOptions);
+                }
+                else
+                {
+                    cred = new ClientSecretCredential(VaultProperties.TenantId, VaultProperties.ClientId, VaultProperties.ClientSecret);
+                }
+
+                _certClient = new CertificateClient(new Uri(VaultProperties.VaultURL), credential: cred);
+
                 return _certClient;
             }
         }
         protected CertificateClient _certClient { get; set; }
 
-        internal protected virtual KeyVaultManagementClient KvManagementClient
+        internal protected virtual ArmClient KvManagementClient
         {
             get
             {
@@ -58,18 +80,40 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 {
                     return _mgmtClient;
                 }
-                var subId = VaultProperties.SubscriptionId ?? VaultProperties.StorePath.Split("/")[2];
-                var creds = SdkContext.AzureCredentialsFactory.FromServicePrincipal(VaultProperties.ApplicationId, VaultProperties.ClientSecret, VaultProperties.TenantId, AzureEnvironment.AzureGlobalCloud);
-                _mgmtClient = new KeyVaultManagementClient(creds) { SubscriptionId = subId };
+
+                // var subId = VaultProperties.SubscriptionId ?? VaultProperties.StorePath.Split("/")[2];
+                // var creds = SdkContext.AzureCredentialsFactory.FromServicePrincipal(VaultProperties.ApplicationId, VaultProperties.ClientSecret, VaultProperties.TenantId, AzureEnvironment.AzureGlobalCloud);
+                //NOTE: creating a certificate store from the platform is currently only supported for Azure GlobalCloud customers.
+
+                TokenCredential credential;
+
+                if (this.VaultProperties.UseAzureManagedIdentity)
+                {
+                    var credentialOptions = new DefaultAzureCredentialOptions();
+
+
+                    if (!string.IsNullOrEmpty(this.VaultProperties.ClientId)) // they have selected a managed identity and provided a client ID, so it is a user assigned identity
+                    {
+                        credentialOptions.ManagedIdentityClientId = VaultProperties.ClientId;
+                    }
+                    credential = new DefaultAzureCredential(credentialOptions);
+                }
+                else
+                {
+                    credential = new ClientSecretCredential(VaultProperties.TenantId, VaultProperties.ClientId, VaultProperties.ClientSecret);
+                }
+
+                _mgmtClient = new ArmClient(credential);
                 return _mgmtClient;
             }
         }
-        protected virtual KeyVaultManagementClient _mgmtClient { get; set; }
+        protected virtual ArmClient _mgmtClient { get; set; }
 
         public AzureClient() { }
         public AzureClient(AkvProperties props)
         {
             VaultProperties = props;
+
             logger = LogHandler.GetClassLogger<AzureClient>();
         }
 
@@ -78,51 +122,51 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             return await CertClient.StartDeleteCertificateAsync(certName);
         }
 
-        public virtual async Task<Vault> CreateVault()
+        public virtual async Task<KeyVaultResource> CreateVault()
         {
-            var vaults = KvManagementClient.Vaults;
-
-            var newVaultProps = new VaultProperties(new Guid(VaultProperties.TenantId), new Sku(SkuName.Standard))
-            {
-                AccessPolicies = new[] {new AccessPolicyEntry()
-                    {
-                        ApplicationId = new Guid(VaultProperties.ApplicationId),
-                        ObjectId = VaultProperties.ObjectId,
-                        Permissions = new Permissions()
-                        {
-                            Certificates = new List<string>
-                            {
-                               CertificatePermissions.All
-                            },
-                        },
-                        TenantId = new Guid(VaultProperties.TenantId)
-                    } }
-            };
-            var vaultParameters = new VaultCreateOrUpdateParameters("eastus", newVaultProps);
-            Vault newVault;
-
             try
             {
                 logger.LogInformation("Begin create vault...");
 
-                newVault = await vaults.BeginCreateOrUpdateAsync(VaultProperties.ResourceGroupName, VaultProperties.VaultName, vaultParameters); //this takes a bit of time to run
+                SubscriptionResource subscription = await KvManagementClient.GetDefaultSubscriptionAsync();
+                ResourceGroupCollection resourceGroups = subscription.GetResourceGroups();
+                ResourceGroupResource resourceGroup = await resourceGroups.GetAsync(this.VaultProperties.ResourceGroupName);
+
+                var vaults = resourceGroup.GetKeyVaults();
+
+
+                //TODO: Create store type parameter for Azure Location.
+
+                var loc = new AzureLocation(VaultProperties.VaultRegion); // pass property instead of hardcoded value after testing
+
+                var skuType = VaultProperties.PremiumSKU ? KeyVaultSkuName.Premium : KeyVaultSkuName.Standard;
+
+                var content = new KeyVaultCreateOrUpdateContent(loc, new KeyVaultProperties(new Guid(VaultProperties.TenantId), new KeyVaultSku(KeyVaultSkuFamily.A, skuType)));
+
+                var newVault = await vaults.CreateOrUpdateAsync(WaitUntil.Completed, VaultProperties.VaultName, content); //this takes a bit of time to run
+
+                return newVault.Value;
             }
             catch (Exception ex)
             {
                 logger.LogError("Error when trying to create Azure Keyvault", ex);
                 throw;
             }
-            logger.LogInformation(@"Created vault {0}", newVault.Name);
 
-            return newVault;
         }
 
         public virtual async Task<KeyVaultCertificateWithPolicy> ImportCertificateAsync(string certName, string contents, string pfxPassword)
         {
             try
             {
+                if (CertClient.GetDeletedCertificates().FirstOrDefault(i => i.Name == certName) != null)
+                {
+                    RecoverDeletedCertificateOperation recovery = await CertClient.StartRecoverDeletedCertificateAsync(certName);
+                    recovery.WaitForCompletion();
+                }
+
                 var bytes = Convert.FromBase64String(contents);
-                var x509 = new X509Certificate2(bytes, pfxPassword, X509KeyStorageFlags.Exportable);                
+                var x509 = new X509Certificate2(bytes, pfxPassword, X509KeyStorageFlags.Exportable);
                 var certWithKey = x509.Export(X509ContentType.Pkcs12);
                 var cert = await CertClient.ImportCertificateAsync(new ImportCertificateOptions(certName, certWithKey));
                 return cert;
@@ -145,12 +189,8 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             }
             catch (Exception ex)
             {
-                if (ex.Message.Contains("does not have certificates list permission"))
-                {
-                    await SetManagementPermissionsForService();
-                    inventory = CertClient.GetPropertiesOfCertificates();
-                }
-                else throw;
+                logger.LogError("Error performing inventory", ex);
+                throw;
             }
 
             foreach (var certificate in inventory)
@@ -170,36 +210,24 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
         public virtual async Task<List<string>> GetVaults()
         {
-            var resources = await KvManagementClient.Vaults.ListAsync();
-            return resources.Select(v => v.Id).ToList();
-        }
-
-
-        private async Task SetManagementPermissionsForService()
-        {
-            KeyVaultAccessControlClient client = new KeyVaultAccessControlClient(new Uri(VaultProperties.VaultURL), new ClientSecretCredential(VaultProperties.TenantId, VaultProperties.ApplicationId, VaultProperties.ClientSecret));
-
-            var vaults = KvManagementClient.Vaults;
-
-            var permissions = new Permissions
-            {
-                Certificates = new List<string>() {
-                    CertificatePermissions.All
-                }
-            };
-            var accessPolicyEntry = new AccessPolicyEntry(new Guid(VaultProperties.TenantId), VaultProperties.ObjectId, permissions);
-            var accessPolicyProperties = new VaultAccessPolicyProperties(new[] { accessPolicyEntry });
-            var accessPolicyParameters = new VaultAccessPolicyParameters(accessPolicyProperties);
             try
             {
-                await vaults.UpdateAccessPolicyAsync(VaultProperties.ResourceGroupName, VaultProperties.VaultName, AccessPolicyUpdateKind.Replace, accessPolicyParameters);
-                //force refresh of clients to get a new access token to refresh authority.
-                _mgmtClient = null;
-                _certClient = null;
+                SubscriptionResource subscription = await KvManagementClient.GetDefaultSubscriptionAsync();
+                ResourceGroupCollection resourceGroups = subscription.GetResourceGroups();
+                //ResourceGroupResource resourceGroup = await resourceGroups.GetAsync(this.VaultProperties.ResourceGroupName);
+                var vaultNames = new List<string>();
+
+                resourceGroups.ToList().ForEach(rg =>
+                {
+                    var rgVaults = rg.GetKeyVaults().ToList();
+                    vaultNames.AddRange(rgVaults.Select(v => v.Id.ToString()));
+
+                });
+                return vaultNames;
             }
             catch (Exception ex)
             {
-                logger.LogError("Unable to set access policy on Vault", ex);
+                logger.LogError("Error getting vaults.", ex);
                 throw;
             }
         }

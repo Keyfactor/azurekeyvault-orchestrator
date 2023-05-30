@@ -16,10 +16,10 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Azure.ResourceManager.KeyVault;
 using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
-using Microsoft.Azure.Management.KeyVault.Models;
 using Microsoft.Extensions.Logging;
 
 namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
@@ -64,7 +64,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
         protected async Task<JobResult> PerformCreateVault(long jobHistoryId)
         {
-            Vault createVaultResult;
+            KeyVaultResource createVaultResult;
             var jobResult = new JobResult() { JobHistoryId = jobHistoryId, Result = OrchestratorJobStatusJobResult.Failure };
             try
             {
@@ -76,7 +76,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 return jobResult;
             }
 
-            if (createVaultResult.Id != string.Empty && createVaultResult.Id.Contains(VaultProperties.VaultName))
+            if (createVaultResult.Id != string.Empty && createVaultResult.Id.ToString().Contains(VaultProperties.VaultName))
             {
                 jobResult.Result = OrchestratorJobStatusJobResult.Success;
             }
