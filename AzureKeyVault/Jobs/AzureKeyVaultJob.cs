@@ -38,7 +38,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             {
                 VaultProperties.StorePath = config.CertificateStoreDetails?.StorePath;
                 dynamic properties = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());
-                VaultProperties.TenantId = properties.TenantId ? properties.TenantId : VaultProperties.TenantId;
+                VaultProperties.TenantId = properties.TenantId != null ? properties.TenantId : VaultProperties.TenantId;
                 VaultProperties.TenantId = VaultProperties.TenantId != null ? VaultProperties.TenantId : properties.dirs;
                 VaultProperties.ResourceGroupName = properties.ResourceGroupName;
                 VaultProperties.VaultName = properties.VaultName;
