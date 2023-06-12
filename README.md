@@ -4,6 +4,7 @@ This integration allows the orchestrator to act as a client with access to an in
 
 #### Integration status: Production - Ready for use in production environments.
 
+
 ## About the Keyfactor Universal Orchestrator Extension
 
 This repository contains a Universal Orchestrator Extension which is a plugin to the Keyfactor Universal Orchestrator. Within the Keyfactor Platform, Orchestrators are used to manage “certificate stores” &mdash; collections of certificates and roots of trust that are found within and used by various applications.
@@ -11,6 +12,7 @@ This repository contains a Universal Orchestrator Extension which is a plugin to
 The Universal Orchestrator is part of the Keyfactor software distribution and is available via the Keyfactor customer portal. For general instructions on installing Extensions, see the “Keyfactor Command Orchestrator Installation and Configuration Guide” section of the Keyfactor documentation. For configuration details of this specific Extension see below in this readme.
 
 The Universal Orchestrator is the successor to the Windows Orchestrator. This Orchestrator Extension plugin only works with the Universal Orchestrator and does not work with the Windows Orchestrator.
+
 
 
 
@@ -26,6 +28,10 @@ Azure Key Vault Orchestrator is supported by Keyfactor for Keyfactor customers. 
 
 
 
+
+## Keyfactor Version Supported
+
+The minimum version of the Keyfactor Universal Orchestrator Framework needed to run this version of the extension is 10.1
 
 ## Platform Specific Notes
 
@@ -400,7 +406,7 @@ Now that we have the extension registered on the Orchestrator, we can navigate b
 - For User assigned managed identity:
   - `Client Machine` should be set to the GUID of the tenant ID of the instance of Azure Keyvault.
   - `User` should be set to the managed user ID.
-  - `Password` should be set to the value `managed`.
+  - `Password` should be set to the value **"managed"**.
 
 - For Service principal authentication:
   - `Client Machine` should be set to the GUID of the tenant ID of the instance of Azure Keyvault.
@@ -469,6 +475,8 @@ To add one of these results to Keyfactor as a certificate store:
 
 1) Select a container to store the certificates for this cert store (optional)
 
+1) Select any value for SKU Type and Vault Region.  These values are not used for existing KeyVaults.
+
 1) Click "SAVE".
 
 ### Add an individual Azure Keyvault certificate store
@@ -494,6 +502,8 @@ The steps to do this are:
 - **Store Path**: This is the Azure Resource Identifier for the Keyvault.  Copied from Azure, or created a new Keyvault (see below).  
 - **VaultName**: This is the name of the new or existing Azure Keyvault.
 - **ResourceGroupName**: The name of the Azure Resource Group that contains the Keyvault.
+- **SKU Type**: This field is only used when creating new vaults in Azure.  Select any value, or leave blank.
+- **Vault Region**: This field is also only used when creating new vaults.  Select any value.
 
 If the vault already exists in azure:
 The store path can be found by navigating to the existing Keyvault resource in Azure and clicking "Properties" in the left menu.
