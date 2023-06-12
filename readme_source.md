@@ -352,7 +352,7 @@ Now that we have the extension registered on the Orchestrator, we can navigate b
 - For User assigned managed identity:
   - `Client Machine` should be set to the GUID of the tenant ID of the instance of Azure Keyvault.
   - `User` should be set to the managed user ID.
-  - `Password` should be set to the value `managed`.
+  - `Password` should be set to the value **"managed"**.
 
 - For Service principal authentication:
   - `Client Machine` should be set to the GUID of the tenant ID of the instance of Azure Keyvault.
@@ -421,6 +421,8 @@ To add one of these results to Keyfactor as a certificate store:
 
 1) Select a container to store the certificates for this cert store (optional)
 
+1) Select any value for SKU Type and Vault Region.  These values are not used for existing KeyVaults.
+
 1) Click "SAVE".
 
 ### Add an individual Azure Keyvault certificate store
@@ -446,6 +448,8 @@ The steps to do this are:
 - **Store Path**: This is the Azure Resource Identifier for the Keyvault.  Copied from Azure, or created a new Keyvault (see below).  
 - **VaultName**: This is the name of the new or existing Azure Keyvault.
 - **ResourceGroupName**: The name of the Azure Resource Group that contains the Keyvault.
+- **SKU Type**: This field is only used when creating new vaults in Azure.  Select any value, or leave blank.
+- **Vault Region**: This field is also only used when creating new vaults.  Select any value.
 
 If the vault already exists in azure:
 The store path can be found by navigating to the existing Keyvault resource in Azure and clicking "Properties" in the left menu.

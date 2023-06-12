@@ -66,7 +66,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 }
 
                 _certClient = new CertificateClient(new Uri(VaultProperties.VaultURL), credential: cred);
-                
+
                 return _certClient;
             }
         }
@@ -81,8 +81,8 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                     return _mgmtClient;
                 }
 
-               // var subId = VaultProperties.SubscriptionId ?? VaultProperties.StorePath.Split("/")[2];
-               // var creds = SdkContext.AzureCredentialsFactory.FromServicePrincipal(VaultProperties.ApplicationId, VaultProperties.ClientSecret, VaultProperties.TenantId, AzureEnvironment.AzureGlobalCloud);
+                // var subId = VaultProperties.SubscriptionId ?? VaultProperties.StorePath.Split("/")[2];
+                // var creds = SdkContext.AzureCredentialsFactory.FromServicePrincipal(VaultProperties.ApplicationId, VaultProperties.ClientSecret, VaultProperties.TenantId, AzureEnvironment.AzureGlobalCloud);
                 //NOTE: creating a certificate store from the platform is currently only supported for Azure GlobalCloud customers.
 
                 TokenCredential credential;
@@ -104,7 +104,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 }
 
                 _mgmtClient = new ArmClient(credential);
-                return _mgmtClient;                
+                return _mgmtClient;
             }
         }
         protected virtual ArmClient _mgmtClient { get; set; }
@@ -127,7 +127,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             try
             {
                 logger.LogInformation("Begin create vault...");
-                
+
                 SubscriptionResource subscription = await KvManagementClient.GetDefaultSubscriptionAsync();
                 ResourceGroupCollection resourceGroups = subscription.GetResourceGroups();
                 ResourceGroupResource resourceGroup = await resourceGroups.GetAsync(this.VaultProperties.ResourceGroupName);
@@ -159,8 +159,14 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         {
             try
             {
+                if (CertClient.GetDeletedCertificates().FirstOrDefault(i => i.Name == certName) != null)
+                {
+                    RecoverDeletedCertificateOperation recovery = await CertClient.StartRecoverDeletedCertificateAsync(certName);
+                    recovery.WaitForCompletion();
+                }
+
                 var bytes = Convert.FromBase64String(contents);
-                var x509 = new X509Certificate2(bytes, pfxPassword, X509KeyStorageFlags.Exportable);                
+                var x509 = new X509Certificate2(bytes, pfxPassword, X509KeyStorageFlags.Exportable);
                 var certWithKey = x509.Export(X509ContentType.Pkcs12);
                 var cert = await CertClient.ImportCertificateAsync(new ImportCertificateOptions(certName, certWithKey));
                 return cert;
@@ -219,7 +225,8 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 });
                 return vaultNames;
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 logger.LogError("Error getting vaults.", ex);
                 throw;
             }
