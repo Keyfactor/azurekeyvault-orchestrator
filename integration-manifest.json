@@ -99,7 +99,9 @@
           "ServerRequired": true,
           "PowerShell": false,
           "BlueprintAllowed": false,
-          "CustomAliasAllowed": "Optional"
+          "CustomAliasAllowed": "Optional",
+          "ServerRegistration": 7,
+          "InventoryEndpoint": "/AnyInventory/Update"
         }
       }
     }
