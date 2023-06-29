@@ -34,8 +34,6 @@
           "Name": "Azure Keyvault",
           "ShortName": "AKV",
           "Capability": "AKV",
-          "StoreType": 1102,
-          "ImportType": 1102,
           "LocalStore": false,
           "SupportedOperations": {
             "Add": true,
@@ -46,7 +44,6 @@
           },
           "Properties": [
             {
-              "StoreTypeId": 1102,
               "Name": "VaultName",
               "DisplayName": "VaultName",
               "Type": "String",
@@ -55,7 +52,6 @@
               "Required": true
             },
             {
-              "StoreTypeId": 1102,
               "Name": "ResourceGroupName",
               "DisplayName": "ResourceGroupName",
               "Type": "String",
@@ -64,7 +60,6 @@
               "Required": true
             },
             {
-              "StoreTypeId": 1102,
               "Name": "SkuType",
               "DisplayName": "SKU Type",
               "Type": "MultipleChoice",
@@ -73,7 +68,6 @@
               "Required": false
             },
             {
-              "StoreTypeId": 1102,
               "Name": "VaultRegion",
               "DisplayName": "Vault Region",
               "Type": "MultipleChoice",
@@ -82,7 +76,7 @@
               "Required": false
             }
           ],
-          "EntryParameters": [],
+          "EntryParameters": null,
           "PasswordOptions": {
             "EntrySupported": false,
             "StoreRequired": false,
@@ -95,13 +89,7 @@
           "ServerRequired": true,
           "PowerShell": false,
           "BlueprintAllowed": false,
-          "CustomAliasAllowed": "Optional",
-          "ServerRegistration": 9,
-          "InventoryEndpoint": "/AnyInventory/Update",
-          "InventoryJobType": "0e9f29c0-2932-490f-afc3-f5f0a805b712",
-          "ManagementJobType": "2d43fc56-ec5e-4ced-85c5-365439415014",
-          "DiscoveryJobType": "0746af32-0c66-4e7c-a47c-199c6f89a28c",
-          "EnrollmentJobType": ""
+          "CustomAliasAllowed": "Optional"
         }
 
       ]
