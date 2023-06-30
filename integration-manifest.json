@@ -29,33 +29,34 @@
         "supportsInventory": true,
         "platformSupport": "Unused"
       },
-      "store_types": {
-        "AKV": {
-          "Name": "Azure KeyVault",
+      "store_types": [
+        {
+          "Name": "Azure Keyvault",
           "ShortName": "AKV",
           "Capability": "AKV",
           "LocalStore": false,
           "SupportedOperations": {
             "Add": true,
-            "Create": false,
-            "Discovery": false,
+            "Create": true,
+            "Discovery": true,
+            "Enrollment": false,
             "Remove": true
           },
           "Properties": [
             {
               "Name": "VaultName",
-              "DisplayName": "Vault Name",
+              "DisplayName": "VaultName",
               "Type": "String",
               "DependsOn": "",
-              "DefaultValue": "false",
+              "DefaultValue": null,
               "Required": true
             },
             {
               "Name": "ResourceGroupName",
-              "DisplayName": "Resource Group Name",
+              "DisplayName": "ResourceGroupName",
               "Type": "String",
               "DependsOn": "",
-              "DefaultValue": "",
+              "DefaultValue": null,
               "Required": true
             },
             {
@@ -64,7 +65,7 @@
               "Type": "MultipleChoice",
               "DependsOn": "",
               "DefaultValue": "standard,premium",
-              "Required": true
+              "Required": false
             },
             {
               "Name": "VaultRegion",
@@ -73,34 +74,25 @@
               "DependsOn": "",
               "DefaultValue": "eastus,eastus2,southcentralus,westus2,westus3,australiaeast,northeurope,swedencentral,uksouth,westeurope,centralus,southafricanorth,centralindia,eastasia,japaneast,koreacentral,canadacentral,francecentral,germanywestcentral,norwayeast,switzerlandnorth,uaenorth,brazilsouth,centraluseuap,eastus2euap,qatarcentral,centralusstage,eastusstage,eastus2stage,northcentralusstage,westusstage,asia,asiapacific,australia,brazil,canada,europe,france,germany,global,india,japan,korea,norway,singapore,southafrica,switzerland,uae,uk,unitedstates,unitedstatesuap,eastasiastage,southeastasiastage,brazilus,eastusstg,northcentralus,westus,jioindiawest,devfabric,westcentralus,southafricawest,australiacentral,australiacentral2,australiasoutheast,japanwest,jioindiacentral,koreasouth,southindia,westindia,canadaeast,francesouth,germanynorth,norwaywest,switzerlandwest,ukwest,uaecentral,brazilsoutheast",
               "Required": false
-            },
-            {
-              "Name": "TenantId",
-              "DisplayName": "Tenant Id",
-              "Type": "String",
-              "DependsOn": "",
-              "DefaultValue": null,
-              "Required": true
             }
           ],
+          "EntryParameters": null,
           "PasswordOptions": {
             "EntrySupported": false,
             "StoreRequired": false,
             "Style": "Default"
           },
+          "StorePathType": "",
+          "StorePathValue": "",
           "PrivateKeyAllowed": "Optional",
-          "JobProperties": [
-            "VaultName",
-            "ResourceGroupName",
-            "SkuType",
-            "VaultRegion",
-            "TenantId"
-          ],
+          "JobProperties": [],
           "ServerRequired": true,
           "PowerShell": false,
           "BlueprintAllowed": false,
           "CustomAliasAllowed": "Optional"
         }
+
+      ]
       }
     }
   }
