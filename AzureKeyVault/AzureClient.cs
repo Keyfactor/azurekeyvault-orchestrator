@@ -35,6 +35,22 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
     public class AzureClient
     {
         internal protected virtual AkvProperties VaultProperties { get; set; }
+
+        private Uri AzureCloudEndpoint {
+            get {
+                switch (VaultProperties.AzureCloud.ToLower()) {
+
+                    case "china":
+                        return AzureAuthorityHosts.AzureChina;                        
+                    case "germany":
+                        return AzureAuthorityHosts.AzureGermany;                        
+                    case "government":
+                        return AzureAuthorityHosts.AzureGovernment;
+                    default:
+                        return AzureAuthorityHosts.AzurePublicCloud;
+                }
+            }
+        }
         ILogger logger { get; set; }
 
         private protected virtual CertificateClient CertClient
@@ -52,7 +68,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
                 if (this.VaultProperties.UseAzureManagedIdentity)
                 {
-                    var credentialOptions = new DefaultAzureCredentialOptions();
+                    var credentialOptions = new DefaultAzureCredentialOptions { AuthorityHost = AzureCloudEndpoint };
 
                     if (!string.IsNullOrEmpty(this.VaultProperties.ClientId)) // are they using a user assigned identity instead of a system assigned one (default)?
                     {
@@ -89,7 +105,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
                 if (this.VaultProperties.UseAzureManagedIdentity)
                 {
-                    var credentialOptions = new DefaultAzureCredentialOptions();
+                    var credentialOptions = new DefaultAzureCredentialOptions { AuthorityHost = AzureCloudEndpoint };
 
 
                     if (!string.IsNullOrEmpty(this.VaultProperties.ClientId)) // they have selected a managed identity and provided a client ID, so it is a user assigned identity
@@ -210,17 +226,19 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
         public virtual async Task<List<string>> GetVaults()
         {
+            // discovery is currently only available for the Azure Public cloud.
+            // We need a way to pass the Azure Cloud parameter as part of a discovery job to support other cloud instances.
+
             try
             {
                 SubscriptionResource subscription = await KvManagementClient.GetDefaultSubscriptionAsync();
                 ResourceGroupCollection resourceGroups = subscription.GetResourceGroups();
-                //ResourceGroupResource resourceGroup = await resourceGroups.GetAsync(this.VaultProperties.ResourceGroupName);
                 var vaultNames = new List<string>();
 
-                resourceGroups.ToList().ForEach(rg =>
+                resourceGroups.ToList().ForEach(rg => // we go through all of the resource groups that the identity has access to
                 {
                     var rgVaults = rg.GetKeyVaults().ToList();
-                    vaultNames.AddRange(rgVaults.Select(v => v.Id.ToString()));
+                    vaultNames.AddRange(rgVaults.Select(v => subscription.Id + ":" + v.Data.Name));
 
                 });
                 return vaultNames;

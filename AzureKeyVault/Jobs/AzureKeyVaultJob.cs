@@ -13,6 +13,8 @@
 // limitations under the License.
 
 using Keyfactor.Orchestrators.Extensions;
+using Keyfactor.Orchestrators.Extensions.Interfaces;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
@@ -24,22 +26,27 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         internal protected virtual AzureClient AzClient { get; set; }
         internal protected virtual AkvProperties VaultProperties { get; set; }
 
+        internal protected IPAMSecretResolver PamSecretResolver { get; set; }
+        internal protected ILogger logger { get; set; }
+
         public void InitializeStore(dynamic config)
         {
             VaultProperties = new AkvProperties();
             if (config.GetType().GetProperty("ClientMachine") != null)
                 VaultProperties.TenantId = config.ClientMachine;
 
-            VaultProperties.ClientId = config.ServerUsername ?? null; // can be omitted for system assigned managed identities, required for user assigned or service principal auth
+            // ClientId can be omitted for system assigned managed identities, required for user assigned or service principal auth
+            VaultProperties.ClientId = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server UserName", config.ServerUsername);
 
-            VaultProperties.ClientSecret = config.ServerPassword ?? null; // can be omitted for managed identities, required for service principal auth
-
+            // ClientSecret can be omitted for managed identities, required for service principal auth
+            VaultProperties.ClientSecret = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server Password", config.ServerPassword); 
+            
             if (config.GetType().GetProperty("CertificateStoreDetails") != null)
             {
                 VaultProperties.StorePath = config.CertificateStoreDetails?.StorePath;
                 dynamic properties = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());
                 VaultProperties.TenantId = properties.TenantId != null ? properties.TenantId : VaultProperties.TenantId;
-                VaultProperties.TenantId = VaultProperties.TenantId != null ? VaultProperties.TenantId : properties.dirs;
+                VaultProperties.TenantId = VaultProperties.TenantId ?? properties.dirs;
                 VaultProperties.ResourceGroupName = properties.ResourceGroupName;
                 VaultProperties.VaultName = properties.VaultName;
                 VaultProperties.PremiumSKU = "premium".Equals(properties.SkuType, System.StringComparison.OrdinalIgnoreCase);

@@ -18,6 +18,7 @@ using System.Linq;
 using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
+using Keyfactor.Orchestrators.Extensions.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
@@ -25,7 +26,12 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
     [Job(JobTypes.INVENTORY)]
     public class Inventory : AzureKeyVaultJob<Inventory>, IInventoryJobExtension
     {
-        ILogger logger = LogHandler.GetClassLogger<Inventory>();
+        public Inventory(IPAMSecretResolver resolver)
+        {
+            PamSecretResolver = resolver;
+            logger = LogHandler.GetClassLogger<Inventory>();
+        }
+        
         public JobResult ProcessJob(InventoryJobConfiguration config, SubmitInventoryUpdate callBack)
         {
             logger.LogDebug($"Begin Inventory...");
