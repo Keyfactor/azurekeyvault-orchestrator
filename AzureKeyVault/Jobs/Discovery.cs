@@ -1,4 +1,4 @@
-﻿// Copyright 2022 Keyfactor
+﻿// Copyright 2023 Keyfactor
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,10 +34,12 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             var keyVaults = new List<string>();
 
             // Server credentials
-            AzClient = new AzureClient(VaultProperties);
+            //AzClient = new AzureClient(VaultProperties);
 
             try
             {
+                if (VaultProperties.TenantId == null) throw new MissingFieldException("Need to set Tenant Id value in directories to search field for discovery jobs that use a system managed identity.");
+
                 keyVaults = AzClient.GetVaults().Result;
             }
             catch (Exception ex)

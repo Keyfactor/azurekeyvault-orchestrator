@@ -4,13 +4,15 @@ This integration allows the orchestrator to act as a client with access to an in
 
 #### Integration status: Production - Ready for use in production environments.
 
-## About the Keyfactor Universal Orchestrator Capability
 
-This repository contains a Universal Orchestrator Capability which is a plugin to the Keyfactor Universal Orchestrator. Within the Keyfactor Platform, Orchestrators are used to manage “certificate stores” &mdash; collections of certificates and roots of trust that are found within and used by various applications.
+## About the Keyfactor Universal Orchestrator Extension
 
-The Universal Orchestrator is part of the Keyfactor software distribution and is available via the Keyfactor customer portal. For general instructions on installing Capabilities, see the “Keyfactor Command Orchestrator Installation and Configuration Guide” section of the Keyfactor documentation. For configuration details of this specific Capability, see below in this readme.
+This repository contains a Universal Orchestrator Extension which is a plugin to the Keyfactor Universal Orchestrator. Within the Keyfactor Platform, Orchestrators are used to manage “certificate stores” &mdash; collections of certificates and roots of trust that are found within and used by various applications.
 
-The Universal Orchestrator is the successor to the Windows Orchestrator. This Capability plugin only works with the Universal Orchestrator and does not work with the Windows Orchestrator.
+The Universal Orchestrator is part of the Keyfactor software distribution and is available via the Keyfactor customer portal. For general instructions on installing Extensions, see the “Keyfactor Command Orchestrator Installation and Configuration Guide” section of the Keyfactor documentation. For configuration details of this specific Extension see below in this readme.
+
+The Universal Orchestrator is the successor to the Windows Orchestrator. This Orchestrator Extension plugin only works with the Universal Orchestrator and does not work with the Windows Orchestrator.
+
 
 
 
@@ -19,7 +21,6 @@ The Universal Orchestrator is the successor to the Windows Orchestrator. This Ca
 Azure Key Vault Orchestrator is supported by Keyfactor for Keyfactor customers. If you have a support issue, please open a support ticket with your Keyfactor representative.
 
 ###### To report a problem or suggest a new feature, use the **[Issues](../../issues)** tab. If you want to contribute actual bug fixes or proposed enhancements, use the **[Pull requests](../../pulls)** tab.
-___
 
 
 
@@ -28,9 +29,11 @@ ___
 
 
 
-## Platform Specific Notes
+## Keyfactor Version Supported
 
-The minimum version of the Universal Orchestrator Framework needed to run this version of the extension is 
+The minimum version of the Keyfactor Universal Orchestrator Framework needed to run this version of the extension is 10.1
+
+## Platform Specific Notes
 
 The Keyfactor Universal Orchestrator may be installed on either Windows or Linux based platforms. The certificate operations supported by a capability may vary based what platform the capability is installed on. The table below indicates what capabilities are supported based on which platform the encompassing Universal Orchestrator is running.
 | Operation | Win | Linux |
@@ -41,6 +44,8 @@ The Keyfactor Universal Orchestrator may be installed on either Windows or Linux
 |Supports Discovery|&check; |&check; |
 |Supports Renrollment|  |  |
 |Supports Inventory|&check; |&check; |
+
+
 
 
 
@@ -61,10 +66,9 @@ The high level steps required to configure the Azure Keyvault Orchestrator exten
 
 1) [Create the Certificate Store](#create-the-certificate-store)
 
-_Note that the certificate store type used by this Universal Orchestrator support for Azure Keyvault is not compatible with the certificate store type used by with Windows Orchestrator version for Azure Keyvault. 
-If your Keyfactor instance has used the Windows Orchestrator for Azure Keyvault, a specific migration process is required. 
+_Note that the certificate store type used by this Universal Orchestrator support for Azure Keyvault is not compatible with the certificate store type used by with Windows Orchestrator version for Azure Keyvault.
+If your Keyfactor instance has used the Windows Orchestrator for Azure Keyvault, a specific migration process is required.
 See [Migrating from the Windows Orchestrator for Azure KeyVault](#migrating-from-the-windows-orchestrator-for-azure-keyvault) section below._
-
 
 ---
 
@@ -81,9 +85,9 @@ If you have an existing AKV store type that was created for use with the Windows
 
 Follow the below steps to remove the AKV capability from **each** active Windows Orchestrator that supports it:
 
-#### If the Windows Orchestrator should still manage other cert store types:
+#### If the Windows Orchestrator should still manage other cert store types
 
-*If the Windows Orchestrator will still be used to manage some store types, we will remove only the Azure Keyvault functionality.*
+_If the Windows Orchestrator will still be used to manage some store types, we will remove only the Azure Keyvault functionality._
 
 1) On the Windows Orchestrator host machine, run the Keyfactor Agent Configuration Wizard
 1) Proceed through the steps to "Select Features"
@@ -98,12 +102,12 @@ Follow the below steps to remove the AKV capability from **each** active Windows
 1) Navigate to the Administrative menu (gear icon) and then **> Certificate Store Types**
 1) Select Azure Keyvault, click "DELETE" and confirm.
 1) Navigate to **Orchestrators > Management**, select the orchestrator and click "APPROVE" to re-approve it for use.
- 
+
 1) Repeat these steps for any other Windows Orchestrators that support the AKV store type.
 
-#### If the Windows Orchestrator can be retired completely:
+#### If the Windows Orchestrator can be retired completely
 
-*If the Windows Orchestrator is being completely replaced with the Universal Orchestrator, we can remove all associated stores and jobs.*
+_If the Windows Orchestrator is being completely replaced with the Universal Orchestrator, we can remove all associated stores and jobs._
 
 1) Navigate to **Orchestrators > Management** and select the Windows Orchestrator from the list.
 1) With the orchestrator selected, click the "RESET" button at the top of the list
@@ -115,11 +119,26 @@ Follow the below steps to remove the AKV capability from **each** active Windows
 
 Note: Any Azure Keyvault certificate stores removed can be re-added once the Universal Orchestrator is configured with the AKV capability.
 
---- 
+---
 
 ### Configure the Azure Keyvault for client access
 
-To provision access to the Keyvault instance, we will:
+### Authentication options
+
+The Azure KeyVault orchestrator plugin supports several authentication options:
+
+- [Service Principal](#authentication-via-service-principal)
+- [User Assigned Managed Identities](#authentication-via-user-assigned-managed-identity)
+- [System Assigned Managed Identities](#authentication-via-system-assigned-managed-identity)
+
+ Steps for setting up each option are detailed below.
+
+#### Authentication via Service Principal
+
+For the Orchestrator to be able to interact with the instance of Azure Keyvault, we will need to create an entity in Azure that will encapsulate the permissions we would like to grant it.  In Azure, these intermediate entities are referred to as app registrations and they provision authority for external application access.
+To learn more about application and service principals, refer to [this article](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal).
+
+To provision access to the Keyvault instance using a service principal identity, we will:
 
 1) [Create a Service Principal in Azure Active Directory](#create-a-service-principal)
 
@@ -129,13 +148,10 @@ To provision access to the Keyvault instance, we will:
 
 1) [Store the server credentials in Keyfactor](#store-the-server-credentials-in-keyfactor)
 
-#### Create a Service Principal
-
-For the Orchestrator to be able to interact with the instance of Azure Keyvault, we will need to create an entity in Azure that will encapsulate the permissions we would like to grant it.  In Azure, these intermediate entities are referred to as app registrations and they provision authority for external application access.
-To learn more about application and service principals, refer to [this article](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal).
-
 **In order to complete these steps, you must have the _Owner_ role for the Azure subscription, at least temporarily.**
 This is required to create an App Registration in Azure Active Directory.
+
+#### Create A Service Principal
 
 1) Log into [your azure portal](https://portal.azure.com)
 
@@ -159,9 +175,9 @@ This is required to create an App Registration in Azure Active Directory.
 
      ![App registration object Id](/Images/objectId.png)
 
-1) Copy the _Application (client) ID_, _Object ID_.
+1) Copy the _Application (client) ID_
 
-1) Now we have a App registration and values for  _Directory (tenant) ID_, _Application (client) ID_ and _Object ID_.  These will be used by the integration for authentication to Azure.
+1) Now we have a App registration and values for  _Directory (tenant) ID_, _Application (client) ID_.  These will be used by the integration for authentication to Azure.
 
 #### Assign Permissions
 
@@ -205,19 +221,17 @@ Follow the below steps in order to provide management access for our service pri
 
     ![Vault RBAC principal](/Images/vault-rbac-principal.png)
 
- 1) Select the service principal, click "select", and then "Next"
+1) Select the service principal, click "select", and then "Next"
 
- 1) On the final screen, you should see something similar to the following:
+1) On the final screen, you should see something similar to the following:
 
      ![Vault RBAC final](/Images/vault-rbac-final.png)
 
- 1) Click "Review + assign" to finish assigning the role of Keyvault Administrator for this Key Vault to our service principal account.
-
+1) Click "Review + assign" to finish assigning the role of Keyvault Administrator for this Key Vault to our service principal account.
 
 #### Assign Permissions for an Individual Key Vault via Access Policy
 
-Access to an Azure Key Vault instance can be granted via Role Based Access Control (RBAC) or with class Azure Resource Access Policies.  The below steps are for provisioning access to a single 
-instance of a Key Vault using Access Policies.  If you are using RBAC at the resource group level (necessary for discovery and creating new Key Vaults via Keyfactor) we recommend following RBAC (above).  Alternatively, you will need to assign explicit permissions to the service principal for any Key Vault that is using Access Policy for Access Control if the Key Vault should be managed with Keyfactor.
+Access to an Azure Key Vault instance can be granted via Role Based Access Control (RBAC) or with class Azure Resource Access Policies.  The below steps are for provisioning access to a single instance of a Key Vault using Access Policies.  If you are using RBAC at the resource group level (necessary for discovery and creating new Key Vaults via Keyfactor) we recommend following RBAC (above).  Alternatively, you will need to assign explicit permissions to the service principal for any Key Vault that is using Access Policy for Access Control if the Key Vault should be managed with Keyfactor.
 
 Following the below steps will provide our service principal with the ability to manage keys in an existing vault, without providing it the elevated permissions required for discovering existing vaults or creating new ones.  If you've completed the steps in the previous section for the resource group that contains the Key Vault(s) you would like to manage and the Key Vault(s) are using RBAC, the below steps are not necessary.
 
@@ -249,7 +263,7 @@ Following the below steps will provide our service principal with the ability to
 
 #### Generate an Access Token
 
-For authenticating to Azure via our App Registration, we will need to generate an access token.
+For authenticating to Azure via App Registration/Service Principal, we will need to generate an access token.
 
 1) Navigate to the App Registration we created earlier, in Azure Active Directory.
 1) Select "Certificates & Secrets" from the left menu.
@@ -263,10 +277,29 @@ Now we have our App registration created in Azure, and we have the following val
 
 - _TenantId_
 - _ApplicationId_
-- _ObjectId_
 - _ClientSecret_
 
 We will store these values securely in Keyfactor in subsequent steps.
+
+#### Authentication via User Assigned Managed Identity
+
+Authentication has been somewhat simplified with the introduction of Azure Managed Identities.  If the orchestrator is running on an Azure Virtual Machine, Managed identities allow an Azure administrator to
+assign a managed identity to the virtual machine that can then be used by this orchestrator extension for authentication without the need to issue or manage client secrets.
+
+The two types of managed identities available in Azure are _System_ assigned, and _User_ assigned identities.
+
+- System assigned managed identities are bound to the specific resource and not reassignable.  They are bound to the resource and share the same lifecycle.  
+- User assigned managed identities exist as a standalone entity, independent of a resource, and can therefore be assigned to multiple Azure resources.
+
+Read more about Azure Managed Identities [here](https://learn.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview).
+
+Detailed steps for creating a managed identity and assigning permissions can be found [here](https://learn.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/how-manage-user-assigned-managed-identities?pivots=identity-mi-methods-azp).
+
+Once the User Assigned managed identity has been created, you will need only to enter the Client Id into the Application Id field on the certificate store definition (the Client Secret can be left blank).
+
+#### Authentication via System Assigned Managed Identity
+
+In order to use a _System_ assigned managed identity, there is no need to enter the
 
 ### Create the Store Type in Keyfactor
 
@@ -284,21 +317,38 @@ Now we can navigate to the Keyfactor platform and create the store type for Azur
 
 1) The Azure Keyvault integration supports the following job types: _Inventory, Add, Remove, Create and Discovery_.  Select from these the capabilities you would like to utilize.
 
-1) Make sure that "Needs Server" is checked.
+1) **If you are using a Service Principal or User assigned Managed Identity only** Make sure that "Needs Server" is checked.
 
      ![Cert Store Types Menu](/Images/cert-store-type.png)
 
+> :warning:
+> if you are using a system assigned managed identity for authentication, you should leave this unchecked.
+
 1) Navigate to the _Advanced_ tab and set the following values:
      - Store Path Type: **Freeform**
-     - Supports Custom Alias: **Required**
-     - Private Key Handling: **Required**
+     - Supports Custom Alias: **Optional**
+     - Private Key Handling: **Optional**
      - PFX Password Style: **Default**
 
     ![Cert Store Types Menu](/Images/store-type-fields-advanced.png)
 
 1) Navigate to the _Custom Fields_ tab and add the following fields
-     - Name: "**VaultName**", Display Name: "**Vault Name**", Required: **true** (checked)
-     - Name: "**ResourceGroupName**", Display Name: "**Resource Group Name**", Required: **true** (checked)
+
+     | Name | Display Name | Type | Required |
+     | ---- | ------------ | ---- | -------- |
+     | VaultName | Vault Name | String | true |
+     | ResourceGroupName | Resource Group Name | String | true |
+     | SkuType[^sku] | SKU Type | MultipleChoice | false |
+     | VaultRegion[^vaultregion] | Vault Region | MultipleChoice | false |
+     | TenantId | Tenant Id | String | True
+
+     [^sku]: The SkuType determines the service tier when creating a new instance of Azure KeyVault via the platform.  Valid values include "premium" and "standard".
+        If either option should be available when creating a new KeyVault from the Command platform via creating a new certificate store, then the value to enter for the multiple choice options should be "standard,premium".
+        If your organization requires that one or the other option should always be used, you can limit the options to a single value ("premium" or "standard").  If not selected, "standard" is used when creating a new KeyVault.
+
+     [^vaultregion]: The Vault Region field is only important when creating a new Azure KeyVault from the Command Platform.  This is the region that the newly created vault will be created in.  When creating the cert store type,
+        you can limit the options to those that should be applicable to your organization. Refer to the [Azure Documentation](https://learn.microsoft.com/en-us/dotnet/api/azure.core.azurelocation?view=azure-dotnethttps://learn.microsoft.com/en-us/dotnet/api/azure.core.azurelocation?view=azure-dotnet) for a list of valid region names.
+        If no value is selected, "eastus" is used by default.
 
 ### Install the Extension on the Orchestrator
 
@@ -348,26 +398,39 @@ Now that we have the extension registered on the Orchestrator, we can navigate b
 
 #### Store the Server Credentials in Keyfactor
 
+> :warning:
+> The steps for configuring discovery are different for each authentication type.
+
+- For System Assigned managed identity authentication this step can be skipped.  No server credentials are necessary.  The store type should have been set up without "needs server" checked, so the form field should not be present.  
+
+- For User assigned managed identity:
+  - `Client Machine` should be set to the GUID of the tenant ID of the instance of Azure Keyvault.
+  - `User` should be set to the managed user ID.
+  - `Password` should be set to the value **"managed"**.
+
+- For Service principal authentication:
+  - `Client Machine` should be set to the GUID of the tenant ID of the instance of Azure Keyvault.
+  - `User` should be set to the service principal id
+  - `Password` should be set to the client secret.
+
 The first thing we'll need to do is store the server credentials that will be used by the extension.
 The combination of fields required to interact with the Azure Keyvault are:
 
-- Subscription ID
 - Tenant (or Directory) ID
-- Application ID (of the service principal)
-- Object ID (of the service principal)
-- Client Secret
+- Application ID or user managed identity ID
+- Client Secret (if using Service Principal Authentication)
 
-This integration expects the above values to be included in the server credentials in the following way:
+If not using system managed identity authentication, the integration expects the above values to be included in the server credentials in the following way:
 
-- **Client Machine**: `<subscription id>` (GUID)
+- **Client Machine**: `<tenantId>` (GUID)
 
-- **User**: `<tenantId> <app id guid> <object Id>` (GUID's separated by spaces)
+- **User**: `<app id guid>` (if service principal authentication) `<managed user id>` (if user managed identity authentication is used)
 
-- **Password**: `<client secret>`
+- **Password**: `<client secret>` (if service principal authentication), `managed` (if user managed identity authentication is used)
 
 Follow these steps to store the values:
 
-1) Enter the _Subscription ID_ in the **Client Machine** field.
+1) Enter the _Tenant Id_ in the **Client Machine** field.
 
      ![Discovery Form](/Images/discovery-form-client-machine.png)
 
@@ -375,20 +438,20 @@ Follow these steps to store the values:
 
      ![Change Credentials](/Images/change-credentials-form.png)
 
-1) Click "UPDATE SERVER USERNAME" and Enter the three GUIDs corresponding to **Tenant ID**, **App ID** and **Object ID** for the Server Username.  
-     example: `c9ed4b45-9f70-418a-aa58-f04c80848ca9 6e5de0a7-318a-46ed-ba46-a62b3ff28f55 5261a31a-5d8c-4d1e-93d0-bec81a786f75`
+1) Click "UPDATE SERVER USERNAME" and Enter the appropriate values based on the authentication type.
 
       ![Set Username](/Images/server-creds-username.png)
 
 1) Enter again to confirm, and click save.
 
-1) Click "UPDATE SERVER PASSWORD" and update the value with the **Client Secret** following the same steps as above.
+1) Click "UPDATE SERVER PASSWORD" and update with the appropriate value (`<client secret>` or `managed`) following the same steps as above.
 
 1) Select a time to run the discovery job.
 
-1) Enter a comma-separated list of resource group names if you would like to limit the discovery process to a subset of resource groups.  Otherwise enter "AKV" into the **Directories to Search** field.  
+> :warning:
+> If you are using a system assigned managed identity, you will need to enter the **Tenant Id** value into the "Directories to Search" field.
 
-1) Leave the remaining fields blank and click "DONE".
+1) Leave the remaining fields blank and click "SAVE".
 
 #### Approve the Certificate Store
 
@@ -412,6 +475,8 @@ To add one of these results to Keyfactor as a certificate store:
 
 1) Select a container to store the certificates for this cert store (optional)
 
+1) Select any value for SKU Type and Vault Region.  These values are not used for existing KeyVaults.
+
 1) Click "SAVE".
 
 ### Add an individual Azure Keyvault certificate store
@@ -429,7 +494,7 @@ The steps to do this are:
 
 - **Category**: Azure Keyvault
 - **Container**: _optional_
-- **Client Machine**: Azure Subscription Id.  
+- **Client Machine**: If applicable; Tenant Id.  
 
   - Note: These will only have to be entered once, even if adding multiple certificate stores.
   - Follow the steps [here](#store-the-server-credentials-in-keyfactor) to enter them.
@@ -437,6 +502,8 @@ The steps to do this are:
 - **Store Path**: This is the Azure Resource Identifier for the Keyvault.  Copied from Azure, or created a new Keyvault (see below).  
 - **VaultName**: This is the name of the new or existing Azure Keyvault.
 - **ResourceGroupName**: The name of the Azure Resource Group that contains the Keyvault.
+- **SKU Type**: This field is only used when creating new vaults in Azure.  Select any value, or leave blank.
+- **Vault Region**: This field is also only used when creating new vaults.  Select any value.
 
 If the vault already exists in azure:
 The store path can be found by navigating to the existing Keyvault resource in Azure and clicking "Properties" in the left menu.
@@ -452,7 +519,6 @@ If the Keyvault does not exist in Azure, and you would like to create it:
 - For a non-existing Keyvault that you would like to create in Azure, make sure you have the "Create Certificate Store" box checked.
 
 ![Add Vault](/Images/add-vault.png)
-
 
 ---
 
