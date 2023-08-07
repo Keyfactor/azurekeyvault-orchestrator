@@ -98,8 +98,6 @@ This text would be entered in as the value for the __Server Password__, instead 
 
 
 
-
-
 ---
 
 
@@ -199,8 +197,8 @@ To provision access to the Keyvault instance using a service principal identity,
 
 1) [Store the server credentials in Keyfactor](#store-the-server-credentials-in-keyfactor)
 
-
-**To create the app registration, you need at least the Application Administrator or Global Administrator Azure AD Roles. To assign the service principal to the appropriate Azure subscription, resource groups, or resources, you need at least the User Access Administrator or Owner roles.**
+**In order to complete these steps, you must have the _Owner_ role for the Azure subscription, at least temporarily.**
+This is required to create an App Registration in Azure Active Directory.
 
 ### Create A Service Principal
 
