@@ -238,7 +238,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 resourceGroups.ToList().ForEach(rg => // we go through all of the resource groups that the identity has access to
                 {
                     var rgVaults = rg.GetKeyVaults().ToList();
-                    vaultNames.AddRange(rgVaults.Select(v => subscription.Id + ":" + v.Data.Name));
+                    vaultNames.AddRange(rgVaults.Select(v => subscription.Id.SubscriptionId + ":" + v.Data.Name));
 
                 });
                 return vaultNames;

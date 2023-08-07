@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using Keyfactor.Orchestrators.Extensions;
 using Keyfactor.Orchestrators.Extensions.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -31,29 +32,37 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
         public void InitializeStore(dynamic config)
         {
-            VaultProperties = new AkvProperties();
-            if (config.GetType().GetProperty("ClientMachine") != null)
-                VaultProperties.TenantId = config.ClientMachine;
 
-            // ClientId can be omitted for system assigned managed identities, required for user assigned or service principal auth
-            VaultProperties.ClientId = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server UserName", config.ServerUsername);
-
-            // ClientSecret can be omitted for managed identities, required for service principal auth
-            VaultProperties.ClientSecret = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server Password", config.ServerPassword); 
-            
-            if (config.GetType().GetProperty("CertificateStoreDetails") != null)
+            try
             {
-                VaultProperties.StorePath = config.CertificateStoreDetails?.StorePath;
-                dynamic properties = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());
-                VaultProperties.TenantId = properties.TenantId != null ? properties.TenantId : VaultProperties.TenantId;
-                VaultProperties.TenantId = VaultProperties.TenantId ?? properties.dirs;
-                VaultProperties.ResourceGroupName = properties.ResourceGroupName;
-                VaultProperties.VaultName = properties.VaultName;
-                VaultProperties.PremiumSKU = "premium".Equals(properties.SkuType, System.StringComparison.OrdinalIgnoreCase);
-                VaultProperties.VaultRegion = properties.VaultRegion ?? "eastus";
-                VaultProperties.VaultRegion = VaultProperties.VaultRegion.ToLower();
+                VaultProperties = new AkvProperties();
+                if (config.GetType().GetProperty("ClientMachine") != null)
+                    VaultProperties.TenantId = config.ClientMachine;
+
+                // ClientId can be omitted for system assigned managed identities, required for user assigned or service principal auth
+                VaultProperties.ClientId = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server UserName", config.ServerUsername);
+
+                // ClientSecret can be omitted for managed identities, required for service principal auth
+                VaultProperties.ClientSecret = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server Password", config.ServerPassword);
+
+                if (config.GetType().GetProperty("CertificateStoreDetails") != null)
+                {
+                    VaultProperties.StorePath = config.CertificateStoreDetails?.StorePath;
+                    dynamic properties = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());
+                    VaultProperties.TenantId = config.CertificateStoreDetails?.ClientMachine != null ? config.CertificateStoreDetails?.ClientMachine : VaultProperties.TenantId;
+                    VaultProperties.TenantId = VaultProperties.TenantId ?? properties.dirs;
+                    VaultProperties.ResourceGroupName = properties.ResourceGroupName;
+                    VaultProperties.VaultName = properties.VaultName;
+                    VaultProperties.PremiumSKU = properties.SkuType == "premium";
+                    VaultProperties.VaultRegion = properties.VaultRegion ?? "eastus";
+                    VaultProperties.VaultRegion = VaultProperties.VaultRegion.ToLower();
+                }
+                AzClient ??= new AzureClient(VaultProperties);
             }
-            AzClient ??= new AzureClient(VaultProperties);
+            catch (Exception ex) {
+                logger.LogError("Error initializing store", ex.Message);
+                throw;
+            }
         }        
     }
 }
