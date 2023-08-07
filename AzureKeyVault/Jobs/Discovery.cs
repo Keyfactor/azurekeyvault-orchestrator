@@ -38,6 +38,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             InitializeStore(config);
 
             var complete = new JobResult() { JobHistoryId = config.JobHistoryId, Result = OrchestratorJobStatusJobResult.Failure };
+            
             List<string> keyVaults;
 
             try

@@ -107,7 +107,6 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 {
                     var credentialOptions = new DefaultAzureCredentialOptions { AuthorityHost = AzureCloudEndpoint };
 
-
                     if (!string.IsNullOrEmpty(this.VaultProperties.ClientId)) // they have selected a managed identity and provided a client ID, so it is a user assigned identity
                     {
                         credentialOptions.ManagedIdentityClientId = VaultProperties.ClientId;
@@ -239,7 +238,6 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 {
                     var rgVaults = rg.GetKeyVaults().ToList();
                     vaultNames.AddRange(rgVaults.Select(v => subscription.Id.SubscriptionId + ":" + v.Data.Name));
-
                 });
                 return vaultNames;
             }

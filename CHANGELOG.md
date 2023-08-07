@@ -1,4 +1,3 @@
-﻿
 - 3.0
   - Added support for Azure clouds other than US public.
   - Shortened Store path to `subscription id : vault name`

@@ -97,6 +97,10 @@ To provision access to the Keyvault instance using a service principal identity,
 **In order to complete these steps, you must have the _Owner_ role for the Azure subscription, at least temporarily.**
 This is required to create an App Registration in Azure Active Directory.
 
+### Create A Service Principal
+
+**Note:** In order to manage key vaults in multiple Azure tenants using a single service principal, the supported account types option selected should be:  `Accounts in any organizational directory (Any Azure AD directory - Multitenant)`. Also, the app registration must be registered in a single tenant, but a service principal must be created in each tenant tied to the app registration. For more info review the [Microsoft documentation](https://learn.microsoft.com/en-us/azure/active-directory/fundamentals/service-accounts-principal#tenant-service-principal-relationships).
+
 #### Create A Service Principal
 
 1) Log into [your azure portal](https://portal.azure.com)
@@ -124,6 +128,11 @@ This is required to create an App Registration in Azure Active Directory.
 1) Copy the _Application (client) ID_
 
 1) Now we have a App registration and values for  _Directory (tenant) ID_, _Application (client) ID_.  These will be used by the integration for authentication to Azure.
+
+1) (Optional) If creating a multi-tenant service principal, the following AzureAD Powershell command must be run in each tenant:  
+   ``` Powershell
+   New-AzADServicePrincipal -ApplicationId <Application ID>
+   ```
 
 #### Assign Permissions
 
@@ -355,7 +364,7 @@ Now that we have the extension registered on the Orchestrator, we can navigate b
   - `Password` should be set to the value **"managed"**.
 
 - For Service principal authentication:
-  - `Client Machine` should be set to the GUID of the tenant ID of the instance of Azure Keyvault.
+  - `Client Machine` should be set to the GUID of the tenant ID of the instance of Azure Keyvault. **Note:** If using a multi-tenant app registration, use the tenant ID of the Azure tenant where the key vault lives.
   - `User` should be set to the service principal id
   - `Password` should be set to the client secret.
 
