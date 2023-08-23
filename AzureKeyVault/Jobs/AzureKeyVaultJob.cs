@@ -32,7 +32,6 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
         public void InitializeStore(dynamic config)
         {
-
             try
             {
                 VaultProperties = new AkvProperties();
