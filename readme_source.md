@@ -415,7 +415,7 @@ To add one of these results to Keyfactor as a certificate store:
 
 1) Double-click the row that corresponds to the Azure Keyvault in the discovery results (you can also select the row and click "approve").
 
-1) In the dialog window, enter the Vault Name and Resource Group Name from the store path value above.
+1) In the dialog window, enter the Vault Name from the store path value above, as well as the resource group name for the vault (found in the Azure portal).
 
      ![Approve Cert Store](/Images/approve-cert-store.png)
 
@@ -460,7 +460,7 @@ If the Keyvault does not exist in Azure, and you would like to create it:
 
 - Enter a value for the store path in the following format:
 
-`/subscriptions/{subscription id}/resourceGroups/{resource group for keyvault}/providers/Microsoft.KeyVault/vaults/{new name}`
+`{subscription id}:{new vault name}`
 
 - For a non-existing Keyvault that you would like to create in Azure, make sure you have the "Create Certificate Store" box checked.
 
