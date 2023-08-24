@@ -20,13 +20,18 @@ using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
 using Microsoft.Extensions.Logging;
+using Keyfactor.Orchestrators.Extensions.Interfaces;
 
 namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 {
     [Job(JobTypes.MANAGEMENT)]
     public class Management : AzureKeyVaultJob<Management>, IManagementJobExtension
     {
-        readonly ILogger logger = LogHandler.GetClassLogger<Management>();
+        public Management(IPAMSecretResolver resolver)
+        {
+            PamSecretResolver = resolver;
+            logger = LogHandler.GetClassLogger<Management>();
+        }
 
         public JobResult ProcessJob(ManagementJobConfiguration config)
         {
@@ -171,12 +176,6 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         }
 
         #endregion
-
-        //protected virtual X509Certificate2 GenerateCertificate(string pfxPassword, string content)
-        //{
-        //    byte[] pfxBytes = Convert.FromBase64String(content);
-        //    return new X509Certificate2(pfxBytes, pfxPassword, X509KeyStorageFlags.Exportable);
-        //}
     }
 }
 
