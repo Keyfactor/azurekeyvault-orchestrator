@@ -354,7 +354,7 @@ Once the User Assigned managed identity has been created, you will need only to 
 
 #### Authentication via System Assigned Managed Identity
 
-In order to use a _System_ assigned managed identity, there is no need to enter the
+In order to use a _System_ assigned managed identity, there is no need to enter the server credentials.  If no server credentials are provided, the extension assumes authentication is via system assigned managed identity.
 
 ### Create the Store Type in Keyfactor
 
