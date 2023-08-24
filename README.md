@@ -14,14 +14,11 @@ The Universal Orchestrator is part of the Keyfactor software distribution and is
 The Universal Orchestrator is the successor to the Windows Orchestrator. This Orchestrator Extension plugin only works with the Universal Orchestrator and does not work with the Windows Orchestrator.
 
 
-
-
 ## Support for Azure Key Vault Orchestrator
 
 Azure Key Vault Orchestrator is supported by Keyfactor for Keyfactor customers. If you have a support issue, please open a support ticket with your Keyfactor representative.
 
 ###### To report a problem or suggest a new feature, use the **[Issues](../../issues)** tab. If you want to contribute actual bug fixes or proposed enhancements, use the **[Pull requests](../../pulls)** tab.
-
 
 
 ---
@@ -304,7 +301,7 @@ Once the User Assigned managed identity has been created, you will need only to 
 
 #### Authentication via System Assigned Managed Identity
 
-In order to use a _System_ assigned managed identity, there is no need to enter the
+In order to use a _System_ assigned managed identity, there is no need to enter the server credentials.  If no server credentials are provided, the extension assumes authentication is via system assigned managed identity.
 
 ### Create the Store Type in Keyfactor
 
