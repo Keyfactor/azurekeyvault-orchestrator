@@ -212,6 +212,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         {
             try
             {
+                // trace log the resrouce groups available and checked
                 SubscriptionResource subscription = await KvManagementClient.GetDefaultSubscriptionAsync();
                 ResourceGroupCollection resourceGroups = subscription.GetResourceGroups();
                 //ResourceGroupResource resourceGroup = await resourceGroups.GetAsync(this.VaultProperties.ResourceGroupName);
