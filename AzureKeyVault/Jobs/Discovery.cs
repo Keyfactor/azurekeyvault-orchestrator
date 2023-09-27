@@ -17,28 +17,33 @@ using System.Collections.Generic;
 using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
+using Keyfactor.Orchestrators.Extensions.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 {
     [Job(JobTypes.DISCOVERY)]
-    public class Discovery : AzureKeyVaultJob<Discovery>, IDiscoveryJobExtension
-    {
-        ILogger logger = LogHandler.GetClassLogger<Discovery>();
+    public class Discovery : AzureKeyVaultJob<Discovery>, IDiscoveryJobExtension    {
+        
+
+        public Discovery(IPAMSecretResolver resolver)
+        {
+            PamSecretResolver = resolver;
+            logger = LogHandler.GetClassLogger<Discovery>();
+        }
+
         public JobResult ProcessJob(DiscoveryJobConfiguration config, SubmitDiscoveryUpdate sdr)
         {
             logger.LogDebug($"Begin Discovery...");
             InitializeStore(config);
 
             var complete = new JobResult() { JobHistoryId = config.JobHistoryId, Result = OrchestratorJobStatusJobResult.Failure };
-            var keyVaults = new List<string>();
-
-            // Server credentials
-            //AzClient = new AzureClient(VaultProperties);
+            
+            List<string> keyVaults;
 
             try
             {
-                if (VaultProperties.TenantId == null) throw new MissingFieldException("Need to set Tenant Id value in directories to search field for discovery jobs that use a system managed identity.");
+                if (VaultProperties.TenantId == null) throw new MissingFieldException("Need to set Tenant Id value in directories to search for discovery jobs that use a system managed identity.");
 
                 keyVaults = AzClient.GetVaults().Result;
             }

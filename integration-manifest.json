@@ -10,7 +10,7 @@
   "about": {
     "orchestrator": {
       "UOFramework": "10.1",
-      "pam_support": false,
+      "pam_support": true,
       "win": {
         "supportsCreateStore": true,
         "supportsDiscovery": true,
@@ -29,33 +29,34 @@
         "supportsInventory": true,
         "platformSupport": "Unused"
       },
-      "store_types": {
-        "AKV": {
-          "Name": "Azure KeyVault",
+      "store_types": [
+        {
+          "Name": "Azure Keyvault",
           "ShortName": "AKV",
           "Capability": "AKV",
           "LocalStore": false,
           "SupportedOperations": {
             "Add": true,
-            "Create": false,
-            "Discovery": false,
+            "Create": true,
+            "Discovery": true,
+            "Enrollment": false,
             "Remove": true
           },
           "Properties": [
             {
               "Name": "VaultName",
-              "DisplayName": "Vault Name",
+              "DisplayName": "VaultName",
               "Type": "String",
               "DependsOn": "",
-              "DefaultValue": "false",
+              "DefaultValue": null,
               "Required": true
             },
             {
               "Name": "ResourceGroupName",
-              "DisplayName": "Resource Group Name",
+              "DisplayName": "ResourceGroupName",
               "Type": "String",
               "DependsOn": "",
-              "DefaultValue": "",
+              "DefaultValue": null,
               "Required": true
             },
             {
@@ -64,7 +65,7 @@
               "Type": "MultipleChoice",
               "DependsOn": "",
               "DefaultValue": "standard,premium",
-              "Required": true
+              "Required": false
             },
             {
               "Name": "VaultRegion",
@@ -75,33 +76,39 @@
               "Required": false
             },
             {
-              "Name": "TenantId",
-              "DisplayName": "Tenant Id",
+              "Name": "AzureCloud",
+              "DisplayName": "Azure Cloud",
+              "Type": "MultipleChoice",
+              "DependsOn": "",
+              "DefaultValue": "public,china,germany,government",
+              "Required": false
+            },
+            {
+              "Name": "PrivateEndpoint",
+              "DisplayName": "Private KeyVault Endpoint",
               "Type": "String",
               "DependsOn": "",
               "DefaultValue": null,
-              "Required": true
+              "Required": false
             }
           ],
+          "EntryParameters": null,
           "PasswordOptions": {
             "EntrySupported": false,
             "StoreRequired": false,
             "Style": "Default"
           },
+          "StorePathType": "",
+          "StorePathValue": "",
           "PrivateKeyAllowed": "Optional",
-          "JobProperties": [
-            "VaultName",
-            "ResourceGroupName",
-            "SkuType",
-            "VaultRegion",
-            "TenantId"
-          ],
+          "JobProperties": [],
           "ServerRequired": true,
           "PowerShell": false,
           "BlueprintAllowed": false,
           "CustomAliasAllowed": "Optional"
         }
-      }
+
+      ]
     }
   }
 }

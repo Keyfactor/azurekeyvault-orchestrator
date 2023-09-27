@@ -17,7 +17,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
     public class AkvProperties
     {
         public string SubscriptionId { get; set; }
-        public string ClientId { get; set; } // (a.k.a. ClientId)
+        public string ClientId { get; set; }
         public string ClientSecret { get; set; }
         public string TenantId { get; set; }
         public string ResourceGroupName { get; set; }
@@ -29,12 +29,39 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         {
             get
             {
-                return string.IsNullOrEmpty(ClientSecret) || ClientSecret.ToLowerInvariant() == "managed"; 
+                return string.IsNullOrEmpty(ClientSecret) || ClientSecret.ToLowerInvariant() == "managed";
                 // if they don't provide a client secret, assume they are using Azure Managed Identities
                 // if they provide a client id, but "managed" for the secret, they are using a user assigned managed identity.
             }
         }
 
-        internal protected string VaultURL => $"https://{VaultName}.vault.azure.net/";
+        public string AzureCloud { get; set; }
+
+        public string PrivateEndpoint { get; set; }
+
+        internal protected string VaultEndpoint
+        { //return the default endpoint suffix for the Azure Cloud instance of the KeyVault.
+            get
+            {
+
+                if (!string.IsNullOrEmpty(PrivateEndpoint))
+                {
+                    return PrivateEndpoint.TrimStart('.');
+                }
+                switch (AzureCloud)
+                {
+                    case "china":
+                        return "vault.azure.cn";
+                    case "germany":
+                        return "vault.microsoftazure.de";
+                    case "government":
+                        return "vault.usgovcloudapi.net";
+                    default:
+                        return "vault.azure.net";
+                }
+            }
+        }
+
+        internal protected string VaultURL => $"https://{VaultName}.{VaultEndpoint}/";
     }
 }
