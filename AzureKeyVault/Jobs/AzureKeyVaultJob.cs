@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Collections.Generic;
 using Keyfactor.Orchestrators.Extensions;
 using Newtonsoft.Json;
 
@@ -34,7 +35,13 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
             VaultProperties.ClientSecret = config.ServerPassword ?? null; // can be omitted for managed identities, required for service principal auth
 
-            if (config.GetType().GetProperty("CertificateStoreDetails") != null)
+            // get list of "directories to search", which should be a comma separated list of tenant ids.
+
+            // get list of "directories to ignore", which should be a comma seperated list of tenant ids.
+
+
+
+            if (config.GetType().GetProperty("CertificateStoreDetails") != null) // anything except a discovery job
             {
                 VaultProperties.StorePath = config.CertificateStoreDetails?.StorePath;
                 dynamic properties = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());
@@ -45,6 +52,23 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 VaultProperties.PremiumSKU = "premium".Equals(properties.SkuType, System.StringComparison.OrdinalIgnoreCase);
                 VaultProperties.VaultRegion = properties.VaultRegion ?? "eastus";
                 VaultProperties.VaultRegion = VaultProperties.VaultRegion.ToLower();
+            }
+            else // discovery job
+            {
+                VaultProperties.TenantIdsForDiscovery = new List<string>();
+                var dirs = config.JobProperties?["dirs"] as string;
+                if (!string.IsNullOrEmpty(dirs))
+                {
+                    // parse the list of tenant ids to perform discovery on                                        
+                    VaultProperties.TenantIdsForDiscovery.AddRange(dirs.Split(','));                    
+                }
+                else 
+                {
+                    // if it is empty, we use the default provided Tenant Id only
+                    VaultProperties.TenantIdsForDiscovery.Add(VaultProperties.TenantId);
+                }
+
+                VaultProperties.TenantIdsForDiscovery.ForEach(tId => tId = tId.Trim());
             }
             AzClient ??= new AzureClient(VaultProperties);
         }        

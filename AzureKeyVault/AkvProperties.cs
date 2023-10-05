@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Collections.Generic;
+
 namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 {
     public class AkvProperties
@@ -25,6 +27,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         public string StorePath { get; set; }
         public string VaultRegion { get; set; }
         public bool PremiumSKU { get; set; }
+        public List<string> TenantIdsForDiscovery { get; set; }
         internal protected bool UseAzureManagedIdentity
         {
             get

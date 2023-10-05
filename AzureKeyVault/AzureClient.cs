@@ -35,7 +35,10 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
     public class AzureClient
     {
         internal protected virtual AkvProperties VaultProperties { get; set; }
+        private string ActiveTenantId { get; set; } // for searching across multiple tenants.
+
         ILogger logger { get; set; }
+
 
         private protected virtual CertificateClient CertClient
         {
@@ -78,6 +81,34 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         }
         protected CertificateClient _certClient { get; set; }
 
+        internal protected virtual ArmClient getArmClient(string tenantId)
+        {
+            TokenCredential credential;
+
+            if (this.VaultProperties.UseAzureManagedIdentity)
+            {
+                logger.LogTrace("getting management client for a managed identity");
+                var credentialOptions = new DefaultAzureCredentialOptions();
+                if (!string.IsNullOrEmpty(tenantId)) credentialOptions.TenantId = tenantId;
+
+                if (!string.IsNullOrEmpty(this.VaultProperties.ClientId)) // they have selected a managed identity and provided a client ID, so it is a user assigned identity
+                {
+                    logger.LogTrace("It is a user assigned managed identity");
+                    credentialOptions.ManagedIdentityClientId = VaultProperties.ClientId;
+                }
+                credential = new DefaultAzureCredential(credentialOptions);
+            }
+            else
+            {
+                logger.LogTrace("getting credentials for a service principal identity");
+                credential = new ClientSecretCredential(tenantId, VaultProperties.ClientId, VaultProperties.ClientSecret);
+                logger.LogTrace("got credentials for service principal identity", credential);
+            }
+
+            _mgmtClient = new ArmClient(credential);
+            logger.LogTrace("created management client", _mgmtClient);
+            return _mgmtClient;
+        }
         internal protected virtual ArmClient KvManagementClient
         {
             get
@@ -87,36 +118,37 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                     logger.LogTrace("getting previously initialized management client");
                     return _mgmtClient;
                 }
+                return getArmClient(VaultProperties.TenantId);
 
                 // var subId = VaultProperties.SubscriptionId ?? VaultProperties.StorePath.Split("/")[2];
                 // var creds = SdkContext.AzureCredentialsFactory.FromServicePrincipal(VaultProperties.ApplicationId, VaultProperties.ClientSecret, VaultProperties.TenantId, AzureEnvironment.AzureGlobalCloud);
                 //NOTE: creating a certificate store from the platform is currently only supported for Azure GlobalCloud customers.
 
-                TokenCredential credential;
+                //TokenCredential credential;
 
-                if (this.VaultProperties.UseAzureManagedIdentity)
-                {
-                    logger.LogTrace("getting management client for a managed identity");
-                    var credentialOptions = new DefaultAzureCredentialOptions();
+                //if (this.VaultProperties.UseAzureManagedIdentity)
+                //{
+                //    logger.LogTrace("getting management client for a managed identity");
+                //    var credentialOptions = new DefaultAzureCredentialOptions();
 
 
-                    if (!string.IsNullOrEmpty(this.VaultProperties.ClientId)) // they have selected a managed identity and provided a client ID, so it is a user assigned identity
-                    {
-                        logger.LogTrace("It is a user assigned managed identity");
-                        credentialOptions.ManagedIdentityClientId = VaultProperties.ClientId;
-                    }
-                    credential = new DefaultAzureCredential(credentialOptions);
-                }
-                else
-                {
-                    logger.LogTrace("getting credentials for a service principal identity");
-                    credential = new ClientSecretCredential(VaultProperties.TenantId, VaultProperties.ClientId, VaultProperties.ClientSecret);
-                    logger.LogTrace("got credentials for service principal identity", credential);
-                }
+                //    if (!string.IsNullOrEmpty(this.VaultProperties.ClientId)) // they have selected a managed identity and provided a client ID, so it is a user assigned identity
+                //    {
+                //        logger.LogTrace("It is a user assigned managed identity");
+                //        credentialOptions.ManagedIdentityClientId = VaultProperties.ClientId;
+                //    }
+                //    credential = new DefaultAzureCredential(credentialOptions);
+                //}
+                //else
+                //{
+                //    logger.LogTrace("getting credentials for a service principal identity");
+                //    credential = new ClientSecretCredential(ActiveTenantId, VaultProperties.ClientId, VaultProperties.ClientSecret);
+                //    logger.LogTrace("got credentials for service principal identity", credential);
+                //}
 
-                _mgmtClient = new ArmClient(credential);
-                logger.LogTrace("created management client", _mgmtClient);
-                return _mgmtClient;
+                //_mgmtClient = new ArmClient(credential);
+                //logger.LogTrace("created management client", _mgmtClient);
+                //return _mgmtClient;
             }
         }
         protected virtual ArmClient _mgmtClient { get; set; }
@@ -125,7 +157,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         public AzureClient(AkvProperties props)
         {
             VaultProperties = props;
-
+            ActiveTenantId = props.TenantId;
             logger = LogHandler.GetClassLogger<AzureClient>();
         }
 
@@ -147,9 +179,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
                 var vaults = resourceGroup.GetKeyVaults();
 
-                //TODO: Create store type parameter for Azure Location.
-
-                var loc = new AzureLocation(VaultProperties.VaultRegion); // pass property instead of hardcoded value after testing
+                var loc = new AzureLocation(VaultProperties.VaultRegion);
 
                 var skuType = VaultProperties.PremiumSKU ? KeyVaultSkuName.Premium : KeyVaultSkuName.Standard;
 
@@ -236,44 +266,29 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             var vaultNames = new List<string>();
             try
             {
-                logger.LogTrace("getting tenants available to the identity");
-                var tenants = KvManagementClient.GetTenants();
-                logger.LogTrace("got tenants", tenants);
-
-                foreach (var tenant in tenants)
+                if (VaultProperties.TenantIdsForDiscovery == null || VaultProperties.TenantIdsForDiscovery.Count() < 1)
                 {
-                    logger.LogTrace($"checking tenant Id {1}", tenant.Id.ToString());
-
-                    var subs = tenant.GetSubscriptions();
-                    logger.LogTrace("got subscriptions for tenant", subs);
-
-                    foreach (var sub in subs)
-                    {
-                        logger.LogTrace($"checking subscription with ID {1}", sub.Data.SubscriptionId);
-                        var rgs = sub.GetResourceGroups();
-                        logger.LogTrace("Got resource groups.", rgs);
-                        foreach (var rg in rgs)
-                        {
-                            logger.LogTrace($"checking resource group {1}", rg.Id.ToString());
-                            var rgVaults = rg.GetKeyVaults().ToList();
-                            vaultNames.AddRange(rgVaults.Select(v => v.Id.ToString()));
-                        }
-                    }
+                    throw new Exception("no tenant ID's provided.");
                 }
+                VaultProperties.TenantIdsForDiscovery.ForEach(tenantId =>
+                {
+                    logger.LogTrace($"getting ARM client for tenantId {tenantId}");
 
-                //SubscriptionResource subscription = await KvManagementClient.GetDefaultSubscriptionAsync();
-                //logger.LogTrace("got default subscription for the authenticated identity", subscription);
+                    var mgmtClient = getArmClient(tenantId);
 
-                //ResourceGroupCollection resourceGroups = subscription.GetResourceGroups();
-                //logger.LogTrace("got resource groups in the subscription", resourceGroups);
+                    logger.LogTrace($"getting all available subscriptions in tenant with ID {tenantId}");
+                    var allSubs = mgmtClient.GetSubscriptions();
 
+                    logger.LogTrace($"got {allSubs.Count()} subscriptions");
 
-                //resourceGroups.ToList().ForEach(rg =>
-                //{
-                //    var rgVaults = rg.GetKeyVaults().ToList();
-                //    vaultNames.AddRange(rgVaults.Select(v => v.Id.ToString()));
+                    foreach (var sub in allSubs) {
+                        logger.LogTrace($"searching for vaults in subscription with ID {sub.Data.SubscriptionId}");
+                        var vaults = sub.GetKeyVaults();
+                        logger.LogTrace($"found {vaults.Count()} vaults.");
+                        vaultNames.AddRange(vaults.Select(v => v.Id.ToString()));
+                    }                    
+                });
 
-                //});
                 return vaultNames;
             }
             catch (Exception ex)
