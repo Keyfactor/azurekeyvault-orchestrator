@@ -1,3 +1,7 @@
+- 3.1
+  - Updated the Discovery job to support multiple tenants and all accessible subscriptions they contain
+  - Added more detailed trace logging during the discovery process
+
 - 3.0
   - Added support for Azure clouds other than US public.
   - Shortened Store path to `subscription id : vault name`
