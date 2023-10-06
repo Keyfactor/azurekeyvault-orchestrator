@@ -1,4 +1,9 @@
 ﻿
+- 2.1
+  - Updated the Discovery job to support multiple tenants and all accessible subscriptions they contain.
+
+- 2.0.1
+  - Fixed bug when trying to parse Vault plan (premium/standard)
 
 - 2.0
   - Added support for Azure Managed Identity authentication
