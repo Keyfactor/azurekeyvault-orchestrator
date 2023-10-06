@@ -1,4 +1,3 @@
-﻿
 - 2.1
   - Updated the Discovery job to support multiple tenants and all accessible subscriptions they contain.
 
@@ -10,5 +9,3 @@
   - Updated Azure client libraries
   - Removed ObjectId parameter from StoreType definition
   - Added SkuType and VaultRegion parameters to support vault creation from the platform.
-
-- 1.05
