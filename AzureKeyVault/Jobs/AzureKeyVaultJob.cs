@@ -48,7 +48,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 VaultProperties.TenantId = properties.TenantId != null ? properties.TenantId : VaultProperties.TenantId;
                 VaultProperties.TenantId = VaultProperties.TenantId != null ? VaultProperties.TenantId : properties.dirs;
                 VaultProperties.ResourceGroupName = properties.ResourceGroupName;
-                VaultProperties.VaultName = properties.VaultName;                
+                VaultProperties.VaultName = properties.VaultName;
                 VaultProperties.PremiumSKU = properties.SkuType == "premium";
                 VaultProperties.VaultRegion = properties.VaultRegion ?? "eastus";
                 VaultProperties.VaultRegion = VaultProperties.VaultRegion.ToLower();
