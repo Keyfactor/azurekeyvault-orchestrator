@@ -94,11 +94,14 @@ To provision access to the Keyvault instance using a service principal identity,
 
 1) [Store the server credentials in Keyfactor](#store-the-server-credentials-in-keyfactor)
 
-**To create the app registration, you need at least the Application Administrator or Global Administrator Azure AD Roles. To assign the service principal to the appropriate Azure subscription, resource groups, or resources, you need at least the User Access Administrator or Owner roles.**
+**In order to complete these steps, you must have the _Owner_ role for the Azure subscription, at least temporarily.**
+This is required to create an App Registration in Azure Active Directory.
 
 ### Create A Service Principal
 
 **Note:** In order to manage key vaults in multiple Azure tenants using a single service principal, the supported account types option selected should be:  `Accounts in any organizational directory (Any Azure AD directory - Multitenant)`. Also, the app registration must be registered in a single tenant, but a service principal must be created in each tenant tied to the app registration. For more info review the [Microsoft documentation](https://learn.microsoft.com/en-us/azure/active-directory/fundamentals/service-accounts-principal#tenant-service-principal-relationships).
+
+#### Create A Service Principal
 
 1) Log into [your azure portal](https://portal.azure.com)
 
@@ -125,6 +128,7 @@ To provision access to the Keyvault instance using a service principal identity,
 1) Copy the _Application (client) ID_
 
 1) Now we have a App registration and values for  _Directory (tenant) ID_, _Application (client) ID_.  These will be used by the integration for authentication to Azure.
+
 1) (Optional) If creating a multi-tenant service principal, the following AzureAD Powershell command must be run in each tenant:  
    ``` Powershell
    New-AzADServicePrincipal -ApplicationId <Application ID>
@@ -250,7 +254,7 @@ Once the User Assigned managed identity has been created, you will need only to 
 
 #### Authentication via System Assigned Managed Identity
 
-In order to use a _System_ assigned managed identity, there is no need to enter the
+In order to use a _System_ assigned managed identity, there is no need to enter the server credentials.  If no server credentials are provided, the extension assumes authentication is via system assigned managed identity.
 
 ### Create the Store Type in Keyfactor
 
@@ -420,7 +424,7 @@ To add one of these results to Keyfactor as a certificate store:
 
 1) Double-click the row that corresponds to the Azure Keyvault in the discovery results (you can also select the row and click "approve").
 
-1) In the dialog window, enter the Vault Name and Resource Group Name from the store path value above.
+1) In the dialog window, enter the Vault Name from the store path value above, as well as the resource group name for the vault (found in the Azure portal).
 
      ![Approve Cert Store](/Images/approve-cert-store.png)
 
@@ -465,7 +469,7 @@ If the Keyvault does not exist in Azure, and you would like to create it:
 
 - Enter a value for the store path in the following format:
 
-`/subscriptions/{subscription id}/resourceGroups/{resource group for keyvault}/providers/Microsoft.KeyVault/vaults/{new name}`
+`{subscription id}:{new vault name}`
 
 - For a non-existing Keyvault that you would like to create in Azure, make sure you have the "Create Certificate Store" box checked.
 
