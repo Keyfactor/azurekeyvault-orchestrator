@@ -295,7 +295,7 @@ Now we can navigate to the Keyfactor platform and create the store type for Azur
      | ResourceGroupName | Resource Group Name | String | true |
      | SkuType[^sku] | SKU Type | MultipleChoice | false |
      | VaultRegion[^vaultregion] | Vault Region | MultipleChoice | false |
-     | TenantId | Tenant Id | String | True
+     | TenantId | Tenant Id | String | True |
 
      [^sku]: The SkuType determines the service tier when creating a new instance of Azure KeyVault via the platform.  Valid values include "premium" and "standard".
         If either option should be available when creating a new KeyVault from the Command platform via creating a new certificate store, then the value to enter for the multiple choice options should be "standard,premium".
@@ -360,7 +360,7 @@ Now that we have the extension registered on the Orchestrator, we can navigate b
 
 - For User assigned managed identity:
   - `Client Machine` should be set to the GUID of the tenant ID of the instance of Azure Keyvault.
-  - `User` should be set to the managed user ID.
+  - `User` should be set to the Client ID of the managed identity.
   - `Password` should be set to the value **"managed"**.
 
 - For Service principal authentication:
@@ -403,8 +403,10 @@ Follow these steps to store the values:
 
 1) Select a time to run the discovery job.
 
+1) Enter commma seperated list of tenant ID's in the "Directories to search" field.'
+
 > :warning:
-> If you are using a system assigned managed identity, you will need to enter the **Tenant Id** value into the "Directories to Search" field.
+> If nothing is entered here, the default Tenant ID included with the credentials will be used.  For system managed identities, it is necessary to include the Tenant ID(s) in this field.
 
 1) Leave the remaining fields blank and click "SAVE".
 
