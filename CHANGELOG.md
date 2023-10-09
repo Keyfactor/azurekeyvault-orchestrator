@@ -1,6 +1,9 @@
 - 3.1
   - Updated the Discovery job to support multiple tenants and all accessible subscriptions they contain
   - Added more detailed trace logging during the discovery process
+  - Changed store path to be `<subscription id>:<resource group name>:<vault name>`.
+  - Removed redundant Vault Name and Resource Group Name fields
+  - Updated documentation to explain when optional fields can be omitted from the store type definition.
 
 - 3.0
   - Added support for Azure clouds other than US public.

@@ -29,7 +29,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             try
             {
                 VaultProperties = new AkvProperties();
-                if (config.GetType().GetProperty("ClientMachine") != null)
+                if (config.GetType().GetProperty("ClientMachine") != null) // D
                     VaultProperties.TenantId = config.ClientMachine;
 
                 // ClientId can be omitted for system assigned managed identities, required for user assigned or service principal auth
@@ -42,13 +42,22 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 {
                     VaultProperties.StorePath = config.CertificateStoreDetails?.StorePath;
                     dynamic properties = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());
-                    VaultProperties.TenantId = config.CertificateStoreDetails?.ClientMachine != null ? config.CertificateStoreDetails?.ClientMachine : VaultProperties.TenantId;
-                    VaultProperties.TenantId = VaultProperties.TenantId ?? properties.dirs;
-                    VaultProperties.ResourceGroupName = properties.ResourceGroupName;
-                    VaultProperties.VaultName = properties.VaultName;
-                    VaultProperties.PremiumSKU = properties.SkuType == "premium";
-                    VaultProperties.VaultRegion = properties.VaultRegion ?? "eastus";
-                    VaultProperties.VaultRegion = VaultProperties.VaultRegion.ToLower();
+
+                    // get the values from the storepath field.  format is <subscription id>:<resource group name>:<vault name>
+                    var storePathFields = VaultProperties.StorePath.Split(":");
+                    VaultProperties.SubscriptionId = storePathFields[0].Trim();
+                    VaultProperties.ResourceGroupName = properties.ResourceGroupName ?? storePathFields[1].Trim();
+                    VaultProperties.VaultName = properties.VaultName ?? storePathFields[2].Trim(); // check the field in case of legacy paths.
+
+                    VaultProperties.TenantId = VaultProperties.TenantId ?? config.CertificateStoreDetails?.ClientMachine;
+                    
+                    //VaultProperties.ResourceGroupName = properties.ResourceGroupName;
+                    //VaultProperties.VaultName = properties.VaultName;
+
+                    string skuType = properties.SkuType;
+                    VaultProperties.PremiumSKU = skuType?.ToLower() == "premium";
+                    VaultProperties.VaultRegion = properties.VaultRegion;
+                    VaultProperties.VaultRegion = VaultProperties.VaultRegion?.ToLower();
                 }
                 else // discovery job
                 {
@@ -66,6 +75,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                     }
 
                     VaultProperties.TenantIdsForDiscovery.ForEach(tId => tId = tId.Trim());
+                    VaultProperties.TenantId = VaultProperties.TenantId ?? VaultProperties.TenantIdsForDiscovery[0];
                 }
                 AzClient ??= new AzureClient(VaultProperties);
             }

@@ -17,7 +17,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         public string TenantId { get; set; }
         public string ResourceGroupName { get; set; }
         public string VaultName { get; set; }
-        public string StorePath { get; set; }
+        public string StorePath { get; set; } // format = <subscription id>:<resource group name>:<vault name>
         public string VaultRegion { get; set; }
         public bool PremiumSKU { get; set; }
         public List<string> TenantIdsForDiscovery { get; set; }

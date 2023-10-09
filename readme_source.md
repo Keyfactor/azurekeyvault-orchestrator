@@ -272,6 +272,8 @@ Now we can navigate to the Keyfactor platform and create the store type for Azur
 
 1) The Azure Keyvault integration supports the following job types: _Inventory, Add, Remove, Create and Discovery_.  Select from these the capabilities you would like to utilize.
 
+> :warning: The store type definition needs to include the necessary fields to support Create functionality (SkuType and VaultRegion).  Be sure to read through the _Custom Fields_ instructions below and set them up with the required fields if Creating new Azure Keyvaults from Keyfactor Command is desired.
+
 1) **If you are using a Service Principal or User assigned Managed Identity only** Make sure that "Needs Server" is checked.
 
      ![Cert Store Types Menu](/Images/cert-store-type.png)
@@ -287,23 +289,39 @@ Now we can navigate to the Keyfactor platform and create the store type for Azur
 
     ![Cert Store Types Menu](/Images/store-type-fields-advanced.png)
 
-1) Navigate to the _Custom Fields_ tab and add the following fields
+1) Navigate to the _Custom Fields_ tab and add the custom fields for the store type.
 
-     | Name | Display Name | Type | Required |
-     | ---- | ------------ | ---- | -------- |
-     | VaultName | Vault Name | String | true |
-     | ResourceGroupName | Resource Group Name | String | true |
-     | SkuType[^sku] | SKU Type | MultipleChoice | false |
-     | VaultRegion[^vaultregion] | Vault Region | MultipleChoice | false |
-     | TenantId | Tenant Id | String | True |
+> :warning: If you are using the Global Public cloud (*.vault.azure.net) and creating new Azure
+> Keyvaults from Keyfactor Command functionality is not necessary for your workflow, this section can
+> be skipped entirely.
 
-     [^sku]: The SkuType determines the service tier when creating a new instance of Azure KeyVault via the platform.  Valid values include "premium" and "standard".
-        If either option should be available when creating a new KeyVault from the Command platform via creating a new certificate store, then the value to enter for the multiple choice options should be "standard,premium".
-        If your organization requires that one or the other option should always be used, you can limit the options to a single value ("premium" or "standard").  If not selected, "standard" is used when creating a new KeyVault.
+- The below two fields are necessary if working with Keyvaults in Azure Cloud instances that are not the standard global public one (*.vault.azure.net)  If your vault instance(s) have the base url of `.vault.azure.net` then the next two fields can be omitted from the store type definition and the default global public cloud will be assumed.
 
-     [^vaultregion]: The Vault Region field is only important when creating a new Azure KeyVault from the Command Platform.  This is the region that the newly created vault will be created in.  When creating the cert store type,
-        you can limit the options to those that should be applicable to your organization. Refer to the [Azure Documentation](https://learn.microsoft.com/en-us/dotnet/api/azure.core.azurelocation?view=azure-dotnethttps://learn.microsoft.com/en-us/dotnet/api/azure.core.azurelocation?view=azure-dotnet) for a list of valid region names.
-        If no value is selected, "eastus" is used by default.
+| Name | Display Name | Type | Required |
+| ---- | ------------ | ---- | -------- |
+| AzureCloud | Azure Cloud | MultipleChoice | true |
+| PrivateEndpoint[^privateEndpoint] | Private Endpoint | String | true |
+
+[^privateEndpoint]: The Private Endpoint field should be used if you if have a custom url assigned to your keyvault resources and they are not accessible via the standard endpoint associated with the Azure Cloud instance (*.vault.azure.net, *.vault.azure.cn, etc.).  This field should contain the base url for your vault instance(s), excluding the vault name.
+
+- The following fields are _only_ necessary in order to support creating new Azure Keyvaults from the Keyfactor Command platform.  If this functionality is not needed, there is no need to set up these fields.
+
+| Name | Display Name | Type | Required |
+| ---- | ------------ | ---- | -------- |
+| TenantId | Tenant Id | String | True | 
+| SkuType[^sku] | SKU Type | MultipleChoice | false |
+| VaultRegion[^vaultregion] | Vault Region | MultipleChoice | false |
+
+[^sku]: The SkuType determines the service tier when creating a new instance of Azure KeyVault via the platform.  Valid values include "premium" and "standard".
+     If either option should be available when creating a new KeyVault from the Command platform via creating a new certificate store, then the value to enter for the multiple choice options should be "standard,premium".
+     If your organization requires that one or the other option should always be used, you can limit the options to a single value ("premium" or "standard").  If not selected, "standard" is used when creating a new KeyVault.
+
+[^vaultregion]: The Vault Region field is only important when creating a new Azure KeyVault from the Command Platform.  This is the region that the newly created vault will be created in.  When creating the cert store type,
+     you can limit the options to those that should be applicable to your organization. Refer to the [Azure Documentation](https://learn.microsoft.com/en-us/dotnet/api/azure.core.azurelocation?view=azure-dotnethttps://learn.microsoft.com/en-us/dotnet/api/azure.core.azurelocation?view=azure-dotnet) for a list of valid region names.
+     If no value is selected, "eastus" is used by default.
+
+
+
 
 ### Install the Extension on the Orchestrator
 
@@ -457,8 +475,6 @@ The steps to do this are:
   - Follow the steps [here](#store-the-server-credentials-in-keyfactor) to enter them.
 
 - **Store Path**: This is the Azure Resource Identifier for the Keyvault.  Copied from Azure, or created a new Keyvault (see below).  
-- **VaultName**: This is the name of the new or existing Azure Keyvault.
-- **ResourceGroupName**: The name of the Azure Resource Group that contains the Keyvault.
 - **SKU Type**: This field is only used when creating new vaults in Azure.  Select any value, or leave blank.
 - **Vault Region**: This field is also only used when creating new vaults.  Select any value.
 
@@ -471,7 +487,7 @@ If the Keyvault does not exist in Azure, and you would like to create it:
 
 - Enter a value for the store path in the following format:
 
-`{subscription id}:{new vault name}`
+`{subscription id}:{resource group name}:{new vault name}`
 
 - For a non-existing Keyvault that you would like to create in Azure, make sure you have the "Create Certificate Store" box checked.
 
