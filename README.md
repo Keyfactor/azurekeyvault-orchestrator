@@ -258,6 +258,9 @@ Following the below steps will provide our service principal with the ability to
 
      ![Select Principal](/Images/save-access-policy.PNG)
 
+> :warning:
+> The _minimum_ permission required in order to perform discovery is "Keyvault Reader".  If the identity doesn't have "Keyvault Reader" permissions through direct assignment on the keyvault or inherited from higher level permissions, the keyvault will not show up during discovery.
+
 #### Generate an Access Token
 
 For authenticating to Azure via App Registration/Service Principal, we will need to generate an access token.
@@ -427,7 +430,7 @@ If not using system managed identity authentication, the integration expects the
 
 Follow these steps to store the values:
 
-1) Enter the _Tenant Id_ in the **Client Machine** field.
+1) Enter the primary _Tenant Id_ for the service principal in the **Client Machine** field.
 
      ![Discovery Form](/Images/discovery-form-client-machine.png)
 
@@ -446,7 +449,7 @@ Follow these steps to store the values:
 1) Select a time to run the discovery job.
 
 > :warning:
-> If you are using a system assigned managed identity, you will need to enter the **Tenant Id** value into the "Directories to Search" field.
+> If your service principal is authorized across multiple tenants, you should enter a comma seperated list of the tenant IDs that should be checked in the "Directories to search" field.
 
 1) Leave the remaining fields blank and click "SAVE".
 
