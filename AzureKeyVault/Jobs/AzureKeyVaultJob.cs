@@ -28,12 +28,6 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
             VaultProperties.ClientSecret = config.ServerPassword ?? null; // can be omitted for managed identities, required for service principal auth
 
-            // get list of "directories to search", which should be a comma separated list of tenant ids.
-
-            // get list of "directories to ignore", which should be a comma seperated list of tenant ids.
-
-
-
             if (config.GetType().GetProperty("CertificateStoreDetails") != null) // anything except a discovery job
             {
                 VaultProperties.StorePath = config.CertificateStoreDetails?.StorePath;
