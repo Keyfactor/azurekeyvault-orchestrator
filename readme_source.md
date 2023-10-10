@@ -208,7 +208,7 @@ Following the below steps will provide our service principal with the ability to
      ![Select Principal](/Images/save-access-policy.PNG)
 
 > :warning:
-> The _minimum_ permission required in order to perform discovery is "Keyvault Reader".  If the identity doesn't have "Keyvault Reader" permissions through direct assignment on the keyvault or inherited from higher level permissions, the keyvault will not show up during discovery and no operations would be available on a created certificate store for that keyvault.
+> The _minimum_ permission required in order to perform discovery is "Keyvault Reader".  If the identity doesn't have "Keyvault Reader" permissions through direct assignment on the keyvault or inherited from higher level permissions, the keyvault will not show up during discovery.
 
 #### Generate an Access Token
 
