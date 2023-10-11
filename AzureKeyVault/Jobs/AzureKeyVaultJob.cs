@@ -59,6 +59,23 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
                 VaultProperties.TenantIdsForDiscovery.ForEach(tId => tId = tId.Trim());
             }
+            else // discovery job
+            {
+                VaultProperties.TenantIdsForDiscovery = new List<string>();
+                var dirs = config.JobProperties?["dirs"] as string;
+                if (!string.IsNullOrEmpty(dirs))
+                {
+                    // parse the list of tenant ids to perform discovery on                                        
+                    VaultProperties.TenantIdsForDiscovery.AddRange(dirs.Split(','));                    
+                }
+                else 
+                {
+                    // if it is empty, we use the default provided Tenant Id only
+                    VaultProperties.TenantIdsForDiscovery.Add(VaultProperties.TenantId);
+                }
+
+                VaultProperties.TenantIdsForDiscovery.ForEach(tId => tId = tId.Trim());
+            }
             AzClient ??= new AzureClient(VaultProperties);
         }        
     }

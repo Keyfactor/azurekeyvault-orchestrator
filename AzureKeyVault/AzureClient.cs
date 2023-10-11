@@ -109,7 +109,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                     logger.LogTrace("getting previously initialized management client");
                     return _mgmtClient;
                 }
-                return getArmClient(VaultProperties.TenantId);                
+                return getArmClient(VaultProperties.TenantId);
             }
         }
         protected virtual ArmClient _mgmtClient { get; set; }
