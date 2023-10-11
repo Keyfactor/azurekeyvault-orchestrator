@@ -133,8 +133,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             {
                 logger.LogInformation("Begin create vault...");
 
-                var subscription = KvManagementClient.GetSubscriptions().FirstOrDefault(s => s.Data.SubscriptionId == VaultProperties.SubscriptionId);
-                //SubscriptionResource subscription = KvManagementClient.GetSubscriptionResource(new ResourceIdentifier(VaultProperties.SubscriptionId));
+                var subscription = KvManagementClient.GetSubscriptions().FirstOrDefault(s => s.Data.SubscriptionId == VaultProperties.SubscriptionId);                
                 ResourceGroupCollection resourceGroups = subscription.GetResourceGroups();
                 ResourceGroupResource resourceGroup = await resourceGroups.GetAsync(this.VaultProperties.ResourceGroupName);
 
