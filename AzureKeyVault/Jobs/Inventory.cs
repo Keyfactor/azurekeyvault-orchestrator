@@ -6,7 +6,6 @@
 // and limitations under the License.
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
@@ -24,18 +23,23 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             logger.LogDebug($"Begin Inventory...");
 
             InitializeStore(config);
-
-            List<CurrentInventoryItem> inventoryItems = new List<CurrentInventoryItem>();
-
+                        
             try
             {
-                logger.LogDebug($"Making Request for {0}...", VaultProperties.VaultURL);
+                logger.LogTrace($"Making Request for {0}...", VaultProperties.VaultURL);
+                var inventoryItems = AzClient.GetCertificatesAsync().Result?.ToList();
+                logger.LogTrace($"Found {inventoryItems.Count()} Total Certificates in Azure Key Vault.");
 
-                inventoryItems = AzClient.GetCertificatesAsync().Result?.ToList();
+                // return to orchestrator framework for response to platform
+                callBack.DynamicInvoke(inventoryItems);
 
-                logger.LogDebug($"Found {inventoryItems.Count()} Total Certificates in Azure Key Vault.");
+                return new JobResult
+                {
+                    Result = OrchestratorJobStatusJobResult.Success,
+                    JobHistoryId = config.JobHistoryId,
+                    FailureMessage = string.Empty
+                };
             }
-
             catch (Exception ex)
             {
                 return new JobResult
@@ -46,15 +50,6 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 };
             }
 
-            // upload to CMS
-            callBack.DynamicInvoke(inventoryItems);
-
-            return new JobResult
-            {
-                Result = OrchestratorJobStatusJobResult.Success,
-                JobHistoryId = config.JobHistoryId,
-                FailureMessage = string.Empty
-            };
         }
     }
 }

@@ -27,11 +27,9 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 {
     public class AzureClient
     {
-        internal protected virtual AkvProperties VaultProperties { get; set; }
-        private string ActiveTenantId { get; set; } // for searching across multiple tenants.
+        internal protected virtual AkvProperties VaultProperties { get; set; }        
 
         ILogger logger { get; set; }
-
 
         private protected virtual CertificateClient CertClient
         {
@@ -111,37 +109,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                     logger.LogTrace("getting previously initialized management client");
                     return _mgmtClient;
                 }
-                return getArmClient(VaultProperties.TenantId);
-
-                // var subId = VaultProperties.SubscriptionId ?? VaultProperties.StorePath.Split("/")[2];
-                // var creds = SdkContext.AzureCredentialsFactory.FromServicePrincipal(VaultProperties.ApplicationId, VaultProperties.ClientSecret, VaultProperties.TenantId, AzureEnvironment.AzureGlobalCloud);
-                //NOTE: creating a certificate store from the platform is currently only supported for Azure GlobalCloud customers.
-
-                //TokenCredential credential;
-
-                //if (this.VaultProperties.UseAzureManagedIdentity)
-                //{
-                //    logger.LogTrace("getting management client for a managed identity");
-                //    var credentialOptions = new DefaultAzureCredentialOptions();
-
-
-                //    if (!string.IsNullOrEmpty(this.VaultProperties.ClientId)) // they have selected a managed identity and provided a client ID, so it is a user assigned identity
-                //    {
-                //        logger.LogTrace("It is a user assigned managed identity");
-                //        credentialOptions.ManagedIdentityClientId = VaultProperties.ClientId;
-                //    }
-                //    credential = new DefaultAzureCredential(credentialOptions);
-                //}
-                //else
-                //{
-                //    logger.LogTrace("getting credentials for a service principal identity");
-                //    credential = new ClientSecretCredential(ActiveTenantId, VaultProperties.ClientId, VaultProperties.ClientSecret);
-                //    logger.LogTrace("got credentials for service principal identity", credential);
-                //}
-
-                //_mgmtClient = new ArmClient(credential);
-                //logger.LogTrace("created management client", _mgmtClient);
-                //return _mgmtClient;
+                return getArmClient(VaultProperties.TenantId);                
             }
         }
         protected virtual ArmClient _mgmtClient { get; set; }
@@ -149,8 +117,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         public AzureClient() { }
         public AzureClient(AkvProperties props)
         {
-            VaultProperties = props;
-            ActiveTenantId = props.TenantId;
+            VaultProperties = props;            
             logger = LogHandler.GetClassLogger<AzureClient>();
         }
 
@@ -166,7 +133,8 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             {
                 logger.LogInformation("Begin create vault...");
 
-                SubscriptionResource subscription = await KvManagementClient.GetDefaultSubscriptionAsync();
+                var subscription = KvManagementClient.GetSubscriptions().FirstOrDefault(s => s.Data.SubscriptionId == VaultProperties.SubscriptionId);
+                //SubscriptionResource subscription = KvManagementClient.GetSubscriptionResource(new ResourceIdentifier(VaultProperties.SubscriptionId));
                 ResourceGroupCollection resourceGroups = subscription.GetResourceGroups();
                 ResourceGroupResource resourceGroup = await resourceGroups.GetAsync(this.VaultProperties.ResourceGroupName);
 
@@ -184,7 +152,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             }
             catch (Exception ex)
             {
-                logger.LogError("Error when trying to create Azure Keyvault", ex);
+                logger.LogError(ex, "Error when trying to create Azure Keyvault");
                 throw;
             }
 
@@ -207,13 +175,13 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 var bytes = Convert.FromBase64String(contents);
                 var x509 = new X509Certificate2(bytes, pfxPassword, X509KeyStorageFlags.Exportable);
                 var certWithKey = x509.Export(X509ContentType.Pkcs12);
-                logger.LogTrace($"importing created x509 certificate named {1}", certName);
+                logger.LogTrace($"importing created x509 certificate named {certName}");
                 var cert = await CertClient.ImportCertificateAsync(new ImportCertificateOptions(certName, certWithKey));
                 return cert;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex.Message);
+                logger.LogError(ex, "Failed to add certificate to Keyvault.");
                 throw;
             }
         }
@@ -221,7 +189,8 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         public virtual async Task<IEnumerable<CurrentInventoryItem>> GetCertificatesAsync()
         {
             List<CurrentInventoryItem> inventoryItems = new List<CurrentInventoryItem>();
-            Pageable<CertificateProperties> inventory = null;
+            Pageable<CertificateProperties> inventory;
+
             try
             {
                 logger.LogTrace("calling GetPropertiesOfCertificates() on the Certificate Client", CertClient);
@@ -231,7 +200,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             }
             catch (Exception ex)
             {
-                logger.LogError("Error performing inventory", ex);
+                logger.LogError(ex, "Error performing inventory");
                 throw;
             }
 
@@ -286,7 +255,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             }
             catch (Exception ex)
             {
-                logger.LogError("Error getting vaults.", ex);
+                logger.LogError(ex, "Error getting vaults.");
                 throw;
             }
         }
