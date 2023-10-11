@@ -1,3 +1,7 @@
+- 2.1.1
+  - Updated the Create job to use the Subscription ID embedded in the Store Path rather than the default
+  - Improved Exception logging
+
 - 2.1
   - Updated the Discovery job to support multiple tenants and all accessible subscriptions they contain
   - Added more detailed trace logging during the discovery process

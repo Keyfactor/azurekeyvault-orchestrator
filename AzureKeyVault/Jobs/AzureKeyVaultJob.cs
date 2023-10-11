@@ -31,14 +31,33 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             if (config.GetType().GetProperty("CertificateStoreDetails") != null) // anything except a discovery job
             {
                 VaultProperties.StorePath = config.CertificateStoreDetails?.StorePath;
+                
                 dynamic properties = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());
-                VaultProperties.TenantId = properties.TenantId != null ? properties.TenantId : VaultProperties.TenantId;
-                VaultProperties.TenantId = VaultProperties.TenantId != null ? VaultProperties.TenantId : properties.dirs;
+                VaultProperties.TenantId = config.CertificateStoreDetails?.ClientMachine ?? properties.tenantId;
                 VaultProperties.ResourceGroupName = properties.ResourceGroupName;
                 VaultProperties.VaultName = properties.VaultName;
                 VaultProperties.PremiumSKU = properties.SkuType == "premium";
                 VaultProperties.VaultRegion = properties.VaultRegion ?? "eastus";
                 VaultProperties.VaultRegion = VaultProperties.VaultRegion.ToLower();
+
+                VaultProperties.SubscriptionId = VaultProperties.StorePath.Split('/', System.StringSplitOptions.RemoveEmptyEntries)[1];
+            }
+            else // discovery job
+            {
+                VaultProperties.TenantIdsForDiscovery = new List<string>();
+                var dirs = config.JobProperties?["dirs"] as string;
+                if (!string.IsNullOrEmpty(dirs))
+                {
+                    // parse the list of tenant ids to perform discovery on                                        
+                    VaultProperties.TenantIdsForDiscovery.AddRange(dirs.Split(','));                    
+                }
+                else 
+                {
+                    // if it is empty, we use the default provided Tenant Id only
+                    VaultProperties.TenantIdsForDiscovery.Add(VaultProperties.TenantId);
+                }
+
+                VaultProperties.TenantIdsForDiscovery.ForEach(tId => tId = tId.Trim());
             }
             else // discovery job
             {
