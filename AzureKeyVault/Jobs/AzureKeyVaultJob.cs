@@ -31,14 +31,16 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             if (config.GetType().GetProperty("CertificateStoreDetails") != null) // anything except a discovery job
             {
                 VaultProperties.StorePath = config.CertificateStoreDetails?.StorePath;
+                
                 dynamic properties = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());
-                VaultProperties.TenantId = properties.TenantId != null ? properties.TenantId : VaultProperties.TenantId;
-                VaultProperties.TenantId = VaultProperties.TenantId != null ? VaultProperties.TenantId : properties.dirs;
+                VaultProperties.TenantId = config.CertificateStoreDetails?.ClientMachine ?? properties.tenantId;
                 VaultProperties.ResourceGroupName = properties.ResourceGroupName;
                 VaultProperties.VaultName = properties.VaultName;
                 VaultProperties.PremiumSKU = properties.SkuType == "premium";
                 VaultProperties.VaultRegion = properties.VaultRegion ?? "eastus";
                 VaultProperties.VaultRegion = VaultProperties.VaultRegion.ToLower();
+
+                VaultProperties.SubscriptionId = VaultProperties.StorePath.Split('/', System.StringSplitOptions.RemoveEmptyEntries)[1];
             }
             else // discovery job
             {
