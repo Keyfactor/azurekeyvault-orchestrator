@@ -33,7 +33,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         {
             get
             {
-                switch (VaultProperties.AzureCloud.ToLower())
+                switch (VaultProperties.AzureCloud?.ToLower())
                 {
 
                     case "china":
@@ -67,7 +67,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 {
                     logger.LogTrace("Entering the managed identity workflow");
 
-                    var credentialOptions = new DefaultAzureCredentialOptions { AuthorityHost = AzureCloudEndpoint };
+                    var credentialOptions = new DefaultAzureCredentialOptions { AuthorityHost = AzureCloudEndpoint, AdditionallyAllowedTenants = { "*" } };
 
                     if (!string.IsNullOrEmpty(this.VaultProperties.ClientId)) // are they using a user assigned identity instead of a system assigned one (default)?
                     {
@@ -79,7 +79,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 else
                 {
                     logger.LogTrace("They are using a service principal to authenticate, generating the credentials");
-                    cred = new ClientSecretCredential(VaultProperties.TenantId, VaultProperties.ClientId, VaultProperties.ClientSecret, new ClientSecretCredentialOptions() { AuthorityHost = AzureCloudEndpoint });
+                    cred = new ClientSecretCredential(VaultProperties.TenantId, VaultProperties.ClientId, VaultProperties.ClientSecret, new ClientSecretCredentialOptions() { AuthorityHost = AzureCloudEndpoint, AdditionallyAllowedTenants = { "*" } });
                     logger.LogTrace("generated credentials", cred);
                 }
 
@@ -93,7 +93,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         internal protected virtual ArmClient getArmClient(string tenantId)
         {
             TokenCredential credential;
-            var credentialOptions = new DefaultAzureCredentialOptions { AuthorityHost = AzureCloudEndpoint };
+            var credentialOptions = new DefaultAzureCredentialOptions { AuthorityHost = AzureCloudEndpoint, AdditionallyAllowedTenants = { "*" } };
             if (this.VaultProperties.UseAzureManagedIdentity)
             {
                 logger.LogTrace("getting management client for a managed identity");
@@ -156,12 +156,11 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 logger.LogTrace($"getting subscription info for provided subscription id {VaultProperties.SubscriptionId}");
 
                 SubscriptionResource subscription = KvManagementClient.GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(VaultProperties.SubscriptionId));
-                //ResourceGroupCollection resourceGroup = subscription.GetResourceGroup(VaultProperties.ResourceGroupName)
                 ResourceGroupResource resourceGroup = subscription.GetResourceGroup(VaultProperties.ResourceGroupName);
 
                 AzureLocation loc;
 
-                var vaults = resourceGroup.GetKeyVaults();                
+                var vaults = resourceGroup.GetKeyVaults();
                 if (string.IsNullOrEmpty(VaultProperties.VaultRegion))
                 {
                     try
@@ -185,7 +184,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 var skuType = VaultProperties.PremiumSKU ? KeyVaultSkuName.Premium : KeyVaultSkuName.Standard;
 
                 var content = new KeyVaultCreateOrUpdateContent(loc, new KeyVaultProperties(new Guid(VaultProperties.TenantId), new KeyVaultSku(KeyVaultSkuFamily.A, skuType)));
-                
+
                 var newVault = await vaults.CreateOrUpdateAsync(WaitUntil.Completed, VaultProperties.VaultName, content);
 
                 return newVault.Value;
@@ -289,14 +288,15 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                         var vaults = sub.GetKeyVaults();
                         logger.LogTrace($"found {vaults.Count()} vaults.");
 
-                        foreach (var vault in vaults) {
+                        foreach (var vault in vaults)
+                        {
                             var splitId = vault.Id.ToString().Split("/", StringSplitOptions.RemoveEmptyEntries);
                             // example resource identifier: /subscriptions/b3114ff1-bb92-45b6-9bd6-e4a1eed8c91e/resourceGroups/azure_sentinel_evaluation/providers/Microsoft.KeyVault/vaults/jv2-vault
                             var subId = splitId[1];
                             var resourceGroupName = splitId[3];
                             var vaultName = splitId.Last();
                             vaultNames.Add($"{subId}:{resourceGroupName}:{vaultName}");
-                        }                        
+                        }
                     }
                 });
 

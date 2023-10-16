@@ -65,6 +65,11 @@ _If the Windows Orchestrator is being completely replaced with the Universal Orc
 
 Note: Any Azure Keyvault certificate stores removed can be re-added once the Universal Orchestrator is configured with the AKV capability.
 
+### Migrating from  version 1.x or version 2.x of the Azure Keyvault Orchestrator Extension
+
+It is not necessary to re-create all of the certificate stores when migrating from a previous version of this extension, though it is important to note that Azure KeyVaults found during a Discovery job
+will return with latest store path format: `{subscription id}:{resource group name}:{new vault name}`.
+
 ---
 
 ### Configure the Azure Keyvault for client access
@@ -320,9 +325,6 @@ Now we can navigate to the Keyfactor platform and create the store type for Azur
      you can limit the options to those that should be applicable to your organization. Refer to the [Azure Documentation](https://learn.microsoft.com/en-us/dotnet/api/azure.core.azurelocation?view=azure-dotnethttps://learn.microsoft.com/en-us/dotnet/api/azure.core.azurelocation?view=azure-dotnet) for a list of valid region names.
      If no value is selected, "eastus" is used by default.
 
-
-
-
 ### Install the Extension on the Orchestrator
 
 The process for installing an extension for the universal orchestrator differs from the process of installing an extension for the Windows orchestrator.  Follow the below steps to register the Azure Keyvault integration with your instance of the universal orchestrator.
@@ -432,21 +434,19 @@ Follow these steps to store the values:
 
 When the Discovery job runs successfully, it will list the existing Azure Keyvaults that are acessible by our service principal.
 
-In this example, our job returned four Azure Keyvaults.
+In this example, our job returned these Azure Keyvaults.
 
 ![Discovery Results](/Images/discovery-result.png)
 
-The store path of each vault is the Azure Resource Identifier, and contains the following information:
+The store path of each vault is the `<subscription id>:<resource group name>:<vault name>`:
 
 ![Discovery Results](/Images/storepath.png)
 
 To add one of these results to Keyfactor as a certificate store:
 
-1) Double-click the row that corresponds to the Azure Keyvault in the discovery results (you can also select the row and click "approve").
+1) Double-click the row that corresponds to the Azure Keyvault in the discovery results (you can also select the row and click "SAVE").
 
-1) In the dialog window, enter the Vault Name from the store path value above, as well as the resource group name for the vault (found in the Azure portal).
-
-     ![Approve Cert Store](/Images/approve-cert-store.png)
+1) In the dialog window, enter values for any of the optional fields you have set up for your store type.
 
 1) Select a container to store the certificates for this cert store (optional)
 
@@ -454,7 +454,7 @@ To add one of these results to Keyfactor as a certificate store:
 
 1) Click "SAVE".
 
-### Add an individual Azure Keyvault certificate store
+### Add a new or existing Azure Keyvault certificate store
 
 You can also add a certificate store that corresponds to an Azure Keyvault individually without the need to run the discovery / approval workflow.
 The steps to do this are:
@@ -474,24 +474,24 @@ The steps to do this are:
   - Note: These will only have to be entered once, even if adding multiple certificate stores.
   - Follow the steps [here](#store-the-server-credentials-in-keyfactor) to enter them.
 
-- **Store Path**: This is the Azure Resource Identifier for the Keyvault.  Copied from Azure, or created a new Keyvault (see below).  
-- **SKU Type**: This field is only used when creating new vaults in Azure.  Select any value, or leave blank.
-- **Vault Region**: This field is also only used when creating new vaults.  Select any value.
+- **Store Path**: This is the Subscription ID, Resource Group name, and Vault name in the following format: `{subscription id}:{resource group name}:{new vault name}`
 
-If the vault already exists in azure:
-The store path can be found by navigating to the existing Keyvault resource in Azure and clicking "Properties" in the left menu.
+- **SKU Type**: This field is only used when creating new vaults in Azure.  If present, select any value, or leave blank.
+- **Vault Region**: This field is also only used when creating new vaults.  If present, select any value.
+
+If the vault already exists in azure the store path can be found by navigating to the existing Keyvault resource in Azure and clicking "Properties" in the left menu.
 
 ![Resource Id](/Images/resource-id.png)
 
+- Use these values to create the store path
+
 If the Keyvault does not exist in Azure, and you would like to create it:
 
-- Enter a value for the store path in the following format:
-
-`{subscription id}:{resource group name}:{new vault name}`
+- Enter a value for the store path in the following format: `{subscription id}:{resource group name}:{new vault name}`
 
 - For a non-existing Keyvault that you would like to create in Azure, make sure you have the "Create Certificate Store" box checked.
 
-![Add Vault](/Images/add-vault.png)
+> :warning: The identity you are using for authentication will need to have sufficient Azure permissions to be able to create new Keyvaults.
 
 ---
 

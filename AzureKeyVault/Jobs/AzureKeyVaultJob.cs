@@ -29,7 +29,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             try
             {
                 VaultProperties = new AkvProperties();
-                if (config.GetType().GetProperty("ClientMachine") != null) // D
+                if (config.GetType().GetProperty("ClientMachine") != null) // Discovery job
                     VaultProperties.TenantId = config.ClientMachine;
 
                 // ClientId can be omitted for system assigned managed identities, required for user assigned or service principal auth
@@ -45,21 +45,46 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
                     // get the values from the storepath field.  format is <subscription id>:<resource group name>:<vault name>
                     var storePathFields = VaultProperties.StorePath.Split(":");
-                    VaultProperties.SubscriptionId = storePathFields[0].Trim();
-                    VaultProperties.ResourceGroupName = properties.ResourceGroupName ?? storePathFields[1].Trim();
-                    VaultProperties.VaultName = properties.VaultName ?? storePathFields[2].Trim(); // check the field in case of legacy paths.
 
-                    VaultProperties.TenantId = VaultProperties.TenantId ?? config.CertificateStoreDetails?.ClientMachine;
-                    
-                    //VaultProperties.ResourceGroupName = properties.ResourceGroupName;
-                    //VaultProperties.VaultName = properties.VaultName;
+                    if (storePathFields.Length == 3)
+                    { //using the latest (3 fields)
+                        VaultProperties.SubscriptionId = storePathFields[0].Trim();
+                        VaultProperties.ResourceGroupName = storePathFields[1].Trim();
+                        VaultProperties.VaultName = storePathFields[2]?.Trim();
+                    }
 
-                    string skuType = properties.SkuType;
+                    // support legacy store path <subscription id>:<vault name> 
+                    if (storePathFields.Length == 2)
+                    { // using previous version (2 fields)
+                        VaultProperties.SubscriptionId = storePathFields[0].Trim();
+                        VaultProperties.VaultName = storePathFields[0].Trim();
+                        VaultProperties.SubscriptionId = properties.SubscriptionId;
+                    }
+
+                    // support legacy store path <full azure resource identifier>
+                    // - example: /subscriptions/b3114ff1-bb92-45b6-9bd6-e4a1eed8c91e/resourceGroups/azure_sentinel_evaluation/providers/Microsoft.KeyVault/vaults/jv2-vault            
+                    if (storePathFields.Length == 1)
+                    {
+                        var legacyPathComponents = VaultProperties.StorePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+                        if (legacyPathComponents.Length == 8) // they are using the full resource path
+                        {
+                            VaultProperties.SubscriptionId = legacyPathComponents[1];
+                            VaultProperties.ResourceGroupName = legacyPathComponents[3];
+                            VaultProperties.VaultName = legacyPathComponents[7];
+                        }
+                    }
+
+                    VaultProperties.SubscriptionId = properties.SubscriptionId ?? VaultProperties.SubscriptionId;
+                    VaultProperties.ResourceGroupName = properties.ResourceGroupName ?? VaultProperties.ResourceGroupName;
+                    VaultProperties.VaultName = properties.VaultName ?? VaultProperties.VaultName; // check the field in case of legacy paths.                    
+                    VaultProperties.TenantId = VaultProperties.TenantId ?? config.CertificateStoreDetails?.ClientMachine; // Client Machine could be null in the case of managed identity.  That's ok.
+
+                    string skuType = properties.SkuType;                    
                     VaultProperties.PremiumSKU = skuType?.ToLower() == "premium";
                     VaultProperties.VaultRegion = properties.VaultRegion;
                     VaultProperties.VaultRegion = VaultProperties.VaultRegion?.ToLower();
                 }
-                else // discovery job
+                else // discovery job : Discovery only works on the Global Public Azure cloud because we do not have a way to pass the Azure Cloud instance value during a discovery job.
                 {
                     VaultProperties.TenantIdsForDiscovery = new List<string>();
                     var dirs = config.JobProperties?["dirs"] as string;
@@ -79,11 +104,12 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 }
                 AzClient ??= new AzureClient(VaultProperties);
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 logger.LogError("Error initializing store", ex.Message);
                 throw;
             }
-        }        
+        }
     }
 }
 
