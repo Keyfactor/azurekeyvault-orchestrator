@@ -48,6 +48,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
                     if (storePathFields.Length == 3)
                     { //using the latest (3 fields)
+                        logger.LogTrace($"storepath split by `:` into 3 parts.  {storePathFields}.  Using Using {{subscription id}}:{{resource group name}}:{{vault name}} format.");
                         VaultProperties.SubscriptionId = storePathFields[0].Trim();
                         VaultProperties.ResourceGroupName = storePathFields[1].Trim();
                         VaultProperties.VaultName = storePathFields[2]?.Trim();
@@ -56,6 +57,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                     // support legacy store path <subscription id>:<vault name> 
                     if (storePathFields.Length == 2)
                     { // using previous version (2 fields)
+                        logger.LogTrace($"storepath split by `:` into 2 parts.  {storePathFields}.  Using {{subscription id}}:{{vault name}} format.");
                         VaultProperties.SubscriptionId = storePathFields[0].Trim();
                         VaultProperties.VaultName = storePathFields[0].Trim();
                         VaultProperties.SubscriptionId = properties.SubscriptionId;
@@ -68,6 +70,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                         var legacyPathComponents = VaultProperties.StorePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
                         if (legacyPathComponents.Length == 8) // they are using the full resource path
                         {
+                            logger.LogTrace($"storepath split by `/`.  {storePathFields}.  Using {{subscription id}}:{{vault name}} format.");
                             VaultProperties.SubscriptionId = legacyPathComponents[1];
                             VaultProperties.ResourceGroupName = legacyPathComponents[3];
                             VaultProperties.VaultName = legacyPathComponents[7];
@@ -86,8 +89,11 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 }
                 else // discovery job : Discovery only works on the Global Public Azure cloud because we do not have a way to pass the Azure Cloud instance value during a discovery job.
                 {
+                    logger.LogTrace("Discovery job - getting tenant ids from directories to search field.");
                     VaultProperties.TenantIdsForDiscovery = new List<string>();
                     var dirs = config.JobProperties?["dirs"] as string;
+                    logger.LogTrace($"Directories to search: {dirs}");
+
                     if (!string.IsNullOrEmpty(dirs))
                     {
                         // parse the list of tenant ids to perform discovery on                                        
@@ -101,7 +107,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
                     VaultProperties.TenantIdsForDiscovery.ForEach(tId => tId = tId.Trim());
                     VaultProperties.TenantId = VaultProperties.TenantId ?? VaultProperties.TenantIdsForDiscovery[0];
-                }
+                }                
                 AzClient ??= new AzureClient(VaultProperties);
             }
             catch (Exception ex)
