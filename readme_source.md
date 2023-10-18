@@ -305,8 +305,8 @@ Now we can navigate to the Keyfactor platform and create the store type for Azur
 
 | Name | Display Name | Type | Required |
 | ---- | ------------ | ---- | -------- |
-| AzureCloud[^azurecloud] | Azure Cloud | MultipleChoice | true |
-| PrivateEndpoint[^privateEndpoint] | Private Endpoint | String | true |
+| AzureCloud[^azurecloud] | Azure Cloud | MultipleChoice | false |
+| PrivateEndpoint[^privateEndpoint] | Private Endpoint | String | false |
 
 [^azurecloud]: The Azure Cloud field, if necessary, should contain one of the following values: "china, germany, government".  This is the Azure Cloud instance your organization uses.  If using the standard "public" cloud, this field can be left blank or omitted entirely from the store type definition.
 
@@ -316,7 +316,7 @@ Now we can navigate to the Keyfactor platform and create the store type for Azur
 
 | Name | Display Name | Type | Required |
 | ---- | ------------ | ---- | -------- |
-| TenantId | Tenant Id | String | True | 
+| TenantId | Tenant Id | String | false | 
 | SkuType[^sku] | SKU Type | MultipleChoice | false |
 | VaultRegion[^vaultregion] | Vault Region | MultipleChoice | false |
 

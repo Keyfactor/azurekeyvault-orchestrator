@@ -44,6 +44,14 @@
           },
           "Properties": [
             {
+              "Name": "TenantId",
+              "DisplayName": "Tenant Id",
+              "Type": "String",
+              "DependsOn": "",
+              "DefaultValue": null,
+              "Required": false
+            },
+            {
               "Name": "SkuType",
               "DisplayName": "SKU Type",
               "Type": "MultipleChoice",
