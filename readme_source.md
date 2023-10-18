@@ -301,11 +301,14 @@ Now we can navigate to the Keyfactor platform and create the store type for Azur
 > be skipped entirely.
 
 - The below two fields are necessary if working with Keyvaults in Azure Cloud instances that are not the standard global public one (*.vault.azure.net)  If your vault instance(s) have the base url of `.vault.azure.net` then the next two fields can be omitted from the store type definition and the default global public cloud will be assumed.
+- - The "Azure Cloud" field refers to 
 
 | Name | Display Name | Type | Required |
 | ---- | ------------ | ---- | -------- |
-| AzureCloud | Azure Cloud | MultipleChoice | true |
+| AzureCloud[^azurecloud] | Azure Cloud | MultipleChoice | true |
 | PrivateEndpoint[^privateEndpoint] | Private Endpoint | String | true |
+
+[^azurecloud]: The Azure Cloud field, if necessary, should contain one of the following values: "china, germany, government".  This is the Azure Cloud instance your organization uses.  If using the standard "public" cloud, this field can be left blank or omitted entirely from the store type definition.
 
 [^privateEndpoint]: The Private Endpoint field should be used if you if have a custom url assigned to your keyvault resources and they are not accessible via the standard endpoint associated with the Azure Cloud instance (*.vault.azure.net, *.vault.azure.cn, etc.).  This field should contain the base url for your vault instance(s), excluding the vault name.
 
