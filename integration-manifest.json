@@ -44,20 +44,12 @@
           },
           "Properties": [
             {
-              "Name": "VaultName",
-              "DisplayName": "VaultName",
+              "Name": "TenantId",
+              "DisplayName": "Tenant Id",
               "Type": "String",
               "DependsOn": "",
               "DefaultValue": null,
-              "Required": true
-            },
-            {
-              "Name": "ResourceGroupName",
-              "DisplayName": "ResourceGroupName",
-              "Type": "String",
-              "DependsOn": "",
-              "DefaultValue": null,
-              "Required": true
+              "Required": false
             },
             {
               "Name": "SkuType",

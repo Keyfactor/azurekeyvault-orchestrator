@@ -44,3 +44,4 @@ jobs:
     uses: Keyfactor/actions/.github/workflows/update-catalog.yml@main
     secrets: 
       token: ${{ secrets.SDK_SYNC_PAT }}
+
