@@ -5,30 +5,17 @@ jobs:
   call-create-github-release-workflow:
     uses: Keyfactor/actions/.github/workflows/github-release.yml@main
 
-  get-manifest-properties:
-    runs-on: windows-latest
-    outputs:
-      update_catalog: ${{ steps.read-json.outputs.update_catalog }}
-      integration_type:  ${{ steps.read-json.outputs.integration_type }}
-    steps:
-      - uses: actions/checkout@v3
-      - name: Store json
-        id: read-json
-        shell: pwsh
-        run: |
-          $json = Get-Content integration-manifest.json | ConvertFrom-Json
-          $myvar = $json.update_catalog
-          echo "update_catalog=$myvar" | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
-          $myvar = $json.integration_type
-          echo "integration_type=$myvar" | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
+  call-assign-from-json-workflow:
+    uses: Keyfactor/actions/.github/workflows/assign-env-from-json.yml@main
 
   call-dotnet-build-and-release-workflow:
-    needs: [call-create-github-release-workflow]
+    needs: [call-create-github-release-workflow, call-assign-from-json-workflow]
     uses: Keyfactor/actions/.github/workflows/dotnet-build-and-release.yml@main
     with:
       release_version: ${{ needs.call-create-github-release-workflow.outputs.release_version }}
       release_url: ${{ needs.call-create-github-release-workflow.outputs.release_url }}
-      release_dir: AzureKeyVault\bin\Release
+      release_dir: ${{ needs.call-assign-from-json-workflow.outputs.release_dir }}
+
     secrets: 
       token: ${{ secrets.PRIVATE_PACKAGE_ACCESS }}
 
@@ -39,8 +26,8 @@ jobs:
       token: ${{ secrets.APPROVE_README_PUSH }}
 
   call-update-catalog-workflow:
-    needs: get-manifest-properties
-    if: needs.get-manifest-properties.outputs.update_catalog == 'True' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    needs: call-assign-from-json-workflow
+    if: needs.call-assign-from-json-workflow.outputs.update_catalog == 'True' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     uses: Keyfactor/actions/.github/workflows/update-catalog.yml@main
     secrets: 
       token: ${{ secrets.SDK_SYNC_PAT }}
