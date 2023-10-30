@@ -174,6 +174,13 @@ will return with latest store path format: `{subscription id}:{resource group na
 
 ### Configure the Azure Keyvault for client access
 
+At a minimum, the orchestrator needs access to the following URLs:
+- The instance of Keyfactor Command
+- 'login.microsoftonline.com' (or the endpoint corresponding to the Azure Global Cloud instance (Government, China, Germany).
+    - this is only technically necessary if they are using Service Principal authentication.
+- 'management.azure.com' for all management operations (Create, Add, Remove) as well as Discovery.
+    - This is necessary for authenticating the ARM client used to perform these operations.
+
 ### Authentication options
 
 The Azure KeyVault orchestrator plugin supports several authentication options:
