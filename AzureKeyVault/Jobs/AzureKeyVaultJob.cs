@@ -81,6 +81,8 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                     VaultProperties.ResourceGroupName = properties.ResourceGroupName ?? VaultProperties.ResourceGroupName;
                     VaultProperties.VaultName = properties.VaultName ?? VaultProperties.VaultName; // check the field in case of legacy paths.                    
                     VaultProperties.TenantId = VaultProperties.TenantId ?? config.CertificateStoreDetails?.ClientMachine; // Client Machine could be null in the case of managed identity.  That's ok.
+                    VaultProperties.AzureCloud = properties.AzureCloud ?? null;
+                    VaultProperties.PrivateEndpoint = properties.PrivateEndpoint ?? null;
 
                     string skuType = properties.SkuType;                    
                     VaultProperties.PremiumSKU = skuType?.ToLower() == "premium";
