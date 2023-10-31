@@ -1,4 +1,7 @@
 
+- 3.1.1
+  - Documentation updates
+
 - 3.1
   - Updated the Discovery job to support multiple tenants and all accessible subscriptions they contain
   - Added more detailed trace logging during the discovery process
