@@ -84,7 +84,6 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                     VaultProperties.AzureCloud = properties.AzureCloud ?? null;
                     VaultProperties.PrivateEndpoint = properties.PrivateEndpoint ?? null;
 
-
                     string skuType = properties.SkuType;                    
                     VaultProperties.PremiumSKU = skuType?.ToLower() == "premium";
                     VaultProperties.VaultRegion = properties.VaultRegion;
