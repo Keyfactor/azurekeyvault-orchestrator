@@ -32,17 +32,20 @@
       },
       "store_types": [
         {
-          "Name": "Azure Keyvault",
-          "ShortName": "AKV",
+          "BlueprintAllowed": false,
           "Capability": "AKV",
+          "CustomAliasAllowed": "Optional",
+          "EntryParameters": null,
+          "JobProperties": [],
           "LocalStore": false,
-          "SupportedOperations": {
-            "Add": true,
-            "Create": true,
-            "Discovery": true,
-            "Enrollment": false,
-            "Remove": true
+          "Name": "Azure Keyvault",
+          "PasswordOptions": {
+            "EntrySupported": false,
+            "StoreRequired": false,
+            "Style": "Default"
           },
+          "PowerShell": false,
+          "PrivateKeyAllowed": "Optional",
           "Properties": [
             {
               "Name": "TenantId",
@@ -85,20 +88,17 @@
               "Required": false
             }
           ],
-          "EntryParameters": null,
-          "PasswordOptions": {
-            "EntrySupported": false,
-            "StoreRequired": false,
-            "Style": "Default"
-          },
+          "ServerRequired": true,
+          "ShortName": "AKV",
           "StorePathType": "",
           "StorePathValue": "",
-          "PrivateKeyAllowed": "Optional",
-          "JobProperties": [],
-          "ServerRequired": true,
-          "PowerShell": false,
-          "BlueprintAllowed": false,
-          "CustomAliasAllowed": "Optional"
+          "SupportedOperations": {
+            "Add": true,
+            "Create": true,
+            "Discovery": true,
+            "Enrollment": false,
+            "Remove": true
+          }
         }
 
       ]
