@@ -1,3 +1,5 @@
+- 3.1.1
+  - Fixed bug that was preventing the full certificate chain from being sent to the Azure Keyvault API endpoint. 
 
 - 3.1
   - Updated the Discovery job to support multiple tenants and all accessible subscriptions they contain
