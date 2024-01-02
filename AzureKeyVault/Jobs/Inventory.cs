@@ -35,7 +35,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
             try
             {
-                logger.LogDebug($"Making Request for {0}...", VaultProperties.VaultURL);
+                logger.LogDebug($"Making Request for {VaultProperties.VaultURL}...");
 
                 inventoryItems = AzClient.GetCertificatesAsync().Result?.ToList();
 

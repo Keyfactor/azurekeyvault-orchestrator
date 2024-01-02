@@ -16,7 +16,7 @@ The Universal Orchestrator is the successor to the Windows Orchestrator. This Or
 
 ## Support for Azure Key Vault Orchestrator
 
-Azure Key Vault Orchestrator is supported by Keyfactor for Keyfactor customers. If you have a support issue, please open a support ticket with your Keyfactor representative.
+Azure Key Vault Orchestrator is supported by Keyfactor for Keyfactor customers. If you have a support issue, please open a support ticket via the Keyfactor Support Portal at https://support.keyfactor.com
 
 ###### To report a problem or suggest a new feature, use the **[Issues](../../issues)** tab. If you want to contribute actual bug fixes or proposed enhancements, use the **[Pull requests](../../pulls)** tab.
 
@@ -173,6 +173,16 @@ will return with latest store path format: `{subscription id}:{resource group na
 ---
 
 ### Configure the Azure Keyvault for client access
+
+At a minimum, the orchestrator needs access to the following URLs:
+- The instance of Keyfactor Command
+- 'login.microsoftonline.com' (or the endpoint corresponding to the Azure Global Cloud instance (Government, China, Germany).
+    - this is only technically necessary if they are using Service Principal authentication.
+- 'management.azure.com' for all management operations (Create, Add, Remove) as well as Discovery.
+    - This is necessary for authenticating the ARM client used to perform these operations.
+
+> :warning: Discovery jobs are not supported for KeyVaults located outside of the Azure Public cloud or Keyvaults accessed via a private url endpoint.  
+> All other job types implemented by this integration are supported for alternate Azure clouds and private endpoints.
 
 ### Authentication options
 
