@@ -7,10 +7,12 @@
   "link_github": true,
   "release_dir": "AzureKeyVault\\bin\\Release",
   "support_level": "kf-supported",
+  "release_dir": "AzureKeyVault\\bin\\Release",
   "description": "This integration allows the orchestrator to act as a client with access to an instance of the Azure Key Vault; allowing you to manage your certificates stored in the Azure Keyvault via Keyfactor.",
   "about": {
     "orchestrator": {
       "UOFramework": "10.1",
+      "keyfactor_platform_version": "9.1",
       "pam_support": true,
       "win": {
         "supportsCreateStore": true,
@@ -32,17 +34,20 @@
       },
       "store_types": [
         {
-          "Name": "Azure Keyvault",
-          "ShortName": "AKV",
+          "BlueprintAllowed": false,
           "Capability": "AKV",
+          "CustomAliasAllowed": "Optional",
+          "EntryParameters": null,
+          "JobProperties": [],
           "LocalStore": false,
-          "SupportedOperations": {
-            "Add": true,
-            "Create": true,
-            "Discovery": true,
-            "Enrollment": false,
-            "Remove": true
+          "Name": "Azure Keyvault",
+          "PasswordOptions": {
+            "EntrySupported": false,
+            "StoreRequired": false,
+            "Style": "Default"
           },
+          "PowerShell": false,
+          "PrivateKeyAllowed": "Optional",
           "Properties": [
             {
               "Name": "TenantId",
@@ -85,20 +90,17 @@
               "Required": false
             }
           ],
-          "EntryParameters": null,
-          "PasswordOptions": {
-            "EntrySupported": false,
-            "StoreRequired": false,
-            "Style": "Default"
-          },
+          "ServerRequired": true,
+          "ShortName": "AKV",
           "StorePathType": "",
           "StorePathValue": "",
-          "PrivateKeyAllowed": "Optional",
-          "JobProperties": [],
-          "ServerRequired": true,
-          "PowerShell": false,
-          "BlueprintAllowed": false,
-          "CustomAliasAllowed": "Optional"
+          "SupportedOperations": {
+            "Add": true,
+            "Create": true,
+            "Discovery": true,
+            "Enrollment": false,
+            "Remove": true
+          }
         }
 
       ]
