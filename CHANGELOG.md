@@ -1,3 +1,6 @@
+- 3.1.3
+  - Discovery now continues the search if an error is encountered during the process. 
+
 - 3.1.2
   - Fixed bug that was preventing the full certificate chain from being sent to the Azure Keyvault API endpoint. 
 
