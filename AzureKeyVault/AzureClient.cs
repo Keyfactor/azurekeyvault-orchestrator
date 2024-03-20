@@ -214,19 +214,19 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 var bytes = Convert.FromBase64String(contents);
 
                 var x509Collection = new X509Certificate2Collection();//(bytes, pfxPassword, X509KeyStorageFlags.Exportable);
-                
+
                 x509Collection.Import(bytes, pfxPassword, X509KeyStorageFlags.Exportable);
 
                 var certWithKey = x509Collection.Export(X509ContentType.Pkcs12);
 
-                
+
                 logger.LogTrace($"importing created x509 certificate named {1}", certName);
                 logger.LogTrace($"There are {x509Collection.Count} certificates in the chain.");
                 var cert = await CertClient.ImportCertificateAsync(new ImportCertificateOptions(certName, certWithKey));
-                                
+
                 // var fullCert = _secretClient.GetSecret(certName);
                 // The certificate must be retrieved as a secret from AKV in order to have the full chain included.
-                
+
                 return cert;
             }
             catch (Exception ex)
@@ -273,9 +273,12 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             return inventoryItems;
         }
 
-        public virtual async Task<List<string>> GetVaults()
+        public virtual async Task<(List<string>, List<string>)> GetVaults()
         {
             var vaultNames = new List<string>();
+            var warnings = new List<string>();
+            var searchSubscription = string.Empty;
+            var searchTenantId = string.Empty;
 
             try
             {
@@ -285,6 +288,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 }
                 VaultProperties.TenantIdsForDiscovery.ForEach(tenantId =>
                 {
+                    searchTenantId = tenantId;
                     logger.LogTrace($"getting ARM client for tenantId {tenantId}");
 
                     var mgmtClient = getArmClient(tenantId);
@@ -296,6 +300,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
                     foreach (var sub in allSubs)
                     {
+                        searchSubscription = sub.Id.SubscriptionId;
                         logger.LogTrace($"searching for vaults in subscription with ID {sub.Data.SubscriptionId}");
                         var vaults = sub.GetKeyVaults();
                         logger.LogTrace($"found {vaults.Count()} vaults.");
@@ -311,14 +316,17 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                         }
                     }
                 });
-
-                return vaultNames;
             }
             catch (Exception ex)
             {
-                logger.LogError("Error getting vaults.", ex);
-                throw;
+                logger.LogTrace($"Exception thrown during discovery. Log warning and continue.");
+                var warning = $"Exception thrown performing discovery on tenantId {searchTenantId} and subscription ID {searchSubscription}.  Exception message: {ex.Message}";
+                
+                logger.LogWarning(warning);
+                warnings.Add(warning);                
+                //throw;
             }
+            return (vaultNames, warnings);
         }
     }
 }
