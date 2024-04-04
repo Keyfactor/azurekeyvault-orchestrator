@@ -57,7 +57,6 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 }
             }
         }
-
         internal protected string VaultURL => $"https://{VaultName}.{VaultEndpoint}/";
     }
 }

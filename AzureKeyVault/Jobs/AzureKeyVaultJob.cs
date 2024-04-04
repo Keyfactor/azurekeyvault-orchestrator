@@ -31,7 +31,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 VaultProperties = new AkvProperties();
                 if (config.GetType().GetProperty("ClientMachine") != null) // Discovery job
                     VaultProperties.TenantId = config.ClientMachine;
-
+                
                 // ClientId can be omitted for system assigned managed identities, required for user assigned or service principal auth
                 VaultProperties.ClientId = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server UserName", config.ServerUsername);
 
@@ -48,7 +48,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
                     if (storePathFields.Length == 3)
                     { //using the latest (3 fields)
-                        logger.LogTrace($"storepath split by `:` into 3 parts.  {storePathFields}.  Using Using {{subscription id}}:{{resource group name}}:{{vault name}} format.");
+                        logger.LogTrace($"storepath split by `:` into 3 parts.  {storePathFields}.  Using {{subscription id}}:{{resource group name}}:{{vault name}} format.");
                         VaultProperties.SubscriptionId = storePathFields[0].Trim();
                         VaultProperties.ResourceGroupName = storePathFields[1].Trim();
                         VaultProperties.VaultName = storePathFields[2]?.Trim();
@@ -84,7 +84,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                     VaultProperties.AzureCloud = properties.AzureCloud ?? null;
                     VaultProperties.PrivateEndpoint = properties.PrivateEndpoint ?? null;
 
-                    string skuType = properties.SkuType;                    
+                    string skuType = properties.SkuType;
                     VaultProperties.PremiumSKU = skuType?.ToLower() == "premium";
                     VaultProperties.VaultRegion = properties.VaultRegion;
                     VaultProperties.VaultRegion = VaultProperties.VaultRegion?.ToLower();
@@ -109,7 +109,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
                     VaultProperties.TenantIdsForDiscovery.ForEach(tId => tId = tId.Trim());
                     VaultProperties.TenantId = VaultProperties.TenantId ?? VaultProperties.TenantIdsForDiscovery[0];
-                }                
+                }
                 AzClient ??= new AzureClient(VaultProperties);
             }
             catch (Exception ex)

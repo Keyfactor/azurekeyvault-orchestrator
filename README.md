@@ -323,7 +323,7 @@ The process for installing an extension for the universal orchestrator differs f
 
 1) Create a folder in the "extensions" folder of the Universal Orchestrator installation folder named "AKV" (the name is not important)
 
-     1) example: `C:\Program Files\Keyfactor\Keyfactor Orchestrator\\_AKV_
+     1) example: `C:\Program Files\Keyfactor\Keyfactor Orchestrator\extensions\_AKV_
 
 1) Copy the build output (if you compiled from source) or the contents of the zip file (if you downloaded the pre-compiled binaries) into this folder.
 
