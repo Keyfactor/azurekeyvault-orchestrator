@@ -59,7 +59,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                     logger.LogTrace("getting previously initialized certificate client");
                     return _certClient;
                 }
-
+                logger.LogTrace("initializing new instance of client.");
                 TokenCredential cred;
 
                 // check to see if they have selected to use an Azure Managed Identity for authentication.
@@ -72,14 +72,14 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
                     if (!string.IsNullOrEmpty(this.VaultProperties.ClientId)) // are they using a user assigned identity instead of a system assigned one (default)?
                     {
-                        logger.LogTrace("they provided client ID, so it is a user assigned managed identity (instead of system assigned)");
+                        logger.LogTrace("client ID provided, so it is a user assigned managed identity (instead of system assigned)");
                         credentialOptions.ManagedIdentityClientId = VaultProperties.ClientId;
                     }
                     cred = new DefaultAzureCredential(credentialOptions);
                 }
                 else
                 {
-                    logger.LogTrace("They are using a service principal to authenticate, generating the credentials");
+                    logger.LogTrace("Using a service principal to authenticate, generating the credentials");
                     cred = new ClientSecretCredential(VaultProperties.TenantId, VaultProperties.ClientId, VaultProperties.ClientSecret, new ClientSecretCredentialOptions() { AuthorityHost = AzureCloudEndpoint, AdditionallyAllowedTenants = { "*" } });
                     logger.LogTrace("generated credentials", cred);
                 }
@@ -214,19 +214,19 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 var bytes = Convert.FromBase64String(contents);
 
                 var x509Collection = new X509Certificate2Collection();//(bytes, pfxPassword, X509KeyStorageFlags.Exportable);
-                
+
                 x509Collection.Import(bytes, pfxPassword, X509KeyStorageFlags.Exportable);
 
                 var certWithKey = x509Collection.Export(X509ContentType.Pkcs12);
 
-                
+
                 logger.LogTrace($"importing created x509 certificate named {1}", certName);
                 logger.LogTrace($"There are {x509Collection.Count} certificates in the chain.");
                 var cert = await CertClient.ImportCertificateAsync(new ImportCertificateOptions(certName, certWithKey));
-                                
+
                 // var fullCert = _secretClient.GetSecret(certName);
                 // The certificate must be retrieved as a secret from AKV in order to have the full chain included.
-                
+
                 return cert;
             }
             catch (Exception ex)
@@ -236,26 +236,40 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             }
         }
 
+        public virtual async Task<KeyVaultCertificateWithPolicy> GetCertificate(string alias)
+        {
+            KeyVaultCertificateWithPolicy cert = null;
+
+            try { cert = await CertClient.GetCertificateAsync(alias); }
+            catch (Exception ex)
+            {
+                logger.LogError($"Error retreiving certificate with alias {alias}.  {ex.Message}", ex);
+                throw;
+            }
+
+            return cert;
+        }
+
         public virtual async Task<IEnumerable<CurrentInventoryItem>> GetCertificatesAsync()
         {
             List<CurrentInventoryItem> inventoryItems = new List<CurrentInventoryItem>();
-            Pageable<CertificateProperties> inventory = null;
+            AsyncPageable<CertificateProperties> inventory = null;
             try
             {
                 logger.LogTrace("calling GetPropertiesOfCertificates() on the Certificate Client", CertClient);
-                inventory = CertClient.GetPropertiesOfCertificates();
+                inventory = CertClient.GetPropertiesOfCertificatesAsync();
+
                 logger.LogTrace("got a response", inventory);
-                var certQuantity = inventory.Count();
             }
             catch (Exception ex)
             {
-                logger.LogError("Error performing inventory", ex);
+                logger.LogError($"Error performing inventory.  {ex.Message}", ex);
                 throw;
             }
 
             logger.LogTrace("retrieving each certificate from the response");
 
-            foreach (var certificate in inventory)
+            await foreach (var certificate in inventory)
             {
                 logger.LogTrace("getting details for the individual certificate", certificate);
                 var cert = await CertClient.GetCertificateAsync(certificate.Name);
@@ -273,9 +287,12 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             return inventoryItems;
         }
 
-        public virtual async Task<List<string>> GetVaults()
+        public virtual async Task<(List<string>, List<string>)> GetVaults()
         {
             var vaultNames = new List<string>();
+            var warnings = new List<string>();
+            var searchSubscription = string.Empty;
+            var searchTenantId = string.Empty;
 
             try
             {
@@ -285,6 +302,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 }
                 VaultProperties.TenantIdsForDiscovery.ForEach(tenantId =>
                 {
+                    searchTenantId = tenantId;
                     logger.LogTrace($"getting ARM client for tenantId {tenantId}");
 
                     var mgmtClient = getArmClient(tenantId);
@@ -296,6 +314,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
                     foreach (var sub in allSubs)
                     {
+                        searchSubscription = sub.Id.SubscriptionId;
                         logger.LogTrace($"searching for vaults in subscription with ID {sub.Data.SubscriptionId}");
                         var vaults = sub.GetKeyVaults();
                         logger.LogTrace($"found {vaults.Count()} vaults.");
@@ -311,14 +330,17 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                         }
                     }
                 });
-
-                return vaultNames;
             }
             catch (Exception ex)
             {
-                logger.LogError("Error getting vaults.", ex);
-                throw;
+                logger.LogTrace($"Exception thrown during discovery. Log warning and continue.");
+                var warning = $"Exception thrown performing discovery on tenantId {searchTenantId} and subscription ID {searchSubscription}.  Exception message: {ex.Message}";
+
+                logger.LogWarning(warning);
+                warnings.Add(warning);
+                //throw;
             }
+            return (vaultNames, warnings);
         }
     }
 }
