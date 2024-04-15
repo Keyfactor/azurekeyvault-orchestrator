@@ -9,9 +9,7 @@
 - 3.1.1
   - Updated documentation to clarify required orchestrator access.
 
-- 3.1.1
-  - Documentation updates 
-- 3.1
+- 3.1.0
   - Updated the Discovery job to support multiple tenants and all accessible subscriptions they contain
   - Added more detailed trace logging during the discovery process
   - Changed store path to be `subscription id : resource group name : vault name`
