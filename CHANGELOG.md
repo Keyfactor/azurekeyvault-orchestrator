@@ -1,12 +1,15 @@
+- 3.1.3
+  - Discovery now continues the search if an error is encountered during the process. 
+  - Fixed issue with overwrite box check being ignored when replacing cert in Keyvault
+  -	Now getting properties of certs as pageable during inventory to fix a timeout issue when querying for thousands of certs.
+
 - 3.1.2
   - Fixed bug that was preventing the full certificate chain from being sent to the Azure Keyvault API endpoint. 
 
 - 3.1.1
   - Updated documentation to clarify required orchestrator access.
 
-- 3.1.1
-  - Documentation updates 
-- 3.1
+- 3.1.0
   - Updated the Discovery job to support multiple tenants and all accessible subscriptions they contain
   - Added more detailed trace logging during the discovery process
   - Changed store path to be `subscription id : resource group name : vault name`

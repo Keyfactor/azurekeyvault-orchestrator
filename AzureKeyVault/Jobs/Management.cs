@@ -46,7 +46,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                     break;
                 case CertStoreOperationType.Add:
                     logger.LogDebug($"Begin Management > Add...");
-                    complete = PerformAddition(config.JobCertificate.Alias, config.JobCertificate.PrivateKeyPassword, config.JobCertificate.Contents, config.JobHistoryId);
+                    complete = PerformAddition(config.JobCertificate.Alias, config.JobCertificate.PrivateKeyPassword, config.JobCertificate.Contents, config.JobHistoryId, config.Overwrite);
                     break;
                 case CertStoreOperationType.Remove:
                     logger.LogDebug($"Begin Management > Remove...");
@@ -88,7 +88,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         #endregion
 
         #region Add
-        protected virtual JobResult PerformAddition(string alias, string pfxPassword, string entryContents, long jobHistoryId)
+        protected virtual JobResult PerformAddition(string alias, string pfxPassword, string entryContents, long jobHistoryId, bool overwrite)
         {
             var complete = new JobResult() { Result = OrchestratorJobStatusJobResult.Failure, JobHistoryId = jobHistoryId };
 
@@ -102,6 +102,20 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
                 try
                 {
+                    // if overwrite is unchecked, check for an existing cert first
+                    if (!overwrite)
+                    {
+                        logger.LogTrace($"checking for an existing cert with the alias {alias}");
+                        var existing = AzClient.GetCertificate(alias);
+                        if (existing != null && !overwrite)
+                        {
+                            var message = $"A certificate named {alias} already exists and the overwrite checkbox was unchecked.  No action was taken.";
+                            logger.LogWarning(message);
+                            complete.Result = OrchestratorJobStatusJobResult.Warning;
+                            complete.FailureMessage = message;
+                            return complete;
+                        }
+                    }
                     var cert = AzClient.ImportCertificateAsync(alias, entryContents, pfxPassword).Result;
 
                     // Ensure the return object has a AKV version tag, and Thumbprint
