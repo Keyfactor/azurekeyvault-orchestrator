@@ -93,8 +93,7 @@ For each job type performed by this orchestrator, we've included the minimally s
 <details><summary><h4>Create Vault permissions</h4></summary>
 In order to allow for the ability to create new Azure KeyVaults from within command, here is a role that defines the necessary permissions to do so.  If you will never be creating new Azure KeyVaults from within Command, then it is unnecessary to provide the authenticating entity with these permissions.
 
-> :warning: When creating a new KeyVault, we grant the creating entity the built-in "Key Vault Certificates Officer" role in order to be able to perform subsequent actions on the contents of the KeyVault.  [click here](https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/
-> role-based-access-control/built-in-roles/security.md#key-vault-certificates-officer) to see the list of permissions included in the Key Vault Certificates Officer built-in role.
+> :warning: When creating a new KeyVault, we grant the creating entity the built-in "Key Vault Certificates Officer" role in order to be able to perform subsequent actions on the contents of the KeyVault. [click here](github.com/MicrosoftDocs/azure-docs/blob/main/articles/role-based-access-control/built-in-roles/security.md#key-vault-certificates-officer) to see the list of permissions included in the Key Vault Certificates Officer built-in role.
 
 - built-in roles (both are required):
   - ["Key Vault Contributor"](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/security#key-vault-contributor)
@@ -177,7 +176,6 @@ If you are working with a smaller number of KeyVaults and/or do not plan on util
                 "Microsoft.Resources/deployments/*",
                 "Microsoft.Resources/subscriptions/resourceGroups/read",
                 "Microsoft.KeyVault/checkNameAvailability/read",
-                "Microsoft.Authorization/roleAssignments/write",
                 "Microsoft.KeyVault/locations/*/read",
                 "Microsoft.KeyVault/vaults/*/read",
                 "Microsoft.KeyVault/operations/read"
@@ -227,7 +225,7 @@ This set of permissions is the minimum required to support the basic operations 
                "Microsoft.KeyVault/deletedVaults/read",
                "Microsoft.KeyVault/locations/*/read",
                "Microsoft.KeyVault/vaults/*/read",
-               "Microsoft.KeyVault/operations/read"
+               "Microsoft.KeyVault/operations/read",
              ],
              "notActions": [],
              "dataActions": [
@@ -246,7 +244,7 @@ This set of permissions is the minimum required to support the basic operations 
 <summary><h4>Combined permissions for all operations (Create, Discovery, Inventory, Add and Remove certificates)</h4></summary>
 This section defines a single custom role that contains the necessary permissions to perform all operations allowed by this integration.  The minimum scope allowable is an individual resource group.  If this custom role is associated with the authenticating identity, it will be able to discover existing KeyVaults, Create new ones, and perform inventory as well as adding and removing certificates within the KeyVault.
 
-- minimally sufficient built-in roles (all are required): 
+- minimally sufficient built-in roles (all are required):
   - ["Key Vault Certificates Officer"](github.com/MicrosoftDocs/azure-docs/blob/main/articles/role-based-access-control/built-in-roles/security.md#key-vault-certificates-officer)
   - ["Key Vault Contributor"](learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/security#key-vault-contributor)
   - ["Key Vault Access Administrator"](learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/)
@@ -275,8 +273,11 @@ This section defines a single custom role that contains the necessary permission
                     "Microsoft.Resources/subscriptions/read",
                     "Microsoft.Authorization/roleAssignments/write",
                     "Microsoft.Management/managementGroups/read",
-                    "Microsoft.Resources/deployments/*",
-                    "Microsoft.KeyVault/vaults/*/read"
+                    "Microsoft.KeyVault/vaults/*/read",
+                    "Microsoft.KeyVault/checkNameAvailability/read",
+                    "Microsoft.KeyVault/deletedVaults/read",
+                    "Microsoft.KeyVault/locations/*/read",
+                    "Microsoft.KeyVault/operations/read"
                 ],
                 "notActions": [],
                 "dataActions": [
@@ -291,12 +292,11 @@ This section defines a single custom role that contains the necessary permission
 }
 ```
 
-</details>
-
 > :warning: You still may decide to split the capabilities into seperate roles in order to apply each of them to the lowest level scope
 > required.  We have tried to provide you with an absolute minimum set of required permissions necessary to perform each operation.  Refer to
 > your organization's security policies and/or consult with your information security team in order to determine which role combinations would
 > be most appropriate for your needs.
+</details>
 
 ### Endpoint Access / Firewall
 
