@@ -292,7 +292,10 @@ This section defines a single custom role that contains the necessary permission
 
 </details>
 
-:warning: You still may decide to split the capabilities into seperate roles in order to apply each of them to the lowest level scope required.  We have tried to provide you with an absolute minimum set of required permissions necessary to perform each operation.  Refer to your organization's security policies and/or consult with your information security team in order to determine which role combinations would be most appropriate for your needs.
+> :warning: You still may decide to split the capabilities into seperate roles in order to apply each of them to the lowest level scope
+> required.  We have tried to provide you with an absolute minimum set of required permissions necessary to perform each operation.  Refer to
+> your organization's security policies and/or consult with your information security team in order to determine which role combinations would
+> be most appropriate for your needs.
 
 ### Endpoint Access / Firewall
 
