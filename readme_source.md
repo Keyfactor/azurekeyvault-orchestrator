@@ -93,7 +93,8 @@ For each job type performed by this orchestrator, we've included the minimally s
 <details><summary><h4>Create Vault permissions</h4></summary>
 In order to allow for the ability to create new Azure KeyVaults from within command, here is a role that defines the necessary permissions to do so.  If you will never be creating new Azure KeyVaults from within Command, then it is unnecessary to provide the authenticating entity with these permissions.
 
-:warning: When creating a new KeyVault, we grant the creating entity the built-in "Key Vault Certificates Officer" role in order to be able to perform subsequent actions on the contents of the KeyVault.  [click here](https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/role-based-access-control/built-in-roles/security.md#key-vault-certificates-officer) to see the list of permissions included in the Key Vault Certificates Officer built-in role.
+> :warning: When creating a new KeyVault, we grant the creating entity the built-in "Key Vault Certificates Officer" role in order to be able to perform subsequent actions on the contents of the KeyVault.  [click here](https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/
+> role-based-access-control/built-in-roles/security.md#key-vault-certificates-officer) to see the list of permissions included in the Key Vault Certificates Officer built-in role.
 
 - built-in roles (both are required):
   - ["Key Vault Contributor"](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/security#key-vault-contributor)
