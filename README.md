@@ -174,6 +174,11 @@ will return with latest store path format: `{subscription id}:{resource group na
 
 In order for this orchestrator extension to be able to interact with your instances of Azure Keyvault, it will need to authenticate with a identity that has sufficient permissions to perform the jobs.  Microsoft Azure implements both Role Based Access Control (RBAC) and the classic Access Policy method.  RBAC is the preferred method, as it allows the assignment of granular level, inheretable access control on both the contents of the KeyVaults, as well as higher-level management operations.  For more information and a comparison of the two access control strategies, refer to [this article](learn.microsoft.com/en-us/azure/key-vault/general/rbac-access-policy).
 
+#### RBAC vs Access Policies
+Azure KeyVaults originally utilized access policies for permissions and since then, Microsoft has begun recommending Role Based Access Control (RBAC) as the preferred method of authorization.  
+As of this version, new KeyVaults created via this integration are created with Access Policy authorization.  This will change to RBAC in the next release.
+The access control type the KeyVault implements can be changed in the KeyVault configuration within the Azure Portal.  New KeyVaults created via Keyfactor by way of this integration will be accessible for subsequent actions regardless of the access control type.
+
 #### Configure Role Based Access Control (RBAC)
 
 In order to illustrate the minimum permissions that the authenticating entity (service principal or managed identity) requires, 
@@ -185,7 +190,9 @@ If you know that you will utilize all of the capabilities of this integration; t
 
 #### Built-in vs. custom roles
 
-The custom role definitions below are designed to contain the absolute minimum permissions required.  It is possible to use the built-in roles provided by Microsoft for these operations.  The built-in roles may contain more permissions than necessary.
+> :warning: The custom role definitions below are designed to contain the absolute minimum permissions required.  They are not intended to be used verbatim without consulting your organization's security team and/or Azure Administrator.  Keyfactor does not provide consulting on internal security practices.
+
+It is possible to use the built-in roles provided by Microsoft for these operations.  The built-in roles may contain more permissions than necessary.
 Whether to create custom role definitions or use an existing or pre-built role will depend on your organization's securuity requirements.  
 For each job type performed by this orchestrator, we've included the minimally sufficient built-in role name(s) along with our custom role definitions that limit permissions to the specific actions and scopes necessary.
 
@@ -231,6 +238,7 @@ the above condition limits the ability to assign roles to a single role only (Ke
                     "Microsoft.Resources/subscriptions/resourceGroups/read",
                     "Microsoft.Resources/subscriptions/read",
                     "Microsoft.Authorization/roleAssignments/write",
+                    "Microsoft.Authorization/roleAssignments/delete",
                     "Microsoft.Management/managementGroups/read",
                     "Microsoft.Resources/deployments/*",
                     "Microsoft.KeyVault/vaults/*/read"
@@ -371,6 +379,7 @@ This section defines a single custom role that contains the necessary permission
                     "Microsoft.Resources/subscriptions/resourceGroups/read",
                     "Microsoft.Resources/subscriptions/read",
                     "Microsoft.Authorization/roleAssignments/write",
+                    "Microsoft.Authorization/roleAssignments/delete",
                     "Microsoft.Management/managementGroups/read",
                     "Microsoft.KeyVault/vaults/*/read",
                     "Microsoft.KeyVault/checkNameAvailability/read",
