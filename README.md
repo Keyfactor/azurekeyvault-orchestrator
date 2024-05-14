@@ -232,16 +232,18 @@ the above condition limits the ability to assign roles to a single role only (Ke
         "permissions": [
             {
                 "actions": [
-                    "Microsoft.Authorization/*/read",
-                    "Microsoft.KeyVault/*",
+                    "Microsoft.KeyVault/vaults/*",
+                    "Microsoft.Authorization/*/read",                                        
+                    "Microsoft.KeyVault/register/action",                    
+                    "Microsoft.KeyVault/checkNameAvailability/read",
+                    "Microsoft.KeyVault/vaults/accessPolicies/*",
                     "Microsoft.Resources/deployments/*",
+                    "Microsoft.KeyVault/locations/*/read",
                     "Microsoft.Resources/subscriptions/resourceGroups/read",
-                    "Microsoft.Resources/subscriptions/read",
-                    "Microsoft.Authorization/roleAssignments/write",
-                    "Microsoft.Authorization/roleAssignments/delete",
                     "Microsoft.Management/managementGroups/read",
-                    "Microsoft.Resources/deployments/*",
-                    "Microsoft.KeyVault/vaults/*/read"
+                    "Microsoft.Resources/subscriptions/read",
+                    "Microsoft.Authorization/roleAssignments/*",                     
+                    "Microsoft.KeyVault/operations/read"                    
                 ],
                 "notActions": [],
                 "dataActions": [],
@@ -279,18 +281,14 @@ If you are working with a smaller number of KeyVaults and/or do not plan on util
             {
               "actions": [
                 "Microsoft.Authorization/*/read",
-                "Microsoft.KeyVault/*",
-                "Microsoft.Resources/deployments/*",
                 "Microsoft.Resources/subscriptions/resourceGroups/read",
                 "Microsoft.KeyVault/checkNameAvailability/read",
                 "Microsoft.KeyVault/locations/*/read",
-                "Microsoft.KeyVault/vaults/*/read",
+                "Microsoft.KeyVault/vaults/read",
                 "Microsoft.KeyVault/operations/read"
                ],
                "notActions": [],
                "dataActions": [        
-                 "Microsoft.KeyVault/vaults/*/read",
-                 "Microsoft.KeyVault/vaults/secrets/readMetadata/action"
                ],
                "notDataActions": [],  
              }
@@ -329,14 +327,15 @@ This set of permissions is the minimum required to support the basic operations 
                "Microsoft.Resources/deployments/*",
                "Microsoft.Resources/subscriptions/resourceGroups/read",
                "Microsoft.KeyVault/checkNameAvailability/read",
-               "Microsoft.KeyVault/deletedVaults/read",
                "Microsoft.KeyVault/locations/*/read",
                "Microsoft.KeyVault/vaults/*/read",
-               "Microsoft.KeyVault/operations/read",
+               "Microsoft.KeyVault/operations/read",               
              ],
              "notActions": [],
              "dataActions": [
                "Microsoft.KeyVault/vaults/certificates/*",
+               "Microsoft.KeyVault/vaults/certificatecas/*",
+               "Microsoft.KeyVault/vaults/keys/*",
                "Microsoft.KeyVault/vaults/secrets/readMetadata/action"
              ],
              "notDataActions": []
@@ -373,23 +372,26 @@ This section defines a single custom role that contains the necessary permission
         "permissions": [
             {
                 "actions": [
-                    "Microsoft.Authorization/*/read",
-                    "Microsoft.KeyVault/*",
+                    "Microsoft.KeyVault/vaults/*",
+                    "Microsoft.Authorization/*/read",                                        
+                    "Microsoft.KeyVault/register/action",                    
+                    "Microsoft.KeyVault/checkNameAvailability/read",
+                    "Microsoft.KeyVault/vaults/accessPolicies/*",
                     "Microsoft.Resources/deployments/*",
                     "Microsoft.Resources/subscriptions/resourceGroups/read",
-                    "Microsoft.Resources/subscriptions/read",
-                    "Microsoft.Authorization/roleAssignments/write",
-                    "Microsoft.Authorization/roleAssignments/delete",
                     "Microsoft.Management/managementGroups/read",
-                    "Microsoft.KeyVault/vaults/*/read",
-                    "Microsoft.KeyVault/checkNameAvailability/read",
-                    "Microsoft.KeyVault/deletedVaults/read",
+                    "Microsoft.Resources/subscriptions/read",
+                    "Microsoft.Authorization/roleAssignments/*",                     
+                    "Microsoft.KeyVault/operations/read"                                
                     "Microsoft.KeyVault/locations/*/read",
-                    "Microsoft.KeyVault/operations/read"
+                    "Microsoft.KeyVault/vaults/*/read",
                 ],
                 "notActions": [],
                 "dataActions": [
-                  "Microsoft.KeyVault/vaults/certificates/*",
+                   "Microsoft.KeyVault/vaults/certificates/*",
+                   "Microsoft.KeyVault/vaults/certificatecas/*",
+                   "Microsoft.KeyVault/vaults/keys/*",
+                   "Microsoft.KeyVault/vaults/secrets/*"
              ],
                 "notDataActions": [],
                 "conditionVersion": "2.0",
