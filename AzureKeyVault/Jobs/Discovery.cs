@@ -32,7 +32,6 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             InitializeStore(config);
 
             var complete = new JobResult() { JobHistoryId = config.JobHistoryId, Result = OrchestratorJobStatusJobResult.Failure };
-            var failureMessage = string.Empty;
             List<string> keyVaults, warnings;
 
             try
@@ -45,7 +44,6 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             {
                 complete.FailureMessage = ex.Message;
                 return complete;
-                throw;
             }
 
             // if there are no warnings return vaults and status of success

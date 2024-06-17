@@ -346,3 +346,4 @@ healthchecksdb
 /key.pem
 /cert.pem
 /cert.csr
+.config/dotnet-tools.json
