@@ -1,4 +1,7 @@
-- 3.1.3
+- - 3.1.4
+  - Update nuget dependencies (Azure Identity Packages)
+
+- - 3.1.3
   - Discovery now continues the search if an error is encountered during the process. 
   - Fixed issue with overwrite box check being ignored when replacing cert in Keyvault
   -	Now getting properties of certs as pageable during inventory to fix a timeout issue when querying for thousands of certs.

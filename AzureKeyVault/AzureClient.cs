@@ -18,7 +18,6 @@ using Azure.ResourceManager.KeyVault;
 using Azure.ResourceManager.KeyVault.Models;
 using Azure.ResourceManager.Resources;
 using Azure.Security.KeyVault.Certificates;
-using Azure.Security.KeyVault.Secrets;
 using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
@@ -29,7 +28,6 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
     public class AzureClient
     {
         internal protected virtual AkvProperties VaultProperties { get; set; }
-        private SecretClient _secretClient;
         private Uri AzureCloudEndpoint
         {
             get
@@ -82,8 +80,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                     logger.LogTrace("Using a service principal to authenticate, generating the credentials");
                     cred = new ClientSecretCredential(VaultProperties.TenantId, VaultProperties.ClientId, VaultProperties.ClientSecret, new ClientSecretCredentialOptions() { AuthorityHost = AzureCloudEndpoint, AdditionallyAllowedTenants = { "*" } });
                     logger.LogTrace("generated credentials", cred);
-                }
-                _secretClient = new SecretClient(new Uri(VaultProperties.VaultURL), credential: cred);
+                }                
                 _certClient = new CertificateClient(new Uri(VaultProperties.VaultURL), credential: cred);
 
                 return _certClient;
