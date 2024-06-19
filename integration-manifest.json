@@ -7,12 +7,11 @@
   "link_github": true,
   "release_dir": "AzureKeyVault\\bin\\Release",
   "support_level": "kf-supported",
-  "release_dir": "AzureKeyVault\\bin\\Release",
   "description": "This integration allows the orchestrator to act as a client with access to an instance of the Azure Key Vault; allowing you to manage your certificates stored in the Azure Keyvault via Keyfactor.",
   "about": {
     "orchestrator": {
       "UOFramework": "10.1",
-      "keyfactor_platform_version": "9.1",
+      "keyfactor_platform_version": "10.0",
       "pam_support": true,
       "win": {
         "supportsCreateStore": true,
