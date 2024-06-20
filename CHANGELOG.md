@@ -1,3 +1,6 @@
+- - 3.1.5
+  - Bug fix for error when adding new cert and overwrite is unchecked
+	
 - - 3.1.4
   - Update nuget dependencies (Azure Identity Packages)
 
