@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>netcoreapp3.1</TargetFramework>
@@ -23,7 +23,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Azure.Identity" Version="1.11.3" />
+		<PackageReference Include="Azure.Core" Version="1.40.0" />
+		<PackageReference Include="Azure.Identity" Version="1.12.0" />
 		<PackageReference Include="Azure.ResourceManager" Version="1.12.0" />
 		<PackageReference Include="Azure.ResourceManager.KeyVault" Version="1.2.3" />
 		<PackageReference Include="Azure.ResourceManager.Resources" Version="1.7.3" />
@@ -39,6 +40,8 @@
 		<PackageReference Include="Keyfactor.Orchestrators.IOrchestratorJobExtensions" Version="0.7.0" />
 		<PackageReference Include="Keyfactor.Platform.IPAMProvider" Version="1.0.0" />
 		<PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="6.0.0" />
+		<PackageReference Include="Microsoft.Identity.Client" Version="4.61.3" />
+		<PackageReference Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.61.3" />
 	</ItemGroup>
 
 	<ItemGroup>
