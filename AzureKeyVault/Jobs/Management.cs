@@ -106,8 +106,8 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                     if (!overwrite)
                     {
                         logger.LogTrace($"checking for an existing cert with the alias {alias}");
-                        var existing = AzClient.GetCertificate(alias);
-                        if (existing != null && !overwrite)
+                        var existing = AzClient.GetCertificate(alias).Result;
+                        if (existing != null)
                         {
                             var message = $"A certificate named {alias} already exists and the overwrite checkbox was unchecked.  No action was taken.";
                             logger.LogWarning(message);

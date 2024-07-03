@@ -80,7 +80,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                     logger.LogTrace("Using a service principal to authenticate, generating the credentials");
                     cred = new ClientSecretCredential(VaultProperties.TenantId, VaultProperties.ClientId, VaultProperties.ClientSecret, new ClientSecretCredentialOptions() { AuthorityHost = AzureCloudEndpoint, AdditionallyAllowedTenants = { "*" } });
                     logger.LogTrace("generated credentials", cred);
-                }                
+                }
                 _certClient = new CertificateClient(new Uri(VaultProperties.VaultURL), credential: cred);
 
                 return _certClient;
@@ -236,8 +236,18 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         public virtual async Task<KeyVaultCertificateWithPolicy> GetCertificate(string alias)
         {
             KeyVaultCertificateWithPolicy cert = null;
+            logger.LogTrace($"Attempting to retreive certificate with alias {alias} from the KeyVault.");
 
             try { cert = await CertClient.GetCertificateAsync(alias); }
+            catch (RequestFailedException rEx)
+            {
+                if (rEx.ErrorCode == "CertificateNotFound")
+                {
+                    // the request was successful, the cert does not exist.
+                    logger.LogTrace("The certificate was not found.");
+                    return null;
+                }
+            }
             catch (Exception ex)
             {
                 logger.LogError($"Error retreiving certificate with alias {alias}.  {ex.Message}", ex);
