@@ -1369,8 +1369,8 @@ The following table describes the required and optional fields for the `AKV` cer
 | --------- | ----------- | ------------------------- |
 | Category | Select "Azure Keyvault" or the customized certificate store name from the previous step. | |
 | Container | Optional container to associate certificate store with. | |
-| Client Machine | For the Client Machine field, enter the GUID of the tenant ID for the Azure Keyvault instance. For example: '123e4567-e89b-12d3-a456-426614174000'. | |
-| Store Path | For the Store Path field, enter the Subscription ID, Resource Group name, and Vault name in the format '{subscription id}:{resource group name}:{vault name}'. For example: '123e4567-e89b-12d3-a456-426614174000:myResourceGroup:myKeyVault'. | |
+| Client Machine | The GUID of the tenant ID of the Azure Keyvault instance; for example, '12345678-1234-1234-1234-123456789abc'. | |
+| Store Path | A string formatted as '{subscription id}:{resource group name}:{vault name}'; for example, '12345678-1234-1234-1234-123456789abc:myResourceGroup:myVault'. | |
 | Orchestrator | Select an approved orchestrator capable of managing `AKV` certificates. Specifically, one with the `AKV` capability. | |
 
 * **Using kfutil**
