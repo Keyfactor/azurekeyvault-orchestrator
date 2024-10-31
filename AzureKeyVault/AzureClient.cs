@@ -227,7 +227,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             }
             catch (Exception ex)
             {
-                logger.LogError($""ex.Message);
+                logger.LogError($"There was an error importing the certificate: {ex.Message}");
                 throw;
             }
         }
