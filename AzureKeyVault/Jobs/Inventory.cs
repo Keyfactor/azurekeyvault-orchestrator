@@ -35,15 +35,16 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
             try
             {
-                logger.LogDebug($"Making Request for {VaultProperties.VaultURL}...");
+                logger.LogTrace($"Making Request to get certificates from vault at {VaultProperties.VaultURL}");
 
                 inventoryItems = AzClient.GetCertificatesAsync().Result?.ToList();
 
-                logger.LogDebug($"Found {inventoryItems.Count()} Total Certificates in Azure Key Vault.");
+                logger.LogTrace($"Found {inventoryItems.Count()} Total Certificates in Azure Key Vault.");
             }
 
             catch (Exception ex)
             {
+                logger.LogTrace($"an error occured when performing inventory: {ex.Message}");
                 return new JobResult
                 {
                     Result = OrchestratorJobStatusJobResult.Failure,
@@ -51,7 +52,6 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                     FailureMessage = ex.Message
                 };
             }
-
             // upload to CMS
             callBack.DynamicInvoke(inventoryItems);
 

@@ -106,13 +106,13 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             }
             else
             {
-                logger.LogTrace("getting credentials for a service principal identity");
+                logger.LogTrace($"getting credentials for a service principal identity with id {VaultProperties.ClientId} in Azure Tenant {credentialOptions.TenantId}");
                 credential = new ClientSecretCredential(tenantId, VaultProperties.ClientId, VaultProperties.ClientSecret, credentialOptions);
-                logger.LogTrace("got credentials for service principal identity", credential);
+                logger.LogTrace("got credentials for service principal identity");
             }
 
             _mgmtClient = new ArmClient(credential);
-            logger.LogTrace("created management client", _mgmtClient);
+            logger.LogTrace("created management client");
             return _mgmtClient;
         }
 
@@ -149,7 +149,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         {
             try
             {
-                logger.LogInformation($"Begin create vault in Subscription {VaultProperties.SubscriptionId} with storepath = {VaultProperties.StorePath}");
+                logger.LogTrace($"Begin create vault in Subscription {VaultProperties.SubscriptionId} with storepath = {VaultProperties.StorePath}");
 
                 logger.LogTrace($"getting subscription info for provided subscription id {VaultProperties.SubscriptionId}");
 
@@ -170,7 +170,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                     }
                     catch (Exception ex)
                     {
-                        logger.LogError($"error retrieving default Azure Location: {ex.Message}", ex);
+                        logger.LogError($"error retrieving default Azure Location: {ex.Message}");
                         throw;
                     }
                 }
@@ -189,10 +189,9 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             }
             catch (Exception ex)
             {
-                logger.LogError("Error when trying to create Azure Keyvault", ex);
+                logger.LogError($"Error when trying to create Azure Keyvault {ex.Message}");
                 throw;
             }
-
         }
 
         public virtual async Task<KeyVaultCertificateWithPolicy> ImportCertificateAsync(string certName, string contents, string pfxPassword)
@@ -228,7 +227,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             }
             catch (Exception ex)
             {
-                logger.LogError(ex.Message);
+                logger.LogError($""ex.Message);
                 throw;
             }
         }
@@ -244,7 +243,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 if (rEx.ErrorCode == "CertificateNotFound")
                 {
                     // the request was successful, the cert does not exist.
-                    logger.LogTrace("The certificate was not found.");
+                    logger.LogTrace($"The certificate with alias {alias} was not found: {rEx.Message}");
                     return null;
                 }
             }
@@ -266,7 +265,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 logger.LogTrace("calling GetPropertiesOfCertificates() on the Certificate Client", CertClient);
                 inventory = CertClient.GetPropertiesOfCertificatesAsync();
 
-                logger.LogTrace("got a response", inventory);
+                logger.LogTrace($"got a pageable response");
             }
             catch (Exception ex)
             {
@@ -274,23 +273,48 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 throw;
             }
 
-            logger.LogTrace("retrieving each certificate from the response");
+            logger.LogTrace("retrieving pages for complete list..");
 
-            await foreach (var certificate in inventory)
+            var fullInventoryList = await inventory.ToListAsync();
+            var failedCount = 0;
+            Exception innerException = null;
+
+            logger.LogTrace($"compiled full inventory list of {fullInventoryList.Count()} certificate(s)");
+
+            foreach (var certificate in fullInventoryList)
             {
-                logger.LogTrace("getting details for the individual certificate", certificate);
-                var cert = await CertClient.GetCertificateAsync(certificate.Name);
-                logger.LogTrace("got certificate response", cert);
-
-                inventoryItems.Add(new CurrentInventoryItem()
+                logger.LogTrace($"getting details for the individual certificate with id: {certificate.Id} and name: {certificate.Name}");
+                try
                 {
-                    Alias = cert.Value.Name,
-                    PrivateKeyEntry = true,
-                    ItemStatus = OrchestratorInventoryItemStatus.Unknown,
-                    UseChainLevel = true,
-                    Certificates = new string[] { Convert.ToBase64String(cert.Value.Cer) }
-                });
+                    var cert = await CertClient.GetCertificateAsync(certificate.Name);
+                    logger.LogTrace($"got certificate details");
+
+                    inventoryItems.Add(new CurrentInventoryItem()
+                    {
+                        Alias = cert.Value.Name,
+                        PrivateKeyEntry = true,
+                        ItemStatus = OrchestratorInventoryItemStatus.Unknown,
+                        UseChainLevel = true,
+                        Certificates = [Convert.ToBase64String(cert.Value.Cer)]
+                    });
+                }
+                catch (Exception ex)
+                {
+                    failedCount++;
+                    innerException = ex;
+                    logger.LogError($"Failed to retreive details for certificate {certificate.Name}.  Exception: {ex.Message}");                    
+                    // continuing with inventory instead of throwing, in case there's an issue with a single certificate
+                }
             }
+
+            if (failedCount == fullInventoryList.Count()) {
+                throw new Exception("Unable to retreive details for certificates.", innerException);
+            }
+
+            if (failedCount > 0) {
+                logger.LogWarning($"{failedCount} of {fullInventoryList.Count()} certificates were not able to be retreieved.  Please review the errors.");
+            }
+
             return inventoryItems;
         }
 
@@ -333,6 +357,8 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                             var subId = splitId[1];
                             var resourceGroupName = splitId[3];
                             var vaultName = splitId.Last();
+                            var vaultStorePath = $"{subId}:{resourceGroupName}:{vaultName}";
+                            logger.LogTrace($"found keyvault, using storepath {vaultStorePath}");
                             vaultNames.Add($"{subId}:{resourceGroupName}:{vaultName}");
                         }
                     }

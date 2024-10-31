@@ -28,7 +28,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
         public JobResult ProcessJob(ManagementJobConfiguration config)
         {
-            logger.LogDebug($"Begin Management...");
+            logger.LogDebug($"Begin Management job");
 
             InitializeStore(config);
 

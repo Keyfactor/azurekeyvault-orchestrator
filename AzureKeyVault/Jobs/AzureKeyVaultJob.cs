@@ -31,15 +31,28 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 VaultProperties = new AkvProperties();
                 if (config.GetType().GetProperty("ClientMachine") != null) // Discovery job
                     VaultProperties.TenantId = config.ClientMachine;
-                
+
+                logger.LogTrace($"Got tenant ID {VaultProperties.TenantId} from ClientMachine field.");
                 // ClientId can be omitted for system assigned managed identities, required for user assigned or service principal auth
                 VaultProperties.ClientId = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server UserName", config.ServerUsername);
+
+                logger.LogTrace($"Using client id {VaultProperties.ClientId}");
 
                 // ClientSecret can be omitted for managed identities, required for service principal auth
                 VaultProperties.ClientSecret = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server Password", config.ServerPassword);
 
+                if (VaultProperties.ClientSecret == null)
+                {
+                    logger.LogTrace("No client secret provided, assuming Managed Identity authentication");
+                }
+                else
+                {
+                    logger.LogTrace("client secret provided, assuming Service Principal authentication");
+                }
+
                 if (config.GetType().GetProperty("CertificateStoreDetails") != null) // anything except a discovery job
                 {
+                    logger.LogTrace("CertificateStoreDetails is not empty, (non-Discovery job) applying values..");
                     VaultProperties.StorePath = config.CertificateStoreDetails?.StorePath;
                     dynamic properties = JsonConvert.DeserializeObject(config.CertificateStoreDetails.Properties.ToString());
 
@@ -48,7 +61,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
                     if (storePathFields.Length == 3)
                     { //using the latest (3 fields)
-                        logger.LogTrace($"storepath split by `:` into 3 parts.  {storePathFields}.  Using {{subscription id}}:{{resource group name}}:{{vault name}} format.");
+                        logger.LogTrace("storepath split by `:` into 3 parts. subscription ID: {{subscription id}}:{{resource group name}}:{{vault name}}.");
                         VaultProperties.SubscriptionId = storePathFields[0].Trim();
                         VaultProperties.ResourceGroupName = storePathFields[1].Trim();
                         VaultProperties.VaultName = storePathFields[2]?.Trim();
@@ -59,8 +72,8 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                     { // using previous version (2 fields)
                         logger.LogTrace($"storepath split by `:` into 2 parts.  {storePathFields}.  Using {{subscription id}}:{{vault name}} format.");
                         VaultProperties.SubscriptionId = storePathFields[0].Trim();
-                        VaultProperties.VaultName = storePathFields[0].Trim();
-                        VaultProperties.SubscriptionId = properties.SubscriptionId;
+                        VaultProperties.VaultName = storePathFields[1].Trim();
+                        VaultProperties.ResourceGroupName = properties.ResourceGroupName;
                     }
 
                     // support legacy store path <full azure resource identifier>
@@ -70,23 +83,25 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                         var legacyPathComponents = VaultProperties.StorePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
                         if (legacyPathComponents.Length == 8) // they are using the full resource path
                         {
-                            logger.LogTrace($"storepath split by `/`.  {storePathFields}.  Using {{subscription id}}:{{vault name}} format.");
+                            logger.LogTrace($"full resource identifier provided {storePathFields}.  Using {{subscription id}}:{{vault name}} format.");
                             VaultProperties.SubscriptionId = legacyPathComponents[1];
                             VaultProperties.ResourceGroupName = legacyPathComponents[3];
                             VaultProperties.VaultName = legacyPathComponents[7];
                         }
                     }
 
-                    VaultProperties.SubscriptionId = properties.SubscriptionId ?? VaultProperties.SubscriptionId;
-                    VaultProperties.ResourceGroupName = properties.ResourceGroupName ?? VaultProperties.ResourceGroupName;
-                    VaultProperties.VaultName = properties.VaultName ?? VaultProperties.VaultName; // check the field in case of legacy paths.                    
-                    VaultProperties.TenantId = VaultProperties.TenantId ?? config.CertificateStoreDetails?.ClientMachine; // Client Machine could be null in the case of managed identity.  That's ok.
-                    VaultProperties.AzureCloud = properties.AzureCloud ?? null;
-                    VaultProperties.PrivateEndpoint = properties.PrivateEndpoint ?? null;
+                    logger.LogTrace($"Parsed storepath: Subscription ID: {VaultProperties.SubscriptionId}, ResourceGroupName: {VaultProperties.ResourceGroupName}, VaultName: {VaultProperties.VaultName}");
 
-                    string skuType = properties.SkuType;
+                    VaultProperties.SubscriptionId = properties.SubscriptionId ?? VaultProperties.SubscriptionId;
+                    VaultProperties.ResourceGroupName = !string.IsNullOrEmpty(properties.ResourceGroupName) ? properties.ResourceGroupName : VaultProperties.ResourceGroupName;
+                    VaultProperties.VaultName = properties.VaultName ?? VaultProperties.VaultName; // check the field in case of legacy paths.                    
+                    VaultProperties.TenantId = !string.IsNullOrEmpty(VaultProperties.TenantId) ? VaultProperties.TenantId : config.CertificateStoreDetails?.ClientMachine; // Client Machine could be null in the case of managed identity.  That's ok.
+                    VaultProperties.AzureCloud = !string.IsNullOrEmpty(properties.AzureCloud) ? properties.AzureCloud : VaultProperties.AzureCloud;
+                    VaultProperties.PrivateEndpoint = !string.IsNullOrEmpty(properties.PrivateEndpoint) ? properties.PrivateEndpoint : VaultProperties.PrivateEndpoint;
+
+                    string skuType = !string.IsNullOrEmpty(properties.SkuType) ? properties.SkuType : null;
                     VaultProperties.PremiumSKU = skuType?.ToLower() == "premium";
-                    VaultProperties.VaultRegion = properties.VaultRegion;
+                    VaultProperties.VaultRegion = !string.IsNullOrEmpty(properties.VaultRegion) ? properties.VaultRegion : VaultProperties.VaultRegion;
                     VaultProperties.VaultRegion = VaultProperties.VaultRegion?.ToLower();
                 }
                 else // discovery job : Discovery only works on the Global Public Azure cloud because we do not have a way to pass the Azure Cloud instance value during a discovery job.
@@ -98,7 +113,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
                     if (!string.IsNullOrEmpty(dirs))
                     {
-                        // parse the list of tenant ids to perform discovery on                                        
+                        // parse the list of tenant ids to perform discovery on                                                                
                         VaultProperties.TenantIdsForDiscovery.AddRange(dirs.Split(','));
                     }
                     else
@@ -108,15 +123,17 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                     }
 
                     VaultProperties.TenantIdsForDiscovery.ForEach(tId => tId = tId.Trim());
-                    VaultProperties.TenantId = VaultProperties.TenantId ?? VaultProperties.TenantIdsForDiscovery[0];
+                    VaultProperties.TenantId = VaultProperties.TenantId ?? VaultProperties.TenantIdsForDiscovery[0]; // if VaultProperties.TenantId is null here, they are using Managed Identity auth and no TenantID field; 
                 }
                 AzClient ??= new AzureClient(VaultProperties);
             }
             catch (Exception ex)
             {
-                logger.LogError("Error initializing store", ex.Message);
+                logger.LogError($"Error initializing store: {ex.Message}");
                 throw;
             }
+
+            logger.LogTrace($"Initialization complete, configuration values set.");
         }
     }
 }
