@@ -93,15 +93,15 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                     logger.LogTrace($"Parsed storepath: Subscription ID: {VaultProperties.SubscriptionId}, ResourceGroupName: {VaultProperties.ResourceGroupName}, VaultName: {VaultProperties.VaultName}");
 
                     VaultProperties.SubscriptionId = properties.SubscriptionId ?? VaultProperties.SubscriptionId;
-                    VaultProperties.ResourceGroupName = !string.IsNullOrEmpty(properties.ResourceGroupName) ? properties.ResourceGroupName : VaultProperties.ResourceGroupName;
+                    VaultProperties.ResourceGroupName = !string.IsNullOrEmpty(properties.ResourceGroupName as string) ? properties.ResourceGroupName : VaultProperties.ResourceGroupName;
                     VaultProperties.VaultName = properties.VaultName ?? VaultProperties.VaultName; // check the field in case of legacy paths.                    
                     VaultProperties.TenantId = !string.IsNullOrEmpty(VaultProperties.TenantId) ? VaultProperties.TenantId : config.CertificateStoreDetails?.ClientMachine; // Client Machine could be null in the case of managed identity.  That's ok.
-                    VaultProperties.AzureCloud = !string.IsNullOrEmpty(properties.AzureCloud) ? properties.AzureCloud : VaultProperties.AzureCloud;
-                    VaultProperties.PrivateEndpoint = !string.IsNullOrEmpty(properties.PrivateEndpoint) ? properties.PrivateEndpoint : VaultProperties.PrivateEndpoint;
+                    VaultProperties.AzureCloud = !string.IsNullOrEmpty(properties.AzureCloud as string) ? properties.AzureCloud : VaultProperties.AzureCloud;
+                    VaultProperties.PrivateEndpoint = !string.IsNullOrEmpty(properties.PrivateEndpoint as string) ? properties.PrivateEndpoint : VaultProperties.PrivateEndpoint;
 
-                    string skuType = !string.IsNullOrEmpty(properties.SkuType) ? properties.SkuType : null;
+                    string skuType = !string.IsNullOrEmpty(properties.SkuType as string) ? properties.SkuType : null;
                     VaultProperties.PremiumSKU = skuType?.ToLower() == "premium";
-                    VaultProperties.VaultRegion = !string.IsNullOrEmpty(properties.VaultRegion) ? properties.VaultRegion : VaultProperties.VaultRegion;
+                    VaultProperties.VaultRegion = !string.IsNullOrEmpty(properties.VaultRegion as string) ? properties.VaultRegion : VaultProperties.VaultRegion;
                     VaultProperties.VaultRegion = VaultProperties.VaultRegion?.ToLower();
                 }
                 else // discovery job : Discovery only works on the Global Public Azure cloud because we do not have a way to pass the Azure Cloud instance value during a discovery job.
