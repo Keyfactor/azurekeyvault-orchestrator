@@ -37,8 +37,8 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
                     case "china":
                         return AzureAuthorityHosts.AzureChina;
-                    case "germany":
-                        return AzureAuthorityHosts.AzureGermany;
+                    //case "germany":
+                    //    return AzureAuthorityHosts.AzureGermany; // germany is no longer a valid azure authority host as of 2021
                     case "government":
                         return AzureAuthorityHosts.AzureGovernment;
                     default:
@@ -262,7 +262,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             AsyncPageable<CertificateProperties> inventory = null;
             try
             {
-                logger.LogTrace("calling GetPropertiesOfCertificates() on the Certificate Client", CertClient);
+                logger.LogTrace("calling GetPropertiesOfCertificates() on the Certificate Client");
                 inventory = CertClient.GetPropertiesOfCertificatesAsync();
 
                 logger.LogTrace($"got a pageable response");
