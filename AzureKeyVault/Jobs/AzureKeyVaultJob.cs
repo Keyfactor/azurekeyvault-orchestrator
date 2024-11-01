@@ -32,7 +32,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 if (config.GetType().GetProperty("ClientMachine") != null) // Discovery job
                     VaultProperties.TenantId = config.ClientMachine;
 
-                logger.LogTrace($"Got tenant ID {VaultProperties.TenantId} from ClientMachine field.");
+                if (!string.IsNullOrEmpty(VaultProperties.TenantId)) { logger.LogTrace($"Got tenant ID {VaultProperties.TenantId} from ClientMachine field."); }
                 // ClientId can be omitted for system assigned managed identities, required for user assigned or service principal auth
                 VaultProperties.ClientId = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server UserName", config.ServerUsername);
 
