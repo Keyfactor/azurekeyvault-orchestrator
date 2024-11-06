@@ -1,3 +1,7 @@
+- 3.1.6
+  - Preventing CertStore parameters from getting used if present but empty. 	
+  - Improved trace logging
+	 
 - 3.1.5
   - Bug fix for error when adding new cert and overwrite is unchecked
 	

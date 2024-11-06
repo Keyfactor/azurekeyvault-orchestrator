@@ -36,7 +36,7 @@
           "BlueprintAllowed": false,
           "Capability": "AKV",
           "CustomAliasAllowed": "Optional",
-          "EntryParameters": null,
+          "EntryParameters": [],
           "JobProperties": [],
           "LocalStore": false,
           "Name": "Azure Keyvault",
@@ -53,7 +53,6 @@
               "DisplayName": "Tenant Id",
               "Type": "String",
               "DependsOn": "",
-              "DefaultValue": null,
               "Required": false
             },
             {
@@ -77,7 +76,7 @@
               "DisplayName": "Azure Cloud",
               "Type": "MultipleChoice",
               "DependsOn": "",
-              "DefaultValue": "public,china,germany,government",
+              "DefaultValue": "public,china,government",
               "Required": false
             },
             {
@@ -85,7 +84,6 @@
               "DisplayName": "Private KeyVault Endpoint",
               "Type": "String",
               "DependsOn": "",
-              "DefaultValue": null,
               "Required": false
             }
           ],
