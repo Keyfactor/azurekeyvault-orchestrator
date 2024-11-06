@@ -37,7 +37,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             {
                 if (VaultProperties.TenantId == null) throw new MissingFieldException("Need to set Tenant Id value in directories to search for discovery jobs that use a system managed identity.");
 
-                (keyVaults, warnings) = AzClient.GetVaults().Result;
+                (keyVaults, warnings) = AzClient.GetVaults();
             }
             catch (Exception ex)
             {

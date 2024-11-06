@@ -79,7 +79,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 {
                     logger.LogTrace("Using a service principal to authenticate, generating the credentials");
                     cred = new ClientSecretCredential(VaultProperties.TenantId, VaultProperties.ClientId, VaultProperties.ClientSecret, new ClientSecretCredentialOptions() { AuthorityHost = AzureCloudEndpoint, AdditionallyAllowedTenants = { "*" } });
-                    logger.LogTrace("generated credentials", cred);
+                    logger.LogTrace("generated credentials");
                 }
                 _certClient = new CertificateClient(new Uri(VaultProperties.VaultURL), credential: cred);
 
@@ -295,7 +295,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                         PrivateKeyEntry = true,
                         ItemStatus = OrchestratorInventoryItemStatus.Unknown,
                         UseChainLevel = true,
-                        Certificates = [Convert.ToBase64String(cert.Value.Cer)]
+                        Certificates =  new List<string>() { Convert.ToBase64String(cert.Value.Cer) }
                     });
                 }
                 catch (Exception ex)
@@ -318,7 +318,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             return inventoryItems;
         }
 
-        public virtual async Task<(List<string>, List<string>)> GetVaults()
+        public virtual (List<string>, List<string>) GetVaults()
         {
             var vaultNames = new List<string>();
             var warnings = new List<string>();
