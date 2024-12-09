@@ -273,11 +273,16 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 throw;
             }
 
-            logger.LogTrace("retrieving pages for complete list..");
+            logger.LogTrace("iterating over result pages for complete list..");
 
-            var fullInventoryList = await inventory.ToListAsync();
+            var fullInventoryList = new List<CertificateProperties>();
             var failedCount = 0;
             Exception innerException = null;
+            
+            await foreach (var cert in inventory) {
+                logger.LogTrace($"adding cert with ID: {cert.Id} to the list.");
+                fullInventoryList.Add(cert); // convert to list from pages
+            }
 
             logger.LogTrace($"compiled full inventory list of {fullInventoryList.Count()} certificate(s)");
 
