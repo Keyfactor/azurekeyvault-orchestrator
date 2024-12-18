@@ -81,7 +81,8 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                     cred = new ClientSecretCredential(VaultProperties.TenantId, VaultProperties.ClientId, VaultProperties.ClientSecret, new ClientSecretCredentialOptions() { AuthorityHost = AzureCloudEndpoint, AdditionallyAllowedTenants = { "*" } });
                     logger.LogTrace("generated credentials");
                 }
-                _certClient = new CertificateClient(new Uri(VaultProperties.VaultURL), credential: cred);
+                var certClientOptions = new CertificateClientOptions() { DisableChallengeResourceVerification = true }; // without this, requests fail when running behind a proxy https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/keyvault/TROUBLESHOOTING.md#incorrect-challenge-resource 
+                _certClient = new CertificateClient(new Uri(VaultProperties.VaultURL), credential: cred, certClientOptions);
 
                 return _certClient;
             }
@@ -111,7 +112,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 logger.LogTrace("got credentials for service principal identity");
             }
 
-            _mgmtClient = new ArmClient(credential);
+            _mgmtClient = new ArmClient(credential, VaultProperties.SubscriptionId, new ArmClientOptions() { });
             logger.LogTrace("created management client");
             return _mgmtClient;
         }
@@ -219,10 +220,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 logger.LogTrace($"importing created x509 certificate named {1}", certName);
                 logger.LogTrace($"There are {x509Collection.Count} certificates in the chain.");
                 var cert = await CertClient.ImportCertificateAsync(new ImportCertificateOptions(certName, certWithKey));
-
-                // var fullCert = _secretClient.GetSecret(certName);
-                // The certificate must be retrieved as a secret from AKV in order to have the full chain included.
-
+                
                 return cert;
             }
             catch (Exception ex)
@@ -278,8 +276,9 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             var fullInventoryList = new List<CertificateProperties>();
             var failedCount = 0;
             Exception innerException = null;
-            
-            await foreach (var cert in inventory) {
+
+            await foreach (var cert in inventory)
+            {
                 logger.LogTrace($"adding cert with ID: {cert.Id} to the list.");
                 fullInventoryList.Add(cert); // convert to list from pages
             }
@@ -300,23 +299,25 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                         PrivateKeyEntry = true,
                         ItemStatus = OrchestratorInventoryItemStatus.Unknown,
                         UseChainLevel = true,
-                        Certificates =  new List<string>() { Convert.ToBase64String(cert.Value.Cer) }
+                        Certificates = new List<string>() { Convert.ToBase64String(cert.Value.Cer) }
                     });
                 }
                 catch (Exception ex)
                 {
                     failedCount++;
                     innerException = ex;
-                    logger.LogError($"Failed to retreive details for certificate {certificate.Name}.  Exception: {ex.Message}");                    
+                    logger.LogError($"Failed to retreive details for certificate {certificate.Name}.  Exception: {ex.Message}");
                     // continuing with inventory instead of throwing, in case there's an issue with a single certificate
                 }
             }
 
-            if (failedCount == fullInventoryList.Count()) {
+            if (failedCount == fullInventoryList.Count())
+            {
                 throw new Exception("Unable to retreive details for certificates.", innerException);
             }
 
-            if (failedCount > 0) {
+            if (failedCount > 0)
+            {
                 logger.LogWarning($"{failedCount} of {fullInventoryList.Count()} certificates were not able to be retreieved.  Please review the errors.");
             }
 
