@@ -24,7 +24,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             PamSecretResolver = resolver;
             logger = LogHandler.GetClassLogger<Inventory>();
         }
-        
+
         public JobResult ProcessJob(InventoryJobConfiguration config, SubmitInventoryUpdate callBack)
         {
             logger.LogDebug($"Begin Inventory...");
@@ -44,7 +44,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
             catch (Exception ex)
             {
-                logger.LogTrace($"an error occured when performing inventory: {ex.Message}");
+                logger.LogTrace($"an error occured when performing inventory: {LogHandler.FlattenException(ex)}");
                 return new JobResult
                 {
                     Result = OrchestratorJobStatusJobResult.Failure,
