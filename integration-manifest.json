@@ -5,7 +5,8 @@
   "status": "production",
   "update_catalog": true,
   "link_github": true,
-  "release_dir": "AzureKeyVault\\bin\\Release",
+  "release_dir": "AzureKeyVault/bin/Release",
+  "release_project": "AzureKeyVault/AzureKeyVault.csproj",
   "support_level": "kf-supported",
   "description": "This integration allows the orchestrator to act as a client with access to an instance of the Azure Key Vault; allowing you to manage your certificates stored in the Azure Keyvault via Keyfactor.",
   "about": {
@@ -13,33 +14,24 @@
       "UOFramework": "10.1",
       "keyfactor_platform_version": "10.0",
       "pam_support": true,
-      "win": {
-        "supportsCreateStore": true,
-        "supportsDiscovery": true,
-        "supportsManagementAdd": true,
-        "supportsManagementRemove": true,
-        "supportsReenrollment": false,
-        "supportsInventory": true,
-        "platformSupport": "Unused"
-      },
-      "linux": {
-        "supportsCreateStore": true,
-        "supportsDiscovery": true,
-        "supportsManagementAdd": true,
-        "supportsManagementRemove": true,
-        "supportsReenrollment": false,
-        "supportsInventory": true,
-        "platformSupport": "Unused"
-      },
       "store_types": [
         {
+          "Name": "Azure Keyvault",
+          "ShortName": "AKV",
+          "SupportedOperations": {
+            "Add": true,
+            "Create": true,
+            "Discovery": true,
+            "Enrollment": false,
+            "Remove": true
+          },
+          "ServerRequired": true,
           "BlueprintAllowed": false,
           "Capability": "AKV",
           "CustomAliasAllowed": "Optional",
           "EntryParameters": [],
           "JobProperties": [],
           "LocalStore": false,
-          "Name": "Azure Keyvault",
           "PasswordOptions": {
             "EntrySupported": false,
             "StoreRequired": false,
@@ -49,57 +41,77 @@
           "PrivateKeyAllowed": "Optional",
           "Properties": [
             {
+              "Name": "ServerUsername",
+              "DisplayName": "Server Username",
+              "Type": "Secret",
+              "DependsOn": "",
+              "DefaultValue": "",
+              "Required": true,
+              "IsPAMEligible": true,
+              "Description": "The application (service principal) ID that will be used to authenticate to Azure"
+            },
+            {
+              "Name": "ServerPassword",
+              "DisplayName": "Server Password",
+              "Type": "Secret",
+              "DependsOn": "",
+              "DefaultValue": "",
+              "Required": true,
+              "IsPAMEligible": true,
+              "Description": "The client secret that will be used to authenticate into Azure"
+            },
+            {
               "Name": "TenantId",
               "DisplayName": "Tenant Id",
               "Type": "String",
               "DependsOn": "",
-              "Required": false
+              "IsPAMEligible": false,
+              "Required": false,
+              "Description": "Tenant ID of new Azure Keyvault being created.  Not required if not creating new Keyvault."
             },
             {
               "Name": "SkuType",
               "DisplayName": "SKU Type",
               "Type": "MultipleChoice",
               "DependsOn": "",
+              "IsPAMEligible": false,
               "DefaultValue": "standard,premium",
-              "Required": false
+              "Required": false,
+              "Description": "The SkuType determines the service tier when creating a new instance of Azure KeyVault via the platform. Valid values include 'premium' and 'standard'. If either option should be available when creating a new KeyVault from the Command platform via creating a new certificate store, then the value to enter for the multiple choice options should be 'standard,premium'. If your organization requires that one or the other option should always be used, you can limit the options to a single value ('premium' or 'standard'). If not selected, 'standard' is used when creating a new KeyVault.  Not required if not creating a new Keyvault."
             },
             {
               "Name": "VaultRegion",
               "DisplayName": "Vault Region",
               "Type": "MultipleChoice",
               "DependsOn": "",
+              "IsPAMEligible": false,
               "DefaultValue": "eastus,eastus2,westus2,westus3,westus",
-              "Required": false
+              "Required": false,
+              "Description": "The Vault Region field is only important when creating a new Azure KeyVault from the Command Platform. This is the region that the newly created vault will be created in. When creating the cert store type, you can limit the options to those that should be applicable to your organization. Refer to the [Azure Documentation](https://learn.microsoft.com/en-us/dotnet/api/azure.core.azurelocation?view=azure-dotnethttps://learn.microsoft.com/en-us/dotnet/api/azure.core.azurelocation?view=azure-dotnet) for a list of valid region names. If no value is selected, 'eastus' is used by default.  Not required if not creating a new Keyvault."
             },
             {
               "Name": "AzureCloud",
               "DisplayName": "Azure Cloud",
               "Type": "MultipleChoice",
               "DependsOn": "",
+              "IsPAMEligible": false,
               "DefaultValue": "public,china,government",
-              "Required": false
+              "Required": false,
+              "Description": "The Azure Cloud field, if necessary, should contain one of the following values: china, germany, government. This is the Azure Cloud instance your organization uses. If using the standard 'public' cloud, this field can be left blank or omitted entirely from the store type definition."
             },
             {
               "Name": "PrivateEndpoint",
               "DisplayName": "Private KeyVault Endpoint",
               "Type": "String",
               "DependsOn": "",
-              "Required": false
+              "IsPAMEligible": false,
+              "Required": false,
+              "Description": "The Private Endpoint field should be used if you if have a custom url assigned to your keyvault resources and they are not accessible via the standard endpoint associated with the Azure Cloud instance (*.vault.azure.net, *.vault.azure.cn, etc.). This field should contain the base url for your vault instance(s), excluding the vault name."
             }
           ],
-          "ServerRequired": true,
-          "ShortName": "AKV",
-          "StorePathType": "",
-          "StorePathValue": "",
-          "SupportedOperations": {
-            "Add": true,
-            "Create": true,
-            "Discovery": true,
-            "Enrollment": false,
-            "Remove": true
-          }
+          "ClientMachineDescription": "The Tenant Id of the Azure Keyvault being managed.",
+          "StorePathDescription": "The store path of each vault is the Subscription ID, Resource Group name, and Vault name in the following format: `{subscription id}:{resource group name}:{new vault name}."
         }
-
       ]
     }
   }

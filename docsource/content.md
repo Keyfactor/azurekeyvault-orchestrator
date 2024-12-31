@@ -1,75 +1,9 @@
-## Setup and Configuration
+## Overview
 
-The high level steps required to configure the Azure Keyvault Orchestrator extension are:
+This integration allows the orchestrator to act as a client with access to an instance of the Azure Key Vault; allowing you to manage your certificates stored in the Azure Keyvault via Keyfactor.
 
-1) [Migrating from the Windows Orchestrator for Azure KeyVault](#migrating-from-the-windows-orchestrator-for-azure-keyvault)
 
-1) [Configure the Azure Keyvault for client access](#configure-the-azure-keyvault-for-client-access)
-
-1) [Create the Store Type in Keyfactor](#create-the-store-type-in-keyfactor)
-
-1) [Install the Extension on the Orchestrator](#install-the-extension-on-the-orchestrator)
-
-1) [Create the Certificate Store](#create-the-certificate-store)
-
-_Note that the certificate store type used by this Universal Orchestrator support for Azure Keyvault is not compatible with the certificate store type used by with Windows Orchestrator version for Azure Keyvault.
-If your Keyfactor instance has used the Windows Orchestrator for Azure Keyvault, a specific migration process is required.
-See [Migrating from the Windows Orchestrator for Azure KeyVault](#migrating-from-the-windows-orchestrator-for-azure-keyvault) section below._
-
-<details><summary><h4>Migrating from the Windows Orchestrator for Azure KeyVault</h4></summary>
-If you were previously using the Azure Keyvault extension for the **Windows** Orchestrator, it is necessary to remove the Store Type definition as well as any Certificate stores that use the previous store type.
-This is because the store type parameters have changed in order to facilitate the Discovery and Create functionality.
-
-If you have an existing AKV store type that was created for use with the Windows Orchestrator, you will need to follow the steps in one of the below sections in order to transfer the capability to the Universal Orchestrator.
-
-> :warning:
-> Before removing the certificate stores, view their configuration details and copy the values.
-> Copying the values in the store parameters will save time when re-creating the stores.
-
-Follow the below steps to remove the AKV capability from **each** active Windows Orchestrator that supports it:
-
-#### If the Windows Orchestrator should still manage other cert store types
-
-_If the Windows Orchestrator will still be used to manage some store types, we will remove only the Azure Keyvault functionality._
-
-1) On the Windows Orchestrator host machine, run the Keyfactor Agent Configuration Wizard
-1) Proceed through the steps to "Select Features"
-1) Expand "Cert Stores" and un-check "Azure Keyvault"
-1) Click "Apply Configuration"
-
-1) Open the Keyfactor Platform and navigate to **Orchestrators > Management**
-1) Confirm that "AKV" no longer appears under "Capabilities"
-1) Navigate to **Orchestrators > Management**, select the orchestrator and click "DISAPPROVE" to disapprove it and cancel pending jobs.
-1) Navigate to **Locations > Certificate Stores**
-1) Select any stores with the Category "Azure Keyvault" and click "DELETE" to remove them from Keyfactor.
-1) Navigate to the Administrative menu (gear icon) and then **> Certificate Store Types**
-1) Select Azure Keyvault, click "DELETE" and confirm.
-1) Navigate to **Orchestrators > Management**, select the orchestrator and click "APPROVE" to re-approve it for use.
-
-1) Repeat these steps for any other Windows Orchestrators that support the AKV store type.
-
-#### If the Windows Orchestrator can be retired completely
-
-_If the Windows Orchestrator is being completely replaced with the Universal Orchestrator, we can remove all associated stores and jobs._
-
-1) Navigate to **Orchestrators > Management** and select the Windows Orchestrator from the list.
-1) With the orchestrator selected, click the "RESET" button at the top of the list
-1) Make sure the orchestrator is still selected, and click "DISAPPROVE".
-1) Click "OK" to confirm that you will remove all jobs and certificate stores associated to this orchestrator.
-1) Navigate to the the Administrative (gear icon in the top right) and then **Certificate Store Types**
-1) Select "Azure Keyvault", click "DELETE" and confirm.
-1) Repeat these steps for any other Windows Orchestrators that support the AKV store type (if they can also be retired).
-
-Note: Any Azure Keyvault certificate stores removed can be re-added once the Universal Orchestrator is configured with the AKV capability.
-
-### Migrating from  version 1.x or version 2.x of the Azure Keyvault Orchestrator Extension
-
-It is not necessary to re-create all of the certificate stores when migrating from a previous version of this extension, though it is important to note that Azure KeyVaults found during a Discovery job
-will return with latest store path format: `{subscription id}:{resource group name}:{new vault name}`.
-
-</details>
-
----
+## Requirements
 
 ### Configure the Azure Keyvault for client access
 
@@ -389,90 +323,8 @@ Once the User Assigned managed identity has been created, you will need only to 
 In order to use a _System_ assigned managed identity, there is no need to enter the server credentials.  If no server credentials are provided, the extension assumes authentication is via system assigned managed identity.
 </details>
 
-### Create the Store Type in Keyfactor
 
-Now we can navigate to the Keyfactor platform and create the store type for Azure Key Vault.
-
-1) Navigate to your instance of Keyfactor and log in with a user that has Administrator privileges.
-
-1) Click on the gear icon in the top left and navigate to "Certificate Store Types".
-
-     ![Cert Store Types Menu](/Images/cert-store-types-menu.png)
-
-1) Click "Add" to open the Add Certificate Store dialog.
-
-1) Name the new store type "Azure Keyvault" and give it the short name of "AKV".
-
-1) The Azure Keyvault integration supports the following job types: _Inventory, Add, Remove, Create and Discovery_.  Select from these the capabilities you would like to utilize.
-
-> :warning: The store type definition needs to include the necessary fields to support Create functionality (SkuType and VaultRegion).  Be sure to read through the _Custom Fields_ instructions below and set them up with the required fields if Creating new Azure Keyvaults from Keyfactor Command is desired.
-
-1) **If you are using a Service Principal or User assigned Managed Identity only** Make sure that "Needs Server" is checked.
-
-     ![Cert Store Types Menu](/Images/cert-store-type.png)
-
-> :warning:
-> if you are using a system assigned managed identity for authentication, you should leave this unchecked.
-
-1) Navigate to the _Advanced_ tab and set the following values:
-     - Store Path Type: **Freeform**
-     - Supports Custom Alias: **Optional**
-     - Private Key Handling: **Optional**
-     - PFX Password Style: **Default**
-
-    ![Cert Store Types Menu](/Images/store-type-fields-advanced.png)
-
-1) Navigate to the _Custom Fields_ tab and add the custom fields for the store type.
-
-> :warning: If you are using the Global Public cloud (*.vault.azure.net) and creating new Azure
-> Keyvaults from Keyfactor Command functionality is not necessary for your workflow, this section can
-> be skipped entirely.
-
-- The below two fields are necessary if working with Keyvaults in Azure Cloud instances that are not the standard global public one (*.vault.azure.net)  If your vault instance(s) have the base url of `.vault.azure.net` then the next two fields can be omitted from the store type definition and the default global public cloud will be assumed.
-- - The "Azure Cloud" field refers to 
-
-| Name | Display Name | Type | Required |
-| ---- | ------------ | ---- | -------- |
-| AzureCloud[^azurecloud] | Azure Cloud | MultipleChoice | false |
-| PrivateEndpoint[^privateEndpoint] | Private Endpoint | String | false |
-
-[^azurecloud]: The Azure Cloud field, if necessary, should contain one of the following values: "china, germany, government".  This is the Azure Cloud instance your organization uses.  If using the standard "public" cloud, this field can be left blank or omitted entirely from the store type definition.
-
-[^privateEndpoint]: The Private Endpoint field should be used if you if have a custom url assigned to your keyvault resources and they are not accessible via the standard endpoint associated with the Azure Cloud instance (*.vault.azure.net, *.vault.azure.cn, etc.).  This field should contain the base url for your vault instance(s), excluding the vault name.
-
-- The following fields are _only_ necessary in order to support creating new Azure Keyvaults from the Keyfactor Command platform.  If this functionality is not needed, there is no need to set up these fields.
-
-| Name | Display Name | Type | Required |
-| ---- | ------------ | ---- | -------- |
-| TenantId | Tenant Id | String | false | 
-| SkuType[^sku] | SKU Type | MultipleChoice | false |
-| VaultRegion[^vaultregion] | Vault Region | MultipleChoice | false |
-
-[^sku]: The SkuType determines the service tier when creating a new instance of Azure KeyVault via the platform.  Valid values include "premium" and "standard".
-     If either option should be available when creating a new KeyVault from the Command platform via creating a new certificate store, then the value to enter for the multiple choice options should be "standard,premium".
-     If your organization requires that one or the other option should always be used, you can limit the options to a single value ("premium" or "standard").  If not selected, "standard" is used when creating a new KeyVault.
-
-[^vaultregion]: The Vault Region field is only important when creating a new Azure KeyVault from the Command Platform.  This is the region that the newly created vault will be created in.  When creating the cert store type,
-     you can limit the options to those that should be applicable to your organization. Refer to the [Azure Documentation](https://learn.microsoft.com/en-us/dotnet/api/azure.core.azurelocation?view=azure-dotnethttps://learn.microsoft.com/en-us/dotnet/api/azure.core.azurelocation?view=azure-dotnet) for a list of valid region names.
-     If no value is selected, "eastus" is used by default.
-
-### Install the Extension on the Orchestrator
-
-The process for installing an extension for the universal orchestrator differs from the process of installing an extension for the Windows orchestrator.  Follow the below steps to register the Azure Keyvault integration with your instance of the universal orchestrator.
-
-1) Stop the Universal Orchestrator service.
-
-     1) Note: In Windows, this service is called "Keyfactor Orchestrator Service (Default)"
-
-1) Create a folder in the "extensions" folder of the Universal Orchestrator installation folder named "AKV" (the name is not important)
-
-     1) example: `C:\Program Files\Keyfactor\Keyfactor Orchestrator\extensions\_AKV_
-
-1) Copy the build output (if you compiled from source) or the contents of the zip file (if you downloaded the pre-compiled binaries) into this folder.
-
-1) Start the Universal Orchestrator Service
-
-### Discover Certificate Stores
+## Discovery
 
 Now that we have the extension registered on the Orchestrator, we can navigate back to the Keyfactor platform and finish the setup.  If there are existing Azure Key Vaults, complete the below steps to discover and add them.  If there are no existing key vaults to integrate and you will be creating a new one via the Keyfactor Platform, you can skip to the next section.
 
@@ -584,48 +436,3 @@ To add one of these results to Keyfactor as a certificate store:
 1) Select any value for SKU Type and Vault Region.  These values are not used for existing KeyVaults.
 
 1) Click "SAVE".
-
-### Add a new or existing Azure Keyvault certificate store
-
-You can also add a certificate store that corresponds to an Azure Keyvault individually without the need to run the discovery / approval workflow.
-The steps to do this are:
-
-1) Navigate to "Locations > Certificate Stores"
-
-1) Click "ADD"
-
-     ![Approve Cert Store](/Images/cert-store-add-button.png)
-
-1) Enter the values corresponding to the Azure Keyvault instance.
-
-- **Category**: Azure Keyvault
-- **Container**: _optional_
-- **Client Machine**: If applicable; Tenant Id.  
-
-  - Note: These will only have to be entered once, even if adding multiple certificate stores.
-  - Follow the steps [here](#store-the-server-credentials-in-keyfactor) to enter them.
-
-- **Store Path**: This is the Subscription ID, Resource Group name, and Vault name in the following format: `{subscription id}:{resource group name}:{new vault name}`
-
-- **SKU Type**: This field is only used when creating new vaults in Azure.  If present, select any value, or leave blank.
-- **Vault Region**: This field is also only used when creating new vaults.  If present, select any value.
-
-If the vault already exists in azure the store path can be found by navigating to the existing Keyvault resource in Azure and clicking "Properties" in the left menu.
-
-![Resource Id](/Images/resource-id.png)
-
-- Use these values to create the store path
-
-If the Keyvault does not exist in Azure, and you would like to create it:
-
-- Enter a value for the store path in the following format: `{subscription id}:{resource group name}:{new vault name}`
-
-- For a non-existing Keyvault that you would like to create in Azure, make sure you have the "Create Certificate Store" box checked.
-
-> :warning: The identity you are using for authentication will need to have sufficient Azure permissions to be able to create new Keyvaults.
-
----
-
-### License
-
-[Apache](https://apache.org/licenses/LICENSE-2.0)

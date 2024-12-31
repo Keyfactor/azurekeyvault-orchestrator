@@ -1,6 +1,8 @@
 - 3.1.6
   - Preventing CertStore parameters from getting used if present but empty. 	
   - Improved trace logging
+  - Convert to .net6/8 dual build
+  - Update README to use doctool
 	 
 - 3.1.5
   - Bug fix for error when adding new cert and overwrite is unchecked
