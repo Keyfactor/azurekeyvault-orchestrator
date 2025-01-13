@@ -41,7 +41,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             }
             catch (Exception ex)
             {
-                complete.FailureMessage = ex.Message;
+                complete.FailureMessage = LogHandler.FlattenException(ex);
                 return complete;
             }
 
