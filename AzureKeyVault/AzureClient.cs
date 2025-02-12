@@ -1,14 +1,14 @@
-// Copyright 2023 Keyfactor
-// Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-// Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
-// and limitations under the License.
+
+//  Copyright 2025 Keyfactor
+//  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+//  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
+//  and limitations under the License.
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Azure;
 using Azure.Core;
@@ -17,11 +17,13 @@ using Azure.ResourceManager;
 using Azure.ResourceManager.KeyVault;
 using Azure.ResourceManager.KeyVault.Models;
 using Azure.ResourceManager.Resources;
+using Azure.ResourceManager.Resources.Models;
 using Azure.Security.KeyVault.Certificates;
 using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 {
@@ -194,7 +196,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             }
         }
 
-        public virtual async Task<KeyVaultCertificateWithPolicy> ImportCertificateAsync(string certName, string contents, string pfxPassword)
+        public virtual async Task<KeyVaultCertificateWithPolicy> ImportCertificateAsync(string certName, string contents, string pfxPassword, string tags = null)
         {
             try
             {
@@ -206,22 +208,37 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                     RecoverDeletedCertificateOperation recovery = await CertClient.StartRecoverDeletedCertificateAsync(certName);
                     recovery.WaitForCompletion();
                 }
-                logger.LogTrace("begin creating x509 certificate from contents.");
-                var bytes = Convert.FromBase64String(contents);
 
-                var x509Collection = new X509Certificate2Collection();//(bytes, pfxPassword, X509KeyStorageFlags.Exportable);
+                logger.LogTrace($"converting to pkcs12 without password for importing to keyvault");
 
-                x509Collection.Import(bytes, pfxPassword, X509KeyStorageFlags.Exportable);
+                var p12bytes = Helpers.ConvertPfxToPasswordlessPkcs12(contents, pfxPassword);
 
-                var certWithKey = x509Collection.Export(X509ContentType.Pkcs12);
+                logger.LogTrace($"got a byte array with length {p12bytes.Length}");
 
+                logger.LogTrace($"calling ImportCertificateAsync on the KeyVault certificate client to import certificate {certName}");
 
-                logger.LogTrace($"importing created x509 certificate named {1}", certName);
-                logger.LogTrace($"There are {x509Collection.Count} certificates in the chain.");
-                var cert = await CertClient.ImportCertificateAsync(new ImportCertificateOptions(certName, certWithKey));
+                var tagDict = new Dictionary<string, string>();
 
-                // var fullCert = _secretClient.GetSecret(certName);
-                // The certificate must be retrieved as a secret from AKV in order to have the full chain included.
+                if (!string.IsNullOrEmpty(tags))
+                {
+                    if (!tags.IsValidJson())
+                    {
+                        logger.LogError($"the entry parameter provided for Certificate Tags: \" {tags} \", does not seem to be valid JSON.");
+                        throw new Exception($"the string \" {tags} \" is not a valid json string. Please enter a valid json string for CertificateTags in the entry parameter or leave empty for no tags to be applied.");
+                    }
+                    logger.LogTrace($"converting the json value provided for tags into a Dictionary<string,string>");
+                    tagDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(tags);
+                    logger.LogTrace($"{tagDict.Count} tag(s) will be associated with the certificate in Azure KeyVault");
+                }
+
+                var options = new ImportCertificateOptions(certName, p12bytes);
+
+                foreach (var tag in tagDict.Keys)
+                {
+                    options.Tags.Add(tag, tagDict[tag]);
+                }
+
+                var cert = await CertClient.ImportCertificateAsync(options);
 
                 return cert;
             }
@@ -278,8 +295,9 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             var fullInventoryList = new List<CertificateProperties>();
             var failedCount = 0;
             Exception innerException = null;
-            
-            await foreach (var cert in inventory) {
+
+            await foreach (var cert in inventory)
+            {
                 logger.LogTrace($"adding cert with ID: {cert.Id} to the list.");
                 fullInventoryList.Add(cert); // convert to list from pages
             }
@@ -300,23 +318,26 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                         PrivateKeyEntry = true,
                         ItemStatus = OrchestratorInventoryItemStatus.Unknown,
                         UseChainLevel = true,
-                        Certificates =  new List<string>() { Convert.ToBase64String(cert.Value.Cer) }
+                        Certificates = new List<string>() { Convert.ToBase64String(cert.Value.Cer) },
+                        Parameters = cert.Value.Properties.Tags as Dictionary<string, object>
                     });
                 }
                 catch (Exception ex)
                 {
                     failedCount++;
                     innerException = ex;
-                    logger.LogError($"Failed to retreive details for certificate {certificate.Name}.  Exception: {ex.Message}");                    
+                    logger.LogError($"Failed to retreive details for certificate {certificate.Name}.  Exception: {ex.Message}");
                     // continuing with inventory instead of throwing, in case there's an issue with a single certificate
                 }
             }
 
-            if (failedCount == fullInventoryList.Count()) {
+            if (failedCount == fullInventoryList.Count())
+            {
                 throw new Exception("Unable to retreive details for certificates.", innerException);
             }
 
-            if (failedCount > 0) {
+            if (failedCount > 0)
+            {
                 logger.LogWarning($"{failedCount} of {fullInventoryList.Count()} certificates were not able to be retreieved.  Please review the errors.");
             }
 
