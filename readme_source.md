@@ -456,6 +456,22 @@ Now we can navigate to the Keyfactor platform and create the store type for Azur
      you can limit the options to those that should be applicable to your organization. Refer to the [Azure Documentation](https://learn.microsoft.com/en-us/dotnet/api/azure.core.azurelocation?view=azure-dotnethttps://learn.microsoft.com/en-us/dotnet/api/azure.core.azurelocation?view=azure-dotnet) for a list of valid region names.
      If no value is selected, "eastus" is used by default.
 
+
+#### Certificate Tags (v3.1.7+)
+If you would like to utilize Tags for associating arbitrary data with a Certificate in Azure KeyVault, you can utilize an entry parameter named "CertificateTags".
+
+Name: **"CertificateTags"** 
+
+Display Name: **"Certificate Tags"**
+
+Type: **String**
+
+When supplied, this field should contain valid JSON representing a key-value dictionary.  
+
+example: 
+```json
+{{"myTag":"myTagValue"}, {"anotherTag":"anotherTagValue"}}
+```
 ### Install the Extension on the Orchestrator
 
 The process for installing an extension for the universal orchestrator differs from the process of installing an extension for the Windows orchestrator.  Follow the below steps to register the Azure Keyvault integration with your instance of the universal orchestrator.
