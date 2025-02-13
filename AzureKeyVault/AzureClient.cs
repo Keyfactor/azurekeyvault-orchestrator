@@ -331,7 +331,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 }
             }
 
-            if (failedCount == fullInventoryList.Count())
+            if (failedCount == fullInventoryList.Count() && failedCount > 0)
             {
                 throw new Exception("Unable to retreive details for certificates.", innerException);
             }
