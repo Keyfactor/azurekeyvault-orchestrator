@@ -36,7 +36,14 @@
           "BlueprintAllowed": false,
           "Capability": "AKV",
           "CustomAliasAllowed": "Optional",
-          "EntryParameters": [],
+          "EntryParameters": [
+            {
+              "Name": "CertificateTags",
+              "DisplayName": "Certificate Tags",
+              "Type": "string",
+              "DefaultValue": ""
+            }
+          ],
           "JobProperties": [],
           "LocalStore": false,
           "Name": "Azure Keyvault",
