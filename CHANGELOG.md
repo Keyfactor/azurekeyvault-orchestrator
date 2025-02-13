@@ -1,8 +1,9 @@
 - 3.1.7
   - Added support for Azure KeyVault Certificate Metadata via Entry Parameters
+  - Fixed issue where an error would be returned during Inventory if 0 certificates were found
   - Converted to BouncyCastle crypto libraries
   -	Convert to .net6/8 dual build
-  - Update README to use doctool
+  - Update README to use doctool  
 	
 - 3.1.6
   - Preventing CertStore parameters from getting used if present but empty. 	
