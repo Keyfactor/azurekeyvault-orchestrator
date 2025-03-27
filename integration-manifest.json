@@ -23,6 +23,7 @@
             {
               "Name": "CertificateTags",
               "DisplayName": "Certificate Tags",
+              "Description":  "If desired, tags can be applied to the KeyVault entries.  Provide them as a JSON string of key-value pairs ie: '{'tag-name': 'tag-content', 'other-tag-name': 'other-tag-content'}'",
               "Type": "string",
               "DefaultValue": ""
             }
@@ -41,6 +42,7 @@
             {
               "Name": "TenantId",
               "DisplayName": "Tenant Id",
+              "Description":  "The ID of the primary Azure Tenant where the KeyVaults are hosted",
               "Type": "String",
               "DependsOn": "",
               "Required": false
@@ -48,6 +50,7 @@
             {
               "Name": "SkuType",
               "DisplayName": "SKU Type",
+              "Description": "The SKU type for newly created KeyVaults (only needed if needing to create new KeyVaults in your Azure subscription via Command)",
               "Type": "MultipleChoice",
               "DependsOn": "",
               "DefaultValue": "standard,premium",
@@ -56,6 +59,7 @@
             {
               "Name": "VaultRegion",
               "DisplayName": "Vault Region",
+              "Description": "The Azure Region to put newly created KeyVaults (only needed if needing to create new KeyVaults in your Azure subscription via Command)",
               "Type": "MultipleChoice",
               "DependsOn": "",
               "DefaultValue": "eastus,eastus2,westus2,westus3,westus",
@@ -64,6 +68,7 @@
             {
               "Name": "AzureCloud",
               "DisplayName": "Azure Cloud",
+              "Description": "The Azure Cloud where the KeyVaults are located (only necessary if not using the standard Azure Public cloud)",
               "Type": "MultipleChoice",
               "DependsOn": "",
               "DefaultValue": "public,china,government",
@@ -72,6 +77,7 @@
             {
               "Name": "PrivateEndpoint",
               "DisplayName": "Private KeyVault Endpoint",
+              "Description": "The private endpoint of your vault instance (if a private endpoint is configured in Azure)",
               "Type": "String",
               "DependsOn": "",
               "Required": false
