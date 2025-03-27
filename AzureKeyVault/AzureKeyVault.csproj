@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<TargetFrameworks>net6.0;net8.0</TargetFrameworks>
     <AssemblyName>Keyfactor.Extensions.Orchestrators.AKV</AssemblyName>
     <RootNamespace>Keyfactor.Extensions.Orchestrator.AzureKeyVault</RootNamespace>
 		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
