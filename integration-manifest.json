@@ -23,10 +23,15 @@
             {
               "Name": "CertificateTags",
               "DisplayName": "Certificate Tags",
-              "Description":  "If desired, tags can be applied to the KeyVault entries.  Provide them as a JSON string of key-value pairs ie: '{'tag-name': 'tag-content', 'other-tag-name': 'other-tag-content'}'",
+              "Description": "If desired, tags can be applied to the KeyVault entries.  Provide them as a JSON string of key-value pairs ie: '{'tag-name': 'tag-content', 'other-tag-name': 'other-tag-content'}'",
               "Type": "string",
               "DefaultValue": "",
-              "RequiredWhen": null
+              "RequiredWhen": {
+                "HasPrivateKey": false,
+                "OnAdd": false,
+                "OnRemove": false,
+                "OnReenrollment": false
+              }
             }
           ],
           "JobProperties": [],
@@ -43,7 +48,7 @@
             {
               "Name": "TenantId",
               "DisplayName": "Tenant Id",
-              "Description":  "The ID of the primary Azure Tenant where the KeyVaults are hosted",
+              "Description": "The ID of the primary Azure Tenant where the KeyVaults are hosted",
               "Type": "String",
               "DependsOn": "",
               "Required": false
