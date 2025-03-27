@@ -1,5 +1,5 @@
 {
-  "$schema": "https://keyfactor.github.io/integration-manifest-schema.json",
+  "$schema": "https://keyfactor.github.io/v2/integration-manifest-schema.json",
   "integration_type": "orchestrator",
   "name": "Azure Key Vault Orchestrator",
   "status": "production",
@@ -7,34 +7,17 @@
   "link_github": true,
   "release_dir": "AzureKeyVault\\bin\\Release",
   "support_level": "kf-supported",
-  "description": "This integration allows the orchestrator to act as a client with access to an instance of the Azure Key Vault; allowing you to manage your certificates stored in the Azure Keyvault via Keyfactor.",
+  "description": "The <Orchestrator Name> Universal Orchestrator extension enables remote management of cryptographic certificates in various environments by performing tasks such as inventory, addition, and removal of certificates, and discovery of new certificate stores.",
   "about": {
     "orchestrator": {
       "UOFramework": "10.1",
       "keyfactor_platform_version": "10.0",
       "pam_support": true,
-      "win": {
-        "supportsCreateStore": true,
-        "supportsDiscovery": true,
-        "supportsManagementAdd": true,
-        "supportsManagementRemove": true,
-        "supportsReenrollment": false,
-        "supportsInventory": true,
-        "platformSupport": "Unused"
-      },
-      "linux": {
-        "supportsCreateStore": true,
-        "supportsDiscovery": true,
-        "supportsManagementAdd": true,
-        "supportsManagementRemove": true,
-        "supportsReenrollment": false,
-        "supportsInventory": true,
-        "platformSupport": "Unused"
-      },
       "store_types": [
         {
           "BlueprintAllowed": false,
           "Capability": "AKV",
+          "ClientMachineDescription": "The GUID of the tenant ID of the Azure Keyvault instance; for example, '12345678-1234-1234-1234-123456789abc'.",
           "CustomAliasAllowed": "Optional",
           "EntryParameters": [
             {
@@ -96,6 +79,7 @@
           ],
           "ServerRequired": true,
           "ShortName": "AKV",
+          "StorePathDescription": "A string formatted as '{subscription id}:{resource group name}:{vault name}'; for example, '12345678-1234-1234-1234-123456789abc:myResourceGroup:myVault'.",
           "StorePathType": "",
           "StorePathValue": "",
           "SupportedOperations": {
@@ -106,7 +90,6 @@
             "Remove": true
           }
         }
-
       ]
     }
   }
