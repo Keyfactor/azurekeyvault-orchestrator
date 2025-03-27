@@ -6,7 +6,7 @@
   "update_catalog": true,
   "link_github": true,
   "release_dir": "AzureKeyVault/bin/Release",
-  "release_project": "AzureKeyVault/AzureKeyVault.csproj"
+  "release_project": "AzureKeyVault/AzureKeyVault.csproj",
   "support_level": "kf-supported",
   "description": "The <Orchestrator Name> Universal Orchestrator extension enables remote management of cryptographic certificates in various environments by performing tasks such as inventory, addition, and removal of certificates, and discovery of new certificate stores.",
   "about": {
