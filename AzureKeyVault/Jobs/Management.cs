@@ -39,7 +39,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 FailureMessage = "Invalid Management Operation"
             };
 
-            var tagsJSON = config.JobProperties["CertificateTags"].ToString();
+            var tagsJSON = config.JobProperties["CertificateTags"]?.ToString();
 
             switch (config.OperationType)
             {
