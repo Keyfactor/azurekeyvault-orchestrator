@@ -1,15 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
-		<TargetFramework>netcoreapp3.1</TargetFramework>
+	<PropertyGroup>		
+		<TargetFrameworks>net6.0;net8.0</TargetFrameworks>
     <AssemblyName>Keyfactor.Extensions.Orchestrators.AKV</AssemblyName>
     <RootNamespace>Keyfactor.Extensions.Orchestrator.AzureKeyVault</RootNamespace>
 		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-	  <SignAssembly>false</SignAssembly>
 	  <Copyright />
 	  <PackageLicenseExpression>https://apache.org/licenses/LICENSE-2.0</PackageLicenseExpression>
-	  <PackageLicenseFile></PackageLicenseFile> 
-		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+	  <PackageLicenseFile></PackageLicenseFile>
+		<AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
 		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
 	</PropertyGroup>
 
