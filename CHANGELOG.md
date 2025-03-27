@@ -1,7 +1,7 @@
-- - 3.1.8
+- 3.1.8
   - Fixed bug where enrollment would fail if the CertificateTags field was not defined as an entry parameter	
 	
-- - 3.1.7
+- 3.1.7
   - Added support for Azure KeyVault Certificate Metadata via Entry Parameters
   - Fixed issue where an error would be returned during Inventory if 0 certificates were found
   - Converted to BouncyCastle crypto libraries
