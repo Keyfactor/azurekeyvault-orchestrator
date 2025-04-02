@@ -1,103 +1,71 @@
+<h1 align="center" style="border-bottom: none">
+    Azure Key Vault Universal Orchestrator Extension
+</h1>
 
-# Azure Key Vault Orchestrator
-
-This integration allows the orchestrator to act as a client with access to an instance of the Azure Key Vault; allowing you to manage your certificates stored in the Azure Keyvault via Keyfactor.
-
-#### Integration status: Production - Ready for use in production environments.
-
-## About the Keyfactor Universal Orchestrator Extension
-
-This repository contains a Universal Orchestrator Extension which is a plugin to the Keyfactor Universal Orchestrator. Within the Keyfactor Platform, Orchestrators are used to manage “certificate stores” &mdash; collections of certificates and roots of trust that are found within and used by various applications.
-
-The Universal Orchestrator is part of the Keyfactor software distribution and is available via the Keyfactor customer portal. For general instructions on installing Extensions, see the “Keyfactor Command Orchestrator Installation and Configuration Guide” section of the Keyfactor documentation. For configuration details of this specific Extension see below in this readme.
-
-The Universal Orchestrator is the successor to the Windows Orchestrator. This Orchestrator Extension plugin only works with the Universal Orchestrator and does not work with the Windows Orchestrator.
-
-## Support for Azure Key Vault Orchestrator
-
-Azure Key Vault Orchestrator is supported by Keyfactor for Keyfactor customers. If you have a support issue, please open a support ticket via the Keyfactor Support Portal at https://support.keyfactor.com
-
-###### To report a problem or suggest a new feature, use the **[Issues](../../issues)** tab. If you want to contribute actual bug fixes or proposed enhancements, use the **[Pull requests](../../pulls)** tab.
-
----
-
-
----
-
-
-
-## Keyfactor Version Supported
-
-The minimum version of the Keyfactor Universal Orchestrator Framework needed to run this version of the extension is 10.1
-## Platform Specific Notes
-
-The Keyfactor Universal Orchestrator may be installed on either Windows or Linux based platforms. The certificate operations supported by a capability may vary based what platform the capability is installed on. The table below indicates what capabilities are supported based on which platform the encompassing Universal Orchestrator is running.
-| Operation | Win | Linux |
-|-----|-----|------|
-|Supports Management Add|&check; |&check; |
-|Supports Management Remove|&check; |&check; |
-|Supports Create Store|&check; |&check; |
-|Supports Discovery|&check; |&check; |
-|Supports Reenrollment|  |  |
-|Supports Inventory|&check; |&check; |
-
-
-## PAM Integration
-
-This orchestrator extension has the ability to connect to a variety of supported PAM providers to allow for the retrieval of various client hosted secrets right from the orchestrator server itself.  This eliminates the need to set up the PAM integration on Keyfactor Command which may be in an environment that the client does not want to have access to their PAM provider.
-
-The secrets that this orchestrator extension supports for use with a PAM Provider are:
-
-|Name|Description|
-|----|-----------|
-|Server Username|The application (service principal) ID that will be used to authenticate to Azure|
-|Server Password|The client secret that will be used to authenticate into Azure|
-
-It is not necessary to use a PAM Provider for all of the secrets available above. If a PAM Provider should not be used, simply enter in the actual value to be used, as normal.
-
-If a PAM Provider will be used for one of the fields above, start by referencing the [Keyfactor Integration Catalog](https://keyfactor.github.io/integrations-catalog/content/pam). The GitHub repo for the PAM Provider to be used contains important information such as the format of the `json` needed. What follows is an example but does not reflect the `json` values for all PAM Providers as they have different "instance" and "initialization" parameter names and values.
-
-<details><summary>General PAM Provider Configuration</summary>
-<p>
-
-
-
-### Example PAM Provider Setup
-
-To use a PAM Provider to resolve a field, in this example the __Server Password__ will be resolved by the `Hashicorp-Vault` provider, first install the PAM Provider extension from the [Keyfactor Integration Catalog](https://keyfactor.github.io/integrations-catalog/content/pam) on the Universal Orchestrator.
-
-Next, complete configuration of the PAM Provider on the UO by editing the `manifest.json` of the __PAM Provider__ (e.g. located at extensions/Hashicorp-Vault/manifest.json). The "initialization" parameters need to be entered here:
-
-~~~ json
-  "Keyfactor:PAMProviders:Hashicorp-Vault:InitializationInfo": {
-    "Host": "http://127.0.0.1:8200",
-    "Path": "v1/secret/data",
-    "Token": "xxxxxx"
-  }
-~~~
-
-After these values are entered, the Orchestrator needs to be restarted to pick up the configuration. Now the PAM Provider can be used on other Orchestrator Extensions.
-
-### Use the PAM Provider
-With the PAM Provider configured as an extenion on the UO, a `json` object can be passed instead of an actual value to resolve the field with a PAM Provider. Consult the [Keyfactor Integration Catalog](https://keyfactor.github.io/integrations-catalog/content/pam) for the specific format of the `json` object.
-
-To have the __Server Password__ field resolved by the `Hashicorp-Vault` provider, the corresponding `json` object from the `Hashicorp-Vault` extension needs to be copied and filed in with the correct information:
-
-~~~ json
-{"Secret":"my-kv-secret","Key":"myServerPassword"}
-~~~
-
-This text would be entered in as the value for the __Server Password__, instead of entering in the actual password. The Orchestrator will attempt to use the PAM Provider to retrieve the __Server Password__. If PAM should not be used, just directly enter in the value for the field.
+<p align="center">
+  <!-- Badges -->
+<img src="https://img.shields.io/badge/integration_status-production-3D1973?style=flat-square" alt="Integration Status: production" />
+<a href="https://github.com/Keyfactor/azurekeyvault-orchestrator/releases"><img src="https://img.shields.io/github/v/release/Keyfactor/azurekeyvault-orchestrator?style=flat-square" alt="Release" /></a>
+<img src="https://img.shields.io/github/issues/Keyfactor/azurekeyvault-orchestrator?style=flat-square" alt="Issues" />
+<img src="https://img.shields.io/github/downloads/Keyfactor/azurekeyvault-orchestrator/total?style=flat-square&label=downloads&color=28B905" alt="GitHub Downloads (all assets, all releases)" />
 </p>
-</details> 
+
+<p align="center">
+  <!-- TOC -->
+  <a href="#support">
+    <b>Support</b>
+  </a>
+  ·
+  <a href="#installation">
+    <b>Installation</b>
+  </a>
+  ·
+  <a href="#license">
+    <b>License</b>
+  </a>
+  ·
+  <a href="https://github.com/orgs/Keyfactor/repositories?q=orchestrator">
+    <b>Related Integrations</b>
+  </a>
+</p>
+
+## Overview
+
+The Azure Key Vault Universal Orchestrator extension enables seamless integration between Keyfactor Command and Microsoft Azure Key Vault. This extension facilitates remote management of cryptographic certificates stored in Azure Key Vault, ensuring organizational security and compliance requirements are met. With this extension, users can manage certificates remotely by performing various operations such as inventory, addition, removal, and discovery of certificates and certificate stores.
+
+Azure Key Vault is a cloud service that provides secure storage for secrets, including cryptographic keys and certificates. Certificates in Azure Key Vault are utilized to secure communications and safeguard data by managing the associated cryptographic keys and policies.
+
+Defined Certificate Stores of the Certificate Store Type in Keyfactor Command represent the individual or grouped certificates managed within a specific remote location, such as Azure Key Vault. Each Certificate Store is configured to interface with an Azure Key Vault instance, allowing the orchestrator to perform the required certificate management operations.
 
 
 
+### AKV
 
----
+The Azure Keyvault Certificate Store Type is designed to integrate with Microsoft Azure Key Vault, enabling users to manage and automate the lifecycle of cryptographic certificates stored in Azure Key Vault through Keyfactor Command. This Certificate Store Type represents the connection and configuration necessary to interact with specific instances of Azure Key Vault, allowing for operations such as inventory, addition, removal, and discovery of certificates and certificate stores.
+
+This integration leverages Azure's robust security infrastructure, utilizing OAuth-based authentication methods including Service Principals, User Assigned Managed Identities, and System Assigned Managed Identities. This ensures that only authorized entities can manage the certificates stored within the Key Vault.
+
+While this Certificate Store Type provides a powerful means of managing certificates, there are some important caveats to consider. For example, if your instance of Azure Key Vault utilizes private or custom endpoints, or is hosted outside of the Azure Public cloud (e.g., Government, China, Germany instances), certain functions like discovery job functionality may not be supported. Additionally, the configuration of access control through Azure's Role Based Access Control (RBAC) or classic Access Policies must be meticulously managed to ensure sufficient permissions for the orchestrator to perform its tasks.
+
+The integration does not require a specific SDK, as it interacts with Azure services directly through their APIs. However, ensuring that the orchestrator has network access to Azure endpoints is crucial for smooth operation. Being mindful of these caveats and limitations will help ensure successful deployment and use of the Azure Keyvault Certificate Store Type within your organization’s security framework.
+
+## Compatibility
+
+This integration is compatible with Keyfactor Universal Orchestrator version 10.1 and later.
+
+## Support
+The Azure Key Vault Universal Orchestrator extension If you have a support issue, please open a support ticket by either contacting your Keyfactor representative or via the Keyfactor Support Portal at https://support.keyfactor.com. 
+ 
+> To report a problem or suggest a new feature, use the **[Issues](../../issues)** tab. If you want to contribute actual bug fixes or proposed enhancements, use the **[Pull requests](../../pulls)** tab.
+
+## Requirements & Prerequisites
+
+Before installing the Azure Key Vault Universal Orchestrator extension, we recommend that you install [kfutil](https://github.com/Keyfactor/kfutil). Kfutil is a command-line tool that simplifies the process of creating store types, installing extensions, and instantiating certificate stores in Keyfactor Command.
 
 
-## Setup and Configuration
+### Azure Keyvault Requirements
+
+#### Setup and Configuration
 
 The high level steps required to configure the Azure Keyvault Orchestrator extension are:
 
@@ -115,7 +83,9 @@ _Note that the certificate store type used by this Universal Orchestrator suppor
 If your Keyfactor instance has used the Windows Orchestrator for Azure Keyvault, a specific migration process is required.
 See [Migrating from the Windows Orchestrator for Azure KeyVault](#migrating-from-the-windows-orchestrator-for-azure-keyvault) section below._
 
-<details><summary><h4>Migrating from the Windows Orchestrator for Azure KeyVault</h4></summary>
+<details>
+  <summary>
+    <h4>Migrating from the Windows Orchestrator for Azure KeyVault</h4></summary>
 If you were previously using the Azure Keyvault extension for the **Windows** Orchestrator, it is necessary to remove the Store Type definition as well as any Certificate stores that use the previous store type.
 This is because the store type parameters have changed in order to facilitate the Discovery and Create functionality.
 
@@ -127,7 +97,7 @@ If you have an existing AKV store type that was created for use with the Windows
 
 Follow the below steps to remove the AKV capability from **each** active Windows Orchestrator that supports it:
 
-#### If the Windows Orchestrator should still manage other cert store types
+###### If the Windows Orchestrator should still manage other cert store types
 
 _If the Windows Orchestrator will still be used to manage some store types, we will remove only the Azure Keyvault functionality._
 
@@ -147,7 +117,7 @@ _If the Windows Orchestrator will still be used to manage some store types, we w
 
 1) Repeat these steps for any other Windows Orchestrators that support the AKV store type.
 
-#### If the Windows Orchestrator can be retired completely
+###### If the Windows Orchestrator can be retired completely
 
 _If the Windows Orchestrator is being completely replaced with the Universal Orchestrator, we can remove all associated stores and jobs._
 
@@ -161,7 +131,7 @@ _If the Windows Orchestrator is being completely replaced with the Universal Orc
 
 Note: Any Azure Keyvault certificate stores removed can be re-added once the Universal Orchestrator is configured with the AKV capability.
 
-### Migrating from  version 1.x or version 2.x of the Azure Keyvault Orchestrator Extension
+##### Migrating from  version 1.x or version 2.x of the Azure Keyvault Orchestrator Extension
 
 It is not necessary to re-create all of the certificate stores when migrating from a previous version of this extension, though it is important to note that Azure KeyVaults found during a Discovery job
 will return with latest store path format: `{subscription id}:{resource group name}:{new vault name}`.
@@ -170,25 +140,25 @@ will return with latest store path format: `{subscription id}:{resource group na
 
 ---
 
-### Configure the Azure Keyvault for client access
+##### Configure the Azure Keyvault for client access
 
 In order for this orchestrator extension to be able to interact with your instances of Azure Keyvault, it will need to authenticate with a identity that has sufficient permissions to perform the jobs.  Microsoft Azure implements both Role Based Access Control (RBAC) and the classic Access Policy method.  RBAC is the preferred method, as it allows the assignment of granular level, inheretable access control on both the contents of the KeyVaults, as well as higher-level management operations.  For more information and a comparison of the two access control strategies, refer to [this article](learn.microsoft.com/en-us/azure/key-vault/general/rbac-access-policy).
 
-#### RBAC vs Access Policies
+###### RBAC vs Access Policies
 Azure KeyVaults originally utilized access policies for permissions and since then, Microsoft has begun recommending Role Based Access Control (RBAC) as the preferred method of authorization.  
 As of this version, new KeyVaults created via this integration are created with Access Policy authorization.  This will change to RBAC in the next release.
 The access control type the KeyVault implements can be changed in the KeyVault configuration within the Azure Portal.  New KeyVaults created via Keyfactor by way of this integration will be accessible for subsequent actions regardless of the access control type.
 
-#### Configure Role Based Access Control (RBAC)
+###### Configure Role Based Access Control (RBAC)
 
 In order to illustrate the minimum permissions that the authenticating entity (service principal or managed identity) requires, 
 we have created 3 seperate custom role definitions that you can use as a reference when creating an RBAC role definition in your Azure environment.  
 
 The reason for 3 definitions is that certain orchestrator jobs, such as Create (new KeyVault) or Discovery require more elevated permissions at a different scope than the basic certificate operations (Inventory, Add, Remove) performed within a specific KeyVault.
 
-If you know that you will utilize all of the capabilities of this integration; the last custom role definition contains all necessary permissions for performing all of the Jobs (Discovery, Create KeyVault, Inventory/Add/Remove certificates).  
+If you know that you will utilize all of the capabilities of this integration; the last custom role definition contains all necessary permissions for performing all of the Jobs (Discovery, Create KeyVault, Inventory/Add/Remove certificates).
 
-#### Built-in vs. custom roles
+###### Built-in vs. custom roles
 
 > :warning: The custom role definitions below are designed to contain the absolute minimum permissions required.  They are not intended to be used verbatim without consulting your organization's security team and/or Azure Administrator.  Keyfactor does not provide consulting on internal security practices.
 
@@ -196,7 +166,9 @@ It is possible to use the built-in roles provided by Microsoft for these operati
 Whether to create custom role definitions or use an existing or pre-built role will depend on your organization's securuity requirements.  
 For each job type performed by this orchestrator, we've included the minimally sufficient built-in role name(s) along with our custom role definitions that limit permissions to the specific actions and scopes necessary.
 
-<details><summary><h4>Create Vault permissions</h4></summary>
+<details>
+  <summary><h4>Create Vault permissions</h4></summary>
+
 In order to allow for the ability to create new Azure KeyVaults from within command, here is a role that defines the necessary permissions to do so.  If you will never be creating new Azure KeyVaults from within Command, then it is unnecessary to provide the authenticating entity with these permissions.
 
 > :warning: When creating a new KeyVault, we grant the creating entity the built-in "Key Vault Certificates Officer" role in order to be able to perform subsequent actions on the contents of the KeyVault. [click here](github.com/MicrosoftDocs/azure-docs/blob/main/articles/role-based-access-control/built-in-roles/security.md#key-vault-certificates-officer) to see the list of permissions included in the Key Vault Certificates Officer built-in role.
@@ -256,7 +228,8 @@ the above condition limits the ability to assign roles to a single role only (Ke
 }
 ```
 </details>
-<details><summary><h4>Discover Vaults Permissions</h4></summary>
+<details>
+  <summary><h4>Discover Vaults Permissions</h4></summary>
 
 If you would like this integration to search across your subscriptions to discover instances of existing Azure KeyVaults, this role definition contains the necessary permissions for this.
 If you are working with a smaller number of KeyVaults and/or do not plan on utilizing a Discovery job to retrieve all KeyVaults across your subscriptions, the permissions defined in this role are not necessary.
@@ -299,7 +272,8 @@ If you are working with a smaller number of KeyVaults and/or do not plan on util
 
 </details>
 <details>
-<summary><h4>Inventory, Add, and Remove Certificate Permissions</h4></summary>
+  <summary><h4>Inventory, Add, and Remove Certificate Permissions</h4></summary>
+
 This set of permissions is the minimum required to support the basic operations of performing an Inventory and Add/Removal of certificates.
 
 - built-in role: ["Key Vault Certificates Officer"](github.com/MicrosoftDocs/azure-docs/blob/main/articles/role-based-access-control/built-in-roles/security.md#key-vault-certificates-officer)
@@ -346,8 +320,10 @@ This set of permissions is the minimum required to support the basic operations 
 ```
 
 </details>
+
 <details>
-<summary><h4>Combined permissions for all operations (Create, Discovery, Inventory, Add and Remove certificates)</h4></summary>
+  <summary><h4>Combined permissions for all operations (Create, Discovery, Inventory, Add and Remove certificates)</h4></summary>
+
 This section defines a single custom role that contains the necessary permissions to perform all operations allowed by this integration.  The minimum scope allowable is an individual resource group.  If this custom role is associated with the authenticating identity, it will be able to discover existing KeyVaults, Create new ones, and perform inventory as well as adding and removing certificates within the KeyVault.
 
 - minimally sufficient built-in roles (all are required):
@@ -406,9 +382,10 @@ This section defines a single custom role that contains the necessary permission
 > required.  We have tried to provide you with an absolute minimum set of required permissions necessary to perform each operation.  Refer to
 > your organization's security policies and/or consult with your information security team in order to determine which role combinations would
 > be most appropriate for your needs.
+
 </details>
 
-### Endpoint Access / Firewall
+##### Endpoint Access / Firewall
 
 At a minimum, the orchestrator needs access to the following URLs:
 
@@ -423,7 +400,7 @@ Any firewall applied to the orchestrator host will need to be configured to allo
 > :warning: Discovery jobs are not supported for KeyVaults located outside of the Azure Public cloud or Keyvaults accessed via a private url endpoint.  
 > All other job types implemented by this integration are supported for alternate Azure clouds and private endpoints.
 
-### Authentication options
+##### Authentication options
 
 The Azure KeyVault orchestrator plugin supports several authentication options:
 
@@ -434,7 +411,7 @@ The Azure KeyVault orchestrator plugin supports several authentication options:
  Steps for setting up each option are detailed below.
 
 <details>
-<summary><h4>Authentication via Service Principal</h4></summary>
+  <summary><h4>Authentication via Service Principal</h4></summary>
 
 For the Orchestrator to be able to interact with the instance of Azure Keyvault, we will need to create an entity in Azure that will encapsulate the permissions we would like to grant it.  In Azure, these intermediate entities are referred to as app registrations and they provision authority for external application access.
 To learn more about application and service principals, refer to [this article](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal).
@@ -452,7 +429,7 @@ To provision access to the Keyvault instance using a service principal identity,
 **In order to complete these steps, you must have the _Owner_ role for the Azure subscription, at least temporarily.**
 This is required to create an App Registration in Azure Active Directory.
 
-### Create A Service Principal
+##### Create A Service Principal
 
 **Note:** In order to manage key vaults in multiple Azure tenants using a single service principal, the supported account types option selected should be:  `Accounts in any organizational directory (Any Azure AD directory - Multitenant)`. Also, the app registration must be registered in a single tenant, but a service principal must be created in each tenant tied to the app registration. For more info review the [Microsoft documentation](https://learn.microsoft.com/en-us/azure/active-directory/fundamentals/service-accounts-principal#tenant-service-principal-relationships).
 
@@ -465,9 +442,12 @@ Once we have our App registration created in Azure, record the following values
 - _ClientSecret_
 
 We will store these values securely in Keyfactor in subsequent steps.
+
 </details>
+
 <details>
-<summary><h4>Authentication via User Assigned Managed Identity</h4></summary>
+  <summary><h4>Authentication via User Assigned Managed Identity</h4></summary>
+
 Authentication has been somewhat simplified with the introduction of Azure Managed Identities.  If the orchestrator is running on an Azure Virtual Machine, Managed identities allow an Azure administrator to
 assign a managed identity to the virtual machine that can then be used by this orchestrator extension for authentication without the need to issue or manage client secrets.
 
@@ -481,14 +461,17 @@ Read more about Azure Managed Identities [here](https://learn.microsoft.com/en-u
 Detailed steps for creating a managed identity and assigning permissions can be found [here](https://learn.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/how-manage-user-assigned-managed-identities?pivots=identity-mi-methods-azp).
 
 Once the User Assigned managed identity has been created, you will need only to enter the Client Id into the Application Id field on the certificate store definition (the Client Secret can be left blank).
-</details>
-</details>
-<details>
-<summary><h4>Authentication via System Assigned Managed Identity</h4></summary>
-In order to use a _System_ assigned managed identity, there is no need to enter the server credentials.  If no server credentials are provided, the extension assumes authentication is via system assigned managed identity.
+
 </details>
 
-### Create the Store Type in Keyfactor
+<details>
+<summary><h4>Authentication via System Assigned Managed Identity</h4></summary>
+
+In order to use a _System_ assigned managed identity, there is no need to enter the server credentials.  If no server credentials are provided, the extension assumes authentication is via system assigned managed identity.
+
+</details>
+
+##### Create the Store Type in Keyfactor
 
 Now we can navigate to the Keyfactor platform and create the store type for Azure Key Vault.
 
@@ -555,7 +538,7 @@ Now we can navigate to the Keyfactor platform and create the store type for Azur
      you can limit the options to those that should be applicable to your organization. Refer to the [Azure Documentation](https://learn.microsoft.com/en-us/dotnet/api/azure.core.azurelocation?view=azure-dotnethttps://learn.microsoft.com/en-us/dotnet/api/azure.core.azurelocation?view=azure-dotnet) for a list of valid region names.
      If no value is selected, "eastus" is used by default.
 
-### Install the Extension on the Orchestrator
+##### Install the Extension on the Orchestrator
 
 The process for installing an extension for the universal orchestrator differs from the process of installing an extension for the Windows orchestrator.  Follow the below steps to register the Azure Keyvault integration with your instance of the universal orchestrator.
 
@@ -571,7 +554,7 @@ The process for installing an extension for the universal orchestrator differs f
 
 1) Start the Universal Orchestrator Service
 
-### Discover Certificate Stores
+##### Discover Certificate Stores
 
 Now that we have the extension registered on the Orchestrator, we can navigate back to the Keyfactor platform and finish the setup.  If there are existing Azure Key Vaults, complete the below steps to discover and add them.  If there are no existing key vaults to integrate and you will be creating a new one via the Keyfactor Platform, you can skip to the next section.
 
@@ -587,7 +570,7 @@ Now that we have the extension registered on the Orchestrator, we can navigate b
 
 1) Approve the orchestrator if necessary.
 
-#### Create the discovery job
+###### Create the discovery job
 
 1) Navigate to "Locations > Certificate Stores"
 
@@ -601,7 +584,7 @@ Now that we have the extension registered on the Orchestrator, we can navigate b
 
      ![Discovery Form](/Images/discovery-form.png)
 
-#### Store the Server Credentials in Keyfactor
+###### Store the Server Credentials in Keyfactor
 
 > :warning:
 > The steps for configuring discovery are different for each authentication type.
@@ -660,7 +643,7 @@ Follow these steps to store the values:
 
 1) Leave the remaining fields blank and click "SAVE".
 
-#### Approve the Certificate Store
+###### Approve the Certificate Store
 
 When the Discovery job runs successfully, it will list the existing Azure Keyvaults that are acessible by our service principal.
 
@@ -684,7 +667,7 @@ To add one of these results to Keyfactor as a certificate store:
 
 1) Click "SAVE".
 
-### Add a new or existing Azure Keyvault certificate store
+##### Add a new or existing Azure Keyvault certificate store
 
 You can also add a certificate store that corresponds to an Azure Keyvault individually without the need to run the discovery / approval workflow.
 The steps to do this are:
@@ -725,10 +708,213 @@ If the Keyvault does not exist in Azure, and you would like to create it:
 
 ---
 
-### License
+##### License
 
 [Apache](https://apache.org/licenses/LICENSE-2.0)
 
-When creating cert store type manually, that store property names and entry parameter names are case sensitive
 
 
+
+## Create the AKV Certificate Store Type
+
+To use the Azure Key Vault Universal Orchestrator extension, you **must** create the AKV Certificate Store Type. This only needs to happen _once_ per Keyfactor Command instance.
+
+
+
+* **Create AKV using kfutil**:
+
+    ```shell
+    # Azure Keyvault
+    kfutil store-types create AKV
+    ```
+
+* **Create AKV manually in the Command UI**:
+    <details><summary>Create AKV manually in the Command UI</summary>
+
+    Create a store type called `AKV` with the attributes in the tables below:
+
+    #### Basic Tab
+    | Attribute | Value | Description |
+    | --------- | ----- | ----- |
+    | Name | Azure Keyvault | Display name for the store type (may be customized) |
+    | Short Name | AKV | Short display name for the store type |
+    | Capability | AKV | Store type name orchestrator will register with. Check the box to allow entry of value |
+    | Supports Add | ✅ Checked | Check the box. Indicates that the Store Type supports Management Add |
+    | Supports Remove | ✅ Checked | Check the box. Indicates that the Store Type supports Management Remove |
+    | Supports Discovery | ✅ Checked | Check the box. Indicates that the Store Type supports Discovery |
+    | Supports Reenrollment | 🔲 Unchecked |  Indicates that the Store Type supports Reenrollment |
+    | Supports Create | ✅ Checked | Check the box. Indicates that the Store Type supports store creation |
+    | Needs Server | ✅ Checked | Determines if a target server name is required when creating store |
+    | Blueprint Allowed | 🔲 Unchecked | Determines if store type may be included in an Orchestrator blueprint |
+    | Uses PowerShell | 🔲 Unchecked | Determines if underlying implementation is PowerShell |
+    | Requires Store Password | 🔲 Unchecked | Enables users to optionally specify a store password when defining a Certificate Store. |
+    | Supports Entry Password | 🔲 Unchecked | Determines if an individual entry within a store can have a password. |
+
+    The Basic tab should look like this:
+
+    ![AKV Basic Tab](docsource/images/AKV-basic-store-type-dialog.png)
+
+    #### Advanced Tab
+    | Attribute | Value | Description |
+    | --------- | ----- | ----- |
+    | Supports Custom Alias | Optional | Determines if an individual entry within a store can have a custom Alias. |
+    | Private Key Handling | Optional | This determines if Keyfactor can send the private key associated with a certificate to the store. Required because IIS certificates without private keys would be invalid. |
+    | PFX Password Style | Default | 'Default' - PFX password is randomly generated, 'Custom' - PFX password may be specified when the enrollment job is created (Requires the Allow Custom Password application setting to be enabled.) |
+
+    The Advanced tab should look like this:
+
+    ![AKV Advanced Tab](docsource/images/AKV-advanced-store-type-dialog.png)
+
+    > For Keyfactor **Command versions 24.4 and later**, a Certificate Format dropdown is available with PFX and PEM options. Ensure that **PFX** is selected, as this determines the format of new and renewed certificates sent to the Orchestrator during a Management job. Currently, all Keyfactor-supported Orchestrator extensions support only PFX.
+
+    #### Custom Fields Tab
+    Custom fields operate at the certificate store level and are used to control how the orchestrator connects to the remote target server containing the certificate store to be managed. The following custom fields should be added to the store type:
+
+    | Name | Display Name | Description | Type | Default Value/Options | Required |
+    | ---- | ------------ | ---- | --------------------- | -------- | ----------- |
+    | TenantId | Tenant Id | The ID of the primary Azure Tenant where the KeyVaults are hosted | String |  | 🔲 Unchecked |
+    | SkuType | SKU Type | The SKU type for newly created KeyVaults (only needed if needing to create new KeyVaults in your Azure subscription via Command) | MultipleChoice | standard,premium | 🔲 Unchecked |
+    | VaultRegion | Vault Region | The Azure Region to put newly created KeyVaults (only needed if needing to create new KeyVaults in your Azure subscription via Command) | MultipleChoice | eastus,eastus2,westus2,westus3,westus | 🔲 Unchecked |
+    | AzureCloud | Azure Cloud | The Azure Cloud where the KeyVaults are located (only necessary if not using the standard Azure Public cloud) | MultipleChoice | public,china,government | 🔲 Unchecked |
+    | PrivateEndpoint | Private KeyVault Endpoint | The private endpoint of your vault instance (if a private endpoint is configured in Azure) | String |  | 🔲 Unchecked |
+
+    The Custom Fields tab should look like this:
+
+    ![AKV Custom Fields Tab](docsource/images/AKV-custom-fields-store-type-dialog.png)
+
+
+
+    #### Entry Parameters Tab
+
+    | Name | Display Name | Description | Type | Default Value | Entry has a private key | Adding an entry | Removing an entry | Reenrolling an entry |
+    | ---- | ------------ | ---- | ------------- | ----------------------- | ---------------- | ----------------- | ------------------- | ----------- |
+    | CertificateTags | Certificate Tags | If desired, tags can be applied to the KeyVault entries.  Provide them as a JSON string of key-value pairs ie: '{'tag-name': 'tag-content', 'other-tag-name': 'other-tag-content'}' | string |  | 🔲 Unchecked | 🔲 Unchecked | 🔲 Unchecked | 🔲 Unchecked |
+
+    The Entry Parameters tab should look like this:
+
+    ![AKV Entry Parameters Tab](docsource/images/AKV-entry-parameters-store-type-dialog.png)
+
+
+
+    </details>
+
+## Installation
+
+1. **Download the latest Azure Key Vault Universal Orchestrator extension from GitHub.** 
+
+    Navigate to the [Azure Key Vault Universal Orchestrator extension GitHub version page](https://github.com/Keyfactor/azurekeyvault-orchestrator/releases/latest). Refer to the compatibility matrix below to determine whether the `net6.0` or `net8.0` asset should be downloaded. Then, click the corresponding asset to download the zip archive.
+    | Universal Orchestrator Version | Latest .NET version installed on the Universal Orchestrator server | `rollForward` condition in `Orchestrator.runtimeconfig.json` | `azurekeyvault-orchestrator` .NET version to download |
+    | --------- | ----------- | ----------- | ----------- |
+    | Older than `11.0.0` | | | `net6.0` |
+    | Between `11.0.0` and `11.5.1` (inclusive) | `net6.0` | | `net6.0` | 
+    | Between `11.0.0` and `11.5.1` (inclusive) | `net8.0` | `Disable` | `net6.0` | 
+    | Between `11.0.0` and `11.5.1` (inclusive) | `net8.0` | `LatestMajor` | `net8.0` | 
+    | `11.6` _and_ newer | `net8.0` | | `net8.0` |
+
+    Unzip the archive containing extension assemblies to a known location.
+
+    > **Note** If you don't see an asset with a corresponding .NET version, you should always assume that it was compiled for `net6.0`.
+
+2. **Locate the Universal Orchestrator extensions directory.**
+
+    * **Default on Windows** - `C:\Program Files\Keyfactor\Keyfactor Orchestrator\extensions`
+    * **Default on Linux** - `/opt/keyfactor/orchestrator/extensions`
+    
+3. **Create a new directory for the Azure Key Vault Universal Orchestrator extension inside the extensions directory.**
+        
+    Create a new directory called `azurekeyvault-orchestrator`.
+    > The directory name does not need to match any names used elsewhere; it just has to be unique within the extensions directory.
+
+4. **Copy the contents of the downloaded and unzipped assemblies from __step 2__ to the `azurekeyvault-orchestrator` directory.**
+
+5. **Restart the Universal Orchestrator service.**
+
+    Refer to [Starting/Restarting the Universal Orchestrator service](https://software.keyfactor.com/Core-OnPrem/Current/Content/InstallingAgents/NetCoreOrchestrator/StarttheService.htm).
+
+
+
+> The above installation steps can be supplimented by the [official Command documentation](https://software.keyfactor.com/Core-OnPrem/Current/Content/InstallingAgents/NetCoreOrchestrator/CustomExtensions.htm?Highlight=extensions).
+
+
+
+## Defining Certificate Stores
+
+
+
+* **Manually with the Command UI**
+
+    <details><summary>Create Certificate Stores manually in the UI</summary>
+
+    1. **Navigate to the _Certificate Stores_ page in Keyfactor Command.**
+
+        Log into Keyfactor Command, toggle the _Locations_ dropdown, and click _Certificate Stores_.
+
+    2. **Add a Certificate Store.**
+
+        Click the Add button to add a new Certificate Store. Use the table below to populate the **Attributes** in the **Add** form.
+        | Attribute | Description |
+        | --------- | ----------- |
+        | Category | Select "Azure Keyvault" or the customized certificate store name from the previous step. |
+        | Container | Optional container to associate certificate store with. |
+        | Client Machine | The GUID of the tenant ID of the Azure Keyvault instance; for example, '12345678-1234-1234-1234-123456789abc'. |
+        | Store Path | A string formatted as '{subscription id}:{resource group name}:{vault name}'; for example, '12345678-1234-1234-1234-123456789abc:myResourceGroup:myVault'. |
+        | Orchestrator | Select an approved orchestrator capable of managing `AKV` certificates. Specifically, one with the `AKV` capability. |
+        | TenantId | The ID of the primary Azure Tenant where the KeyVaults are hosted |
+        | SkuType | The SKU type for newly created KeyVaults (only needed if needing to create new KeyVaults in your Azure subscription via Command) |
+        | VaultRegion | The Azure Region to put newly created KeyVaults (only needed if needing to create new KeyVaults in your Azure subscription via Command) |
+        | AzureCloud | The Azure Cloud where the KeyVaults are located (only necessary if not using the standard Azure Public cloud) |
+        | PrivateEndpoint | The private endpoint of your vault instance (if a private endpoint is configured in Azure) |
+
+
+        
+
+    </details>
+
+* **Using kfutil**
+    
+    <details><summary>Create Certificate Stores with kfutil</summary>
+    
+    1. **Generate a CSV template for the AKV certificate store**
+
+        ```shell
+        kfutil stores import generate-template --store-type-name AKV --outpath AKV.csv
+        ```
+    2. **Populate the generated CSV file**
+
+        Open the CSV file, and reference the table below to populate parameters for each **Attribute**.
+        | Attribute | Description |
+        | --------- | ----------- |
+        | Category | Select "Azure Keyvault" or the customized certificate store name from the previous step. |
+        | Container | Optional container to associate certificate store with. |
+        | Client Machine | The GUID of the tenant ID of the Azure Keyvault instance; for example, '12345678-1234-1234-1234-123456789abc'. |
+        | Store Path | A string formatted as '{subscription id}:{resource group name}:{vault name}'; for example, '12345678-1234-1234-1234-123456789abc:myResourceGroup:myVault'. |
+        | Orchestrator | Select an approved orchestrator capable of managing `AKV` certificates. Specifically, one with the `AKV` capability. |
+        | TenantId | The ID of the primary Azure Tenant where the KeyVaults are hosted |
+        | SkuType | The SKU type for newly created KeyVaults (only needed if needing to create new KeyVaults in your Azure subscription via Command) |
+        | VaultRegion | The Azure Region to put newly created KeyVaults (only needed if needing to create new KeyVaults in your Azure subscription via Command) |
+        | AzureCloud | The Azure Cloud where the KeyVaults are located (only necessary if not using the standard Azure Public cloud) |
+        | PrivateEndpoint | The private endpoint of your vault instance (if a private endpoint is configured in Azure) |
+
+
+        
+
+    3. **Import the CSV file to create the certificate stores** 
+
+        ```shell
+        kfutil stores import csv --store-type-name AKV --file AKV.csv
+        ```
+    </details>
+
+> The content in this section can be supplimented by the [official Command documentation](https://software.keyfactor.com/Core-OnPrem/Current/Content/ReferenceGuide/Certificate%20Stores.htm?Highlight=certificate%20store).
+
+
+
+
+
+## License
+
+Apache License 2.0, see [LICENSE](LICENSE).
+
+## Related Integrations
+
+See all [Keyfactor Universal Orchestrator extensions](https://github.com/orgs/Keyfactor/repositories?q=orchestrator).

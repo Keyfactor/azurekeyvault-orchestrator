@@ -1,4 +1,16 @@
-## Setup and Configuration
+## Overview
+
+The Azure Keyvault Certificate Store Type is designed to integrate with Microsoft Azure Key Vault, enabling users to manage and automate the lifecycle of cryptographic certificates stored in Azure Key Vault through Keyfactor Command. This Certificate Store Type represents the connection and configuration necessary to interact with specific instances of Azure Key Vault, allowing for operations such as inventory, addition, removal, and discovery of certificates and certificate stores.
+
+This integration leverages Azure's robust security infrastructure, utilizing OAuth-based authentication methods including Service Principals, User Assigned Managed Identities, and System Assigned Managed Identities. This ensures that only authorized entities can manage the certificates stored within the Key Vault.
+
+While this Certificate Store Type provides a powerful means of managing certificates, there are some important caveats to consider. For example, if your instance of Azure Key Vault utilizes private or custom endpoints, or is hosted outside of the Azure Public cloud (e.g., Government, China, Germany instances), certain functions like discovery job functionality may not be supported. Additionally, the configuration of access control through Azure's Role Based Access Control (RBAC) or classic Access Policies must be meticulously managed to ensure sufficient permissions for the orchestrator to perform its tasks.
+
+The integration does not require a specific SDK, as it interacts with Azure services directly through their APIs. However, ensuring that the orchestrator has network access to Azure endpoints is crucial for smooth operation. Being mindful of these caveats and limitations will help ensure successful deployment and use of the Azure Keyvault Certificate Store Type within your organization’s security framework.
+
+## Requirements
+
+### Setup and Configuration
 
 The high level steps required to configure the Azure Keyvault Orchestrator extension are:
 
@@ -16,7 +28,9 @@ _Note that the certificate store type used by this Universal Orchestrator suppor
 If your Keyfactor instance has used the Windows Orchestrator for Azure Keyvault, a specific migration process is required.
 See [Migrating from the Windows Orchestrator for Azure KeyVault](#migrating-from-the-windows-orchestrator-for-azure-keyvault) section below._
 
-<details><summary><h4>Migrating from the Windows Orchestrator for Azure KeyVault</h4></summary>
+<details>
+  <summary>
+    <h4>Migrating from the Windows Orchestrator for Azure KeyVault</h4></summary>
 If you were previously using the Azure Keyvault extension for the **Windows** Orchestrator, it is necessary to remove the Store Type definition as well as any Certificate stores that use the previous store type.
 This is because the store type parameters have changed in order to facilitate the Discovery and Create functionality.
 
@@ -28,7 +42,7 @@ If you have an existing AKV store type that was created for use with the Windows
 
 Follow the below steps to remove the AKV capability from **each** active Windows Orchestrator that supports it:
 
-#### If the Windows Orchestrator should still manage other cert store types
+##### If the Windows Orchestrator should still manage other cert store types
 
 _If the Windows Orchestrator will still be used to manage some store types, we will remove only the Azure Keyvault functionality._
 
@@ -48,7 +62,7 @@ _If the Windows Orchestrator will still be used to manage some store types, we w
 
 1) Repeat these steps for any other Windows Orchestrators that support the AKV store type.
 
-#### If the Windows Orchestrator can be retired completely
+##### If the Windows Orchestrator can be retired completely
 
 _If the Windows Orchestrator is being completely replaced with the Universal Orchestrator, we can remove all associated stores and jobs._
 
@@ -62,7 +76,7 @@ _If the Windows Orchestrator is being completely replaced with the Universal Orc
 
 Note: Any Azure Keyvault certificate stores removed can be re-added once the Universal Orchestrator is configured with the AKV capability.
 
-### Migrating from  version 1.x or version 2.x of the Azure Keyvault Orchestrator Extension
+#### Migrating from  version 1.x or version 2.x of the Azure Keyvault Orchestrator Extension
 
 It is not necessary to re-create all of the certificate stores when migrating from a previous version of this extension, though it is important to note that Azure KeyVaults found during a Discovery job
 will return with latest store path format: `{subscription id}:{resource group name}:{new vault name}`.
@@ -71,25 +85,25 @@ will return with latest store path format: `{subscription id}:{resource group na
 
 ---
 
-### Configure the Azure Keyvault for client access
+#### Configure the Azure Keyvault for client access
 
 In order for this orchestrator extension to be able to interact with your instances of Azure Keyvault, it will need to authenticate with a identity that has sufficient permissions to perform the jobs.  Microsoft Azure implements both Role Based Access Control (RBAC) and the classic Access Policy method.  RBAC is the preferred method, as it allows the assignment of granular level, inheretable access control on both the contents of the KeyVaults, as well as higher-level management operations.  For more information and a comparison of the two access control strategies, refer to [this article](learn.microsoft.com/en-us/azure/key-vault/general/rbac-access-policy).
 
-#### RBAC vs Access Policies
+##### RBAC vs Access Policies
 Azure KeyVaults originally utilized access policies for permissions and since then, Microsoft has begun recommending Role Based Access Control (RBAC) as the preferred method of authorization.  
 As of this version, new KeyVaults created via this integration are created with Access Policy authorization.  This will change to RBAC in the next release.
 The access control type the KeyVault implements can be changed in the KeyVault configuration within the Azure Portal.  New KeyVaults created via Keyfactor by way of this integration will be accessible for subsequent actions regardless of the access control type.
 
-#### Configure Role Based Access Control (RBAC)
+##### Configure Role Based Access Control (RBAC)
 
 In order to illustrate the minimum permissions that the authenticating entity (service principal or managed identity) requires, 
 we have created 3 seperate custom role definitions that you can use as a reference when creating an RBAC role definition in your Azure environment.  
 
 The reason for 3 definitions is that certain orchestrator jobs, such as Create (new KeyVault) or Discovery require more elevated permissions at a different scope than the basic certificate operations (Inventory, Add, Remove) performed within a specific KeyVault.
 
-If you know that you will utilize all of the capabilities of this integration; the last custom role definition contains all necessary permissions for performing all of the Jobs (Discovery, Create KeyVault, Inventory/Add/Remove certificates).  
+If you know that you will utilize all of the capabilities of this integration; the last custom role definition contains all necessary permissions for performing all of the Jobs (Discovery, Create KeyVault, Inventory/Add/Remove certificates).
 
-#### Built-in vs. custom roles
+##### Built-in vs. custom roles
 
 > :warning: The custom role definitions below are designed to contain the absolute minimum permissions required.  They are not intended to be used verbatim without consulting your organization's security team and/or Azure Administrator.  Keyfactor does not provide consulting on internal security practices.
 
@@ -97,7 +111,9 @@ It is possible to use the built-in roles provided by Microsoft for these operati
 Whether to create custom role definitions or use an existing or pre-built role will depend on your organization's securuity requirements.  
 For each job type performed by this orchestrator, we've included the minimally sufficient built-in role name(s) along with our custom role definitions that limit permissions to the specific actions and scopes necessary.
 
-<details><summary><h4>Create Vault permissions</h4></summary>
+<details>
+  <summary><h4>Create Vault permissions</h4></summary>
+
 In order to allow for the ability to create new Azure KeyVaults from within command, here is a role that defines the necessary permissions to do so.  If you will never be creating new Azure KeyVaults from within Command, then it is unnecessary to provide the authenticating entity with these permissions.
 
 > :warning: When creating a new KeyVault, we grant the creating entity the built-in "Key Vault Certificates Officer" role in order to be able to perform subsequent actions on the contents of the KeyVault. [click here](github.com/MicrosoftDocs/azure-docs/blob/main/articles/role-based-access-control/built-in-roles/security.md#key-vault-certificates-officer) to see the list of permissions included in the Key Vault Certificates Officer built-in role.
@@ -157,7 +173,8 @@ the above condition limits the ability to assign roles to a single role only (Ke
 }
 ```
 </details>
-<details><summary><h4>Discover Vaults Permissions</h4></summary>
+<details>
+  <summary><h4>Discover Vaults Permissions</h4></summary>
 
 If you would like this integration to search across your subscriptions to discover instances of existing Azure KeyVaults, this role definition contains the necessary permissions for this.
 If you are working with a smaller number of KeyVaults and/or do not plan on utilizing a Discovery job to retrieve all KeyVaults across your subscriptions, the permissions defined in this role are not necessary.
@@ -200,7 +217,8 @@ If you are working with a smaller number of KeyVaults and/or do not plan on util
 
 </details>
 <details>
-<summary><h4>Inventory, Add, and Remove Certificate Permissions</h4></summary>
+  <summary><h4>Inventory, Add, and Remove Certificate Permissions</h4></summary>
+
 This set of permissions is the minimum required to support the basic operations of performing an Inventory and Add/Removal of certificates.
 
 - built-in role: ["Key Vault Certificates Officer"](github.com/MicrosoftDocs/azure-docs/blob/main/articles/role-based-access-control/built-in-roles/security.md#key-vault-certificates-officer)
@@ -247,8 +265,10 @@ This set of permissions is the minimum required to support the basic operations 
 ```
 
 </details>
+
 <details>
-<summary><h4>Combined permissions for all operations (Create, Discovery, Inventory, Add and Remove certificates)</h4></summary>
+  <summary><h4>Combined permissions for all operations (Create, Discovery, Inventory, Add and Remove certificates)</h4></summary>
+
 This section defines a single custom role that contains the necessary permissions to perform all operations allowed by this integration.  The minimum scope allowable is an individual resource group.  If this custom role is associated with the authenticating identity, it will be able to discover existing KeyVaults, Create new ones, and perform inventory as well as adding and removing certificates within the KeyVault.
 
 - minimally sufficient built-in roles (all are required):
@@ -307,9 +327,10 @@ This section defines a single custom role that contains the necessary permission
 > required.  We have tried to provide you with an absolute minimum set of required permissions necessary to perform each operation.  Refer to
 > your organization's security policies and/or consult with your information security team in order to determine which role combinations would
 > be most appropriate for your needs.
+
 </details>
 
-### Endpoint Access / Firewall
+#### Endpoint Access / Firewall
 
 At a minimum, the orchestrator needs access to the following URLs:
 
@@ -324,7 +345,7 @@ Any firewall applied to the orchestrator host will need to be configured to allo
 > :warning: Discovery jobs are not supported for KeyVaults located outside of the Azure Public cloud or Keyvaults accessed via a private url endpoint.  
 > All other job types implemented by this integration are supported for alternate Azure clouds and private endpoints.
 
-### Authentication options
+#### Authentication options
 
 The Azure KeyVault orchestrator plugin supports several authentication options:
 
@@ -335,7 +356,7 @@ The Azure KeyVault orchestrator plugin supports several authentication options:
  Steps for setting up each option are detailed below.
 
 <details>
-<summary><h4>Authentication via Service Principal</h4></summary>
+  <summary><h4>Authentication via Service Principal</h4></summary>
 
 For the Orchestrator to be able to interact with the instance of Azure Keyvault, we will need to create an entity in Azure that will encapsulate the permissions we would like to grant it.  In Azure, these intermediate entities are referred to as app registrations and they provision authority for external application access.
 To learn more about application and service principals, refer to [this article](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal).
@@ -353,7 +374,7 @@ To provision access to the Keyvault instance using a service principal identity,
 **In order to complete these steps, you must have the _Owner_ role for the Azure subscription, at least temporarily.**
 This is required to create an App Registration in Azure Active Directory.
 
-### Create A Service Principal
+#### Create A Service Principal
 
 **Note:** In order to manage key vaults in multiple Azure tenants using a single service principal, the supported account types option selected should be:  `Accounts in any organizational directory (Any Azure AD directory - Multitenant)`. Also, the app registration must be registered in a single tenant, but a service principal must be created in each tenant tied to the app registration. For more info review the [Microsoft documentation](https://learn.microsoft.com/en-us/azure/active-directory/fundamentals/service-accounts-principal#tenant-service-principal-relationships).
 
@@ -366,9 +387,12 @@ Once we have our App registration created in Azure, record the following values
 - _ClientSecret_
 
 We will store these values securely in Keyfactor in subsequent steps.
+
 </details>
+
 <details>
-<summary><h4>Authentication via User Assigned Managed Identity</h4></summary>
+  <summary><h4>Authentication via User Assigned Managed Identity</h4></summary>
+
 Authentication has been somewhat simplified with the introduction of Azure Managed Identities.  If the orchestrator is running on an Azure Virtual Machine, Managed identities allow an Azure administrator to
 assign a managed identity to the virtual machine that can then be used by this orchestrator extension for authentication without the need to issue or manage client secrets.
 
@@ -382,14 +406,17 @@ Read more about Azure Managed Identities [here](https://learn.microsoft.com/en-u
 Detailed steps for creating a managed identity and assigning permissions can be found [here](https://learn.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/how-manage-user-assigned-managed-identities?pivots=identity-mi-methods-azp).
 
 Once the User Assigned managed identity has been created, you will need only to enter the Client Id into the Application Id field on the certificate store definition (the Client Secret can be left blank).
-</details>
-</details>
-<details>
-<summary><h4>Authentication via System Assigned Managed Identity</h4></summary>
-In order to use a _System_ assigned managed identity, there is no need to enter the server credentials.  If no server credentials are provided, the extension assumes authentication is via system assigned managed identity.
+
 </details>
 
-### Create the Store Type in Keyfactor
+<details>
+<summary><h4>Authentication via System Assigned Managed Identity</h4></summary>
+
+In order to use a _System_ assigned managed identity, there is no need to enter the server credentials.  If no server credentials are provided, the extension assumes authentication is via system assigned managed identity.
+
+</details>
+
+#### Create the Store Type in Keyfactor
 
 Now we can navigate to the Keyfactor platform and create the store type for Azure Key Vault.
 
@@ -456,23 +483,7 @@ Now we can navigate to the Keyfactor platform and create the store type for Azur
      you can limit the options to those that should be applicable to your organization. Refer to the [Azure Documentation](https://learn.microsoft.com/en-us/dotnet/api/azure.core.azurelocation?view=azure-dotnethttps://learn.microsoft.com/en-us/dotnet/api/azure.core.azurelocation?view=azure-dotnet) for a list of valid region names.
      If no value is selected, "eastus" is used by default.
 
-
-#### Certificate Tags (v3.1.7+)
-If you would like to utilize Tags for associating arbitrary data with a Certificate in Azure KeyVault, you can utilize an entry parameter named "CertificateTags".
-
-Name: **"CertificateTags"** 
-
-Display Name: **"Certificate Tags"**
-
-Type: **String**
-
-When supplied, this field should contain valid JSON representing a key-value dictionary.  
-
-example: 
-```json
-{{"myTag":"myTagValue"}, {"anotherTag":"anotherTagValue"}}
-```
-### Install the Extension on the Orchestrator
+#### Install the Extension on the Orchestrator
 
 The process for installing an extension for the universal orchestrator differs from the process of installing an extension for the Windows orchestrator.  Follow the below steps to register the Azure Keyvault integration with your instance of the universal orchestrator.
 
@@ -488,7 +499,7 @@ The process for installing an extension for the universal orchestrator differs f
 
 1) Start the Universal Orchestrator Service
 
-### Discover Certificate Stores
+#### Discover Certificate Stores
 
 Now that we have the extension registered on the Orchestrator, we can navigate back to the Keyfactor platform and finish the setup.  If there are existing Azure Key Vaults, complete the below steps to discover and add them.  If there are no existing key vaults to integrate and you will be creating a new one via the Keyfactor Platform, you can skip to the next section.
 
@@ -504,7 +515,7 @@ Now that we have the extension registered on the Orchestrator, we can navigate b
 
 1) Approve the orchestrator if necessary.
 
-#### Create the discovery job
+##### Create the discovery job
 
 1) Navigate to "Locations > Certificate Stores"
 
@@ -518,7 +529,7 @@ Now that we have the extension registered on the Orchestrator, we can navigate b
 
      ![Discovery Form](/Images/discovery-form.png)
 
-#### Store the Server Credentials in Keyfactor
+##### Store the Server Credentials in Keyfactor
 
 > :warning:
 > The steps for configuring discovery are different for each authentication type.
@@ -577,7 +588,7 @@ Follow these steps to store the values:
 
 1) Leave the remaining fields blank and click "SAVE".
 
-#### Approve the Certificate Store
+##### Approve the Certificate Store
 
 When the Discovery job runs successfully, it will list the existing Azure Keyvaults that are acessible by our service principal.
 
@@ -601,7 +612,7 @@ To add one of these results to Keyfactor as a certificate store:
 
 1) Click "SAVE".
 
-### Add a new or existing Azure Keyvault certificate store
+#### Add a new or existing Azure Keyvault certificate store
 
 You can also add a certificate store that corresponds to an Azure Keyvault individually without the need to run the discovery / approval workflow.
 The steps to do this are:
@@ -642,6 +653,6 @@ If the Keyvault does not exist in Azure, and you would like to create it:
 
 ---
 
-### License
+#### License
 
 [Apache](https://apache.org/licenses/LICENSE-2.0)

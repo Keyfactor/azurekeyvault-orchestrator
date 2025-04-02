@@ -1,47 +1,38 @@
 {
-  "$schema": "https://keyfactor.github.io/integration-manifest-schema.json",
+  "$schema": "https://keyfactor.github.io/v2/integration-manifest-schema.json",
   "integration_type": "orchestrator",
   "name": "Azure Key Vault Orchestrator",
   "status": "production",
   "update_catalog": true,
   "link_github": true,
-  "release_dir": "AzureKeyVault\\bin\\Release",
+  "release_dir": "AzureKeyVault/bin/Release",
+  "release_project": "AzureKeyVault/AzureKeyVault.csproj",
   "support_level": "kf-supported",
-  "description": "This integration allows the orchestrator to act as a client with access to an instance of the Azure Key Vault; allowing you to manage your certificates stored in the Azure Keyvault via Keyfactor.",
+  "description": "The <Orchestrator Name> Universal Orchestrator extension enables remote management of cryptographic certificates in various environments by performing tasks such as inventory, addition, and removal of certificates, and discovery of new certificate stores.",
   "about": {
     "orchestrator": {
       "UOFramework": "10.1",
       "keyfactor_platform_version": "10.0",
       "pam_support": true,
-      "win": {
-        "supportsCreateStore": true,
-        "supportsDiscovery": true,
-        "supportsManagementAdd": true,
-        "supportsManagementRemove": true,
-        "supportsReenrollment": false,
-        "supportsInventory": true,
-        "platformSupport": "Unused"
-      },
-      "linux": {
-        "supportsCreateStore": true,
-        "supportsDiscovery": true,
-        "supportsManagementAdd": true,
-        "supportsManagementRemove": true,
-        "supportsReenrollment": false,
-        "supportsInventory": true,
-        "platformSupport": "Unused"
-      },
       "store_types": [
         {
           "BlueprintAllowed": false,
           "Capability": "AKV",
+          "ClientMachineDescription": "The GUID of the tenant ID of the Azure Keyvault instance; for example, '12345678-1234-1234-1234-123456789abc'.",
           "CustomAliasAllowed": "Optional",
           "EntryParameters": [
             {
               "Name": "CertificateTags",
               "DisplayName": "Certificate Tags",
+              "Description": "If desired, tags can be applied to the KeyVault entries.  Provide them as a JSON string of key-value pairs ie: '{'tag-name': 'tag-content', 'other-tag-name': 'other-tag-content'}'",
               "Type": "string",
-              "DefaultValue": ""
+              "DefaultValue": "",
+              "RequiredWhen": {
+                "HasPrivateKey": false,
+                "OnAdd": false,
+                "OnRemove": false,
+                "OnReenrollment": false
+              }
             }
           ],
           "JobProperties": [],
@@ -58,6 +49,7 @@
             {
               "Name": "TenantId",
               "DisplayName": "Tenant Id",
+              "Description": "The ID of the primary Azure Tenant where the KeyVaults are hosted",
               "Type": "String",
               "DependsOn": "",
               "Required": false
@@ -65,6 +57,7 @@
             {
               "Name": "SkuType",
               "DisplayName": "SKU Type",
+              "Description": "The SKU type for newly created KeyVaults (only needed if needing to create new KeyVaults in your Azure subscription via Command)",
               "Type": "MultipleChoice",
               "DependsOn": "",
               "DefaultValue": "standard,premium",
@@ -73,6 +66,7 @@
             {
               "Name": "VaultRegion",
               "DisplayName": "Vault Region",
+              "Description": "The Azure Region to put newly created KeyVaults (only needed if needing to create new KeyVaults in your Azure subscription via Command)",
               "Type": "MultipleChoice",
               "DependsOn": "",
               "DefaultValue": "eastus,eastus2,westus2,westus3,westus",
@@ -81,6 +75,7 @@
             {
               "Name": "AzureCloud",
               "DisplayName": "Azure Cloud",
+              "Description": "The Azure Cloud where the KeyVaults are located (only necessary if not using the standard Azure Public cloud)",
               "Type": "MultipleChoice",
               "DependsOn": "",
               "DefaultValue": "public,china,government",
@@ -89,6 +84,7 @@
             {
               "Name": "PrivateEndpoint",
               "DisplayName": "Private KeyVault Endpoint",
+              "Description": "The private endpoint of your vault instance (if a private endpoint is configured in Azure)",
               "Type": "String",
               "DependsOn": "",
               "Required": false
@@ -96,6 +92,7 @@
           ],
           "ServerRequired": true,
           "ShortName": "AKV",
+          "StorePathDescription": "A string formatted as '{subscription id}:{resource group name}:{vault name}'; for example, '12345678-1234-1234-1234-123456789abc:myResourceGroup:myVault'.",
           "StorePathType": "",
           "StorePathValue": "",
           "SupportedOperations": {
@@ -106,7 +103,6 @@
             "Remove": true
           }
         }
-
       ]
     }
   }
