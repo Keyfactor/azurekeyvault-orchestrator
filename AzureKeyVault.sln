@@ -12,7 +12,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		docsource\content.md = docsource\content.md
 		create_sp_azure.md = create_sp_azure.md
 		integration-manifest.json = integration-manifest.json
-		readme_source.md = readme_source.md
 	EndProjectSection
 EndProject
 Global
