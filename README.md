@@ -94,11 +94,11 @@ The high level steps required to configure the Azure Keyvault Orchestrator exten
 
 1) [Configure the Azure Keyvault for client access](#configure-the-azure-keyvault-for-client-access)
 
-1) [Create the Store Type in Keyfactor](#create-the-store-type-in-keyfactor)
+1) [Create the Store Type in Keyfactor](#create-the-akv-certificate-store-type)
 
-1) [Install the Extension on the Orchestrator](#install-the-extension-on-the-orchestrator)
+1) [Install the Extension on the Orchestrator](#installation)
 
-1) [Create the Certificate Store](#create-the-certificate-store)
+1) [Create the Certificate Store](#add-a-new-or-existing-azure-keyvault-certificate-store)
 
 _Note that the certificate store type used by this Universal Orchestrator support for Azure Keyvault is not compatible
 with the certificate store type used by with Windows Orchestrator version for Azure Keyvault.
