@@ -663,7 +663,3 @@ If the Keyvault does not exist in Azure, and you would like to create it:
 > create new Keyvaults.
 
 ---
-
-#### License
-
-[Apache](https://apache.org/licenses/LICENSE-2.0)
