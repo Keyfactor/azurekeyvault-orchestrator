@@ -1,0 +1,24 @@
+## Overview
+
+The Azure Keyvault Certificate Store Type is designed to integrate with Microsoft Azure Key Vault, enabling users to
+manage and automate the lifecycle of cryptographic certificates stored in Azure Key Vault through Keyfactor Command.
+This Certificate Store Type represents the connection and configuration necessary to interact with specific instances of
+Azure Key Vault, allowing for operations such as inventory, addition, removal, and discovery of certificates and
+certificate stores.
+
+This integration leverages Azure's robust security infrastructure, utilizing OAuth-based authentication methods
+including Service Principals, User Assigned Managed Identities, and System Assigned Managed Identities. This ensures
+that only authorized entities can manage the certificates stored within the Key Vault.
+
+While this Certificate Store Type provides a powerful means of managing certificates, there are some important caveats
+to consider. For example, if your instance of Azure Key Vault utilizes private or custom endpoints, or is hosted outside
+of the Azure Public cloud (e.g., Government, China, Germany instances), certain functions like discovery job
+functionality may not be supported. Additionally, the configuration of access control through Azure's Role Based Access
+Control (RBAC) or classic Access Policies must be meticulously managed to ensure sufficient permissions for the
+orchestrator to perform its tasks.
+
+The integration does not require a specific SDK, as it interacts with Azure services directly through their APIs.
+However, ensuring that the orchestrator has network access to Azure endpoints is crucial for smooth operation. Being
+mindful of these caveats and limitations will help ensure successful deployment and use of the Azure Keyvault
+Certificate Store Type within your organization’s security framework.
+
