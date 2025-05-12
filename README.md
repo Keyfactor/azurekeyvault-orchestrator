@@ -561,18 +561,44 @@ credentials are provided, the extension assumes authentication is via system ass
 </details>
 
 
-## Create the AKV Certificate Store Type
+## AKV Certificate Store Type
 
 To use the Azure Key Vault Universal Orchestrator extension, you **must** create the AKV Certificate Store Type. This only needs to happen _once_ per Keyfactor Command instance.
 
 
 
-* **Create AKV using kfutil**:
 
-    ```shell
-    # Azure Keyvault
-    kfutil store-types create AKV
-    ```
+### Supported Operations
+
+| Operation    | Is Supported                                                                                                           |
+|--------------|------------------------------------------------------------------------------------------------------------------------|
+| Add          | ✅ Checked        |
+| Remove       | ✅ Checked     |
+| Discovery    | ✅ Checked  |
+| Reenrollment | 🔲 Unchecked |
+| Create       | ✅ Checked     |
+
+### Creation Using kfutil:
+`kfutil` is a custom CLI for the Keyfactor Command API and can be used to created certificate store types.
+For more information on [kfutil](https://github.com/Keyfactor/kfutil) check out the [docs](https://github.com/Keyfactor/kfutil?tab=readme-ov-file#quickstart)
+
+#### Using online definition from GitHub:
+This will reach out to GitHub and pull the latest store-type definition
+```shell
+# Azure Keyvault
+kfutil store-types create AKV
+```
+
+#### Offline creation using integration-manifest file:
+If required, it is possible to create store types from the [integration-manifest.json](./integration-manifest.json) included in this repo.
+You would first download the [integration-manifest.json](./integration-manifest.json) and then run the following command
+in your offline environment.
+```shell
+kfutil store-types create --from-file integration-manifest.json
+```
+
+### Manual Creation
+If you do not wish to use the `kfutil` CLI then certificate store types can be creating in the web UI as described below.
 
 * **Create AKV manually in the Command UI**:
     <details><summary>Create AKV manually in the Command UI</summary>
@@ -628,8 +654,6 @@ To use the Azure Key Vault Universal Orchestrator extension, you **must** create
 
     ![AKV Custom Fields Tab](docsource/images/AKV-custom-fields-store-type-dialog.png)
 
-
-
     #### Entry Parameters Tab
 
     | Name | Display Name | Description | Type | Default Value | Entry has a private key | Adding an entry | Removing an entry | Reenrolling an entry |
@@ -642,13 +666,14 @@ To use the Azure Key Vault Universal Orchestrator extension, you **must** create
 
 
 
-    </details>
+
 
 ## Installation
 
 1. **Download the latest Azure Key Vault Universal Orchestrator extension from GitHub.** 
 
     Navigate to the [Azure Key Vault Universal Orchestrator extension GitHub version page](https://github.com/Keyfactor/azurekeyvault-orchestrator/releases/latest). Refer to the compatibility matrix below to determine whether the `net6.0` or `net8.0` asset should be downloaded. Then, click the corresponding asset to download the zip archive.
+
     | Universal Orchestrator Version | Latest .NET version installed on the Universal Orchestrator server | `rollForward` condition in `Orchestrator.runtimeconfig.json` | `azurekeyvault-orchestrator` .NET version to download |
     | --------- | ----------- | ----------- | ----------- |
     | Older than `11.0.0` | | | `net6.0` |
@@ -678,14 +703,22 @@ To use the Azure Key Vault Universal Orchestrator extension, you **must** create
     Refer to [Starting/Restarting the Universal Orchestrator service](https://software.keyfactor.com/Core-OnPrem/Current/Content/InstallingAgents/NetCoreOrchestrator/StarttheService.htm).
 
 
+6. **(optional) PAM Integration** 
 
-> The above installation steps can be supplimented by the [official Command documentation](https://software.keyfactor.com/Core-OnPrem/Current/Content/InstallingAgents/NetCoreOrchestrator/CustomExtensions.htm?Highlight=extensions).
+    The Azure Key Vault Universal Orchestrator extension is compatible with all supported Keyfactor PAM extensions to resolve PAM-eligible secrets. PAM extensions running on Universal Orchestrators enable secure retrieval of secrets from a connected PAM provider.
+
+    To configure a PAM provider, [reference the Keyfactor Integration Catalog](https://keyfactor.github.io/integrations-catalog/content/pam) to select an extension, and follow the associated instructions to install it on the Universal Orchestrator (remote).
+
+
+> The above installation steps can be supplemented by the [official Command documentation](https://software.keyfactor.com/Core-OnPrem/Current/Content/InstallingAgents/NetCoreOrchestrator/CustomExtensions.htm?Highlight=extensions).
 
 
 
 ## Defining Certificate Stores
 
 
+
+### Store Creation
 
 * **Manually with the Command UI**
 
@@ -698,6 +731,7 @@ To use the Azure Key Vault Universal Orchestrator extension, you **must** create
     2. **Add a Certificate Store.**
 
         Click the Add button to add a new Certificate Store. Use the table below to populate the **Attributes** in the **Add** form.
+
         | Attribute | Description |
         | --------- | ----------- |
         | Category | Select "Azure Keyvault" or the customized certificate store name from the previous step. |
@@ -710,11 +744,8 @@ To use the Azure Key Vault Universal Orchestrator extension, you **must** create
         | VaultRegion | The Azure Region to put newly created KeyVaults (only needed if needing to create new KeyVaults in your Azure subscription via Command) |
         | AzureCloud | The Azure Cloud where the KeyVaults are located (only necessary if not using the standard Azure Public cloud) |
         | PrivateEndpoint | The private endpoint of your vault instance (if a private endpoint is configured in Azure) |
-
-
-        
-
     </details>
+
 
 * **Using kfutil**
     
@@ -728,6 +759,7 @@ To use the Azure Key Vault Universal Orchestrator extension, you **must** create
     2. **Populate the generated CSV file**
 
         Open the CSV file, and reference the table below to populate parameters for each **Attribute**.
+
         | Attribute | Description |
         | --------- | ----------- |
         | Category | Select "Azure Keyvault" or the customized certificate store name from the previous step. |
@@ -740,18 +772,29 @@ To use the Azure Key Vault Universal Orchestrator extension, you **must** create
         | VaultRegion | The Azure Region to put newly created KeyVaults (only needed if needing to create new KeyVaults in your Azure subscription via Command) |
         | AzureCloud | The Azure Cloud where the KeyVaults are located (only necessary if not using the standard Azure Public cloud) |
         | PrivateEndpoint | The private endpoint of your vault instance (if a private endpoint is configured in Azure) |
-
-
-        
-
-    3. **Import the CSV file to create the certificate stores** 
+    3. **Import the CSV file to create the certificate stores**
 
         ```shell
         kfutil stores import csv --store-type-name AKV --file AKV.csv
         ```
+
+* **PAM Provider Eligible Fields**
+    <details><summary>Attributes eligible for retrieval by a PAM Provider on the Universal Orchestrator</summary>
+
+    If a PAM provider was installed _on the Universal Orchestrator_ in the [Installation](#Installation) section, the following parameters can be configured for retrieval _on the Universal Orchestrator_.
+
+    | Attribute | Description |
+    | --------- | ----------- |
+    | ServerUsername | Username to use when connecting to server |
+    | ServerPassword | Password to use when connecting to server |
+
+    Please refer to the **Universal Orchestrator (remote)** usage section ([PAM providers on the Keyfactor Integration Catalog](https://keyfactor.github.io/integrations-catalog/content/pam)) for your selected PAM provider for instructions on how to load attributes orchestrator-side.
+
+    > Any secret can be rendered by a PAM provider _installed on the Keyfactor Command server_. The above parameters are specific to attributes that can be fetched by an installed PAM provider running on the Universal Orchestrator server itself.
     </details>
 
-> The content in this section can be supplimented by the [official Command documentation](https://software.keyfactor.com/Core-OnPrem/Current/Content/ReferenceGuide/Certificate%20Stores.htm?Highlight=certificate%20store).
+
+> The content in this section can be supplemented by the [official Command documentation](https://software.keyfactor.com/Core-OnPrem/Current/Content/ReferenceGuide/Certificate%20Stores.htm?Highlight=certificate%20store).
 
 
 ## Discovering Certificate Stores with the Discovery Job
