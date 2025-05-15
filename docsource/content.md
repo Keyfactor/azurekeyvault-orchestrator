@@ -415,7 +415,7 @@ this integration to make the necessary API requests.
 > accessed via a private url endpoint.  
 > All other job types implemented by this integration are supported for alternate Azure clouds and private endpoints.
 
-#### Authentication options
+### Authentication options
 
 The Azure KeyVault orchestrator plugin supports several authentication options:
 
@@ -441,14 +441,10 @@ To provision access to the Keyvault instance using a service principal identity,
 
 2) [Assign it sufficient permissions for Keyvault operations](#assign-permissions)
 
-3) [Generate an Access Token for Authenticating](#generate-an-access-token)
-
-4) [Store the server credentials in Keyfactor](#store-the-server-credentials-in-keyfactor)
-
 **To complete these steps, you must have the _Owner_ role for the Azure subscription, at least temporarily.**
 This is required to create an App Registration in Azure Active Directory.
 
-#### Create A Service Principal
+##### Create A Service Principal
 
 **Note:** To manage key vaults in multiple Azure tenants using a single service principal, the supported
 account types option selected should be:
@@ -465,7 +461,7 @@ Once we have our App registration created in Azure, record the following values
 - _ApplicationId_
 - _ClientSecret_
 
-We will store these values securely in Keyfactor in later steps.
+These credentials will need to be provided to Keyfactor Command.
 
 </details>
 
@@ -505,5 +501,3 @@ To use a _System_ assigned managed identity, there is no need to enter the serve
 credentials are provided, the extension assumes authentication is via system-assigned managed identity.
 
 </details>
-
-
