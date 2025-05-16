@@ -48,30 +48,6 @@ operations.
 
 
 
-### AKV
-
-The Azure Keyvault Certificate Store Type is designed to integrate with Microsoft Azure Key Vault, enabling users to
-manage and automate the lifecycle of cryptographic certificates stored in Azure Key Vault through Keyfactor Command.
-This Certificate Store Type represents the connection and configuration necessary to interact with specific instances of
-Azure Key Vault, allowing for operations such as inventory, addition, removal, and discovery of certificates and
-certificate stores.
-
-This integration leverages Azure's robust security infrastructure, utilizing OAuth-based authentication methods
-including Service Principals, User Assigned Managed Identities, and System Assigned Managed Identities. This ensures
-that only authorized entities can manage the certificates stored within the Key Vault.
-
-While this Certificate Store Type provides a powerful means of managing certificates, there are some important caveats
-to consider. For example, if your instance of Azure Key Vault utilizes private or custom endpoints, or is hosted outside
-of the Azure Public cloud (e.g., Government, China, Germany instances), certain functions like discovery job
-functionality may not be supported. Additionally, the configuration of access control through Azure's Role Based Access
-Control (RBAC) or classic Access Policies must be meticulously managed to ensure sufficient permissions for the
-orchestrator to perform its tasks.
-
-The integration does not require a specific SDK, as it interacts with Azure services directly through their APIs.
-However, ensuring that the orchestrator has network access to Azure endpoints is crucial for smooth operation. Being
-mindful of these caveats and limitations will help ensure successful deployment and use of the Azure Keyvault
-Certificate Store Type within your organization’s security framework.
-
 ## Compatibility
 
 This integration is compatible with Keyfactor Universal Orchestrator version 10.1 and later.
@@ -578,8 +554,32 @@ To use the Azure Key Vault Universal Orchestrator extension, you **must** create
 
 
 
+### AKV
 
-### Supported Operations
+The Azure Keyvault Certificate Store Type is designed to integrate with Microsoft Azure Key Vault, enabling users to
+manage and automate the lifecycle of cryptographic certificates stored in Azure Key Vault through Keyfactor Command.
+This Certificate Store Type represents the connection and configuration necessary to interact with specific instances of
+Azure Key Vault, allowing for operations such as inventory, addition, removal, and discovery of certificates and
+certificate stores.
+
+This integration leverages Azure's robust security infrastructure, utilizing OAuth-based authentication methods
+including Service Principals, User Assigned Managed Identities, and System Assigned Managed Identities. This ensures
+that only authorized entities can manage the certificates stored within the Key Vault.
+
+While this Certificate Store Type provides a powerful means of managing certificates, there are some important caveats
+to consider. For example, if your instance of Azure Key Vault utilizes private or custom endpoints, or is hosted outside
+of the Azure Public cloud (e.g., Government, China, Germany instances), certain functions like discovery job
+functionality may not be supported. Additionally, the configuration of access control through Azure's Role Based Access
+Control (RBAC) or classic Access Policies must be meticulously managed to ensure sufficient permissions for the
+orchestrator to perform its tasks.
+
+The integration does not require a specific SDK, as it interacts with Azure services directly through their APIs.
+However, ensuring that the orchestrator has network access to Azure endpoints is crucial for smooth operation. Being
+mindful of these caveats and limitations will help ensure successful deployment and use of the Azure Keyvault
+Certificate Store Type within your organization’s security framework.
+
+
+#### Supported Operations
 
 | Operation    | Is Supported                                                                                                           |
 |--------------|------------------------------------------------------------------------------------------------------------------------|
@@ -589,18 +589,18 @@ To use the Azure Key Vault Universal Orchestrator extension, you **must** create
 | Reenrollment | 🔲 Unchecked |
 | Create       | ✅ Checked     |
 
-### Creation Using kfutil:
+#### Creation Using kfutil:
 `kfutil` is a custom CLI for the Keyfactor Command API and can be used to created certificate store types.
 For more information on [kfutil](https://github.com/Keyfactor/kfutil) check out the [docs](https://github.com/Keyfactor/kfutil?tab=readme-ov-file#quickstart)
 
-#### Using online definition from GitHub:
+##### Using online definition from GitHub:
 This will reach out to GitHub and pull the latest store-type definition
 ```shell
 # Azure Keyvault
 kfutil store-types create AKV
 ```
 
-#### Offline creation using integration-manifest file:
+##### Offline creation using integration-manifest file:
 If required, it is possible to create store types from the [integration-manifest.json](./integration-manifest.json) included in this repo.
 You would first download the [integration-manifest.json](./integration-manifest.json) and then run the following command
 in your offline environment.
@@ -608,7 +608,7 @@ in your offline environment.
 kfutil store-types create --from-file integration-manifest.json
 ```
 
-### Manual Creation
+#### Manual Creation
 If you do not wish to use the `kfutil` CLI then certificate store types can be creating in the web UI as described below.
 
 * **Create AKV manually in the Command UI**:
@@ -616,7 +616,7 @@ If you do not wish to use the `kfutil` CLI then certificate store types can be c
 
     Create a store type called `AKV` with the attributes in the tables below:
 
-    #### Basic Tab
+    ##### Basic Tab
     | Attribute | Value | Description |
     | --------- | ----- | ----- |
     | Name | Azure Keyvault | Display name for the store type (may be customized) |
@@ -637,7 +637,7 @@ If you do not wish to use the `kfutil` CLI then certificate store types can be c
 
     ![AKV Basic Tab](docsource/images/AKV-basic-store-type-dialog.png)
 
-    #### Advanced Tab
+    ##### Advanced Tab
     | Attribute | Value | Description |
     | --------- | ----- | ----- |
     | Supports Custom Alias | Optional | Determines if an individual entry within a store can have a custom Alias. |
@@ -650,7 +650,7 @@ If you do not wish to use the `kfutil` CLI then certificate store types can be c
 
     > For Keyfactor **Command versions 24.4 and later**, a Certificate Format dropdown is available with PFX and PEM options. Ensure that **PFX** is selected, as this determines the format of new and renewed certificates sent to the Orchestrator during a Management job. Currently, all Keyfactor-supported Orchestrator extensions support only PFX.
 
-    #### Custom Fields Tab
+    ##### Custom Fields Tab
     Custom fields operate at the certificate store level and are used to control how the orchestrator connects to the remote target server containing the certificate store to be managed. The following custom fields should be added to the store type:
 
     | Name | Display Name | Description | Type | Default Value/Options | Required |
@@ -665,7 +665,7 @@ If you do not wish to use the `kfutil` CLI then certificate store types can be c
 
     ![AKV Custom Fields Tab](docsource/images/AKV-custom-fields-store-type-dialog.png)
 
-    #### Entry Parameters Tab
+    ##### Entry Parameters Tab
 
     | Name | Display Name | Description | Type | Default Value | Entry has a private key | Adding an entry | Removing an entry | Reenrolling an entry |
     | ---- | ------------ | ---- | ------------- | ----------------------- | ---------------- | ----------------- | ------------------- | ----------- |
