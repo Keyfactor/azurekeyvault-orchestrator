@@ -11,8 +11,7 @@ including Service Principals, User Assigned Managed Identities, and System Assig
 that only authorized entities can manage the certificates stored within the Key Vault.
 
 While this Certificate Store Type provides a powerful means of managing certificates, there are some important caveats
-to consider. For example, if your instance of Azure Key Vault utilizes private or custom endpoints, or is hosted outside
-of the Azure Public cloud (e.g., Government, China, Germany instances), certain functions like discovery job
+to consider. For example, if your instance of Azure Key Vault utilizes private or custom endpoints, or is hosted outside the Azure Public cloud (e.g., Government, China, Germany instances), certain functions like discovery job
 functionality may not be supported. Additionally, the configuration of access control through Azure's Role Based Access
 Control (RBAC) or classic Access Policies must be meticulously managed to ensure sufficient permissions for the
 orchestrator to perform its tasks.
@@ -24,7 +23,7 @@ Certificate Store Type within your organization’s security framework.
 
 ## Discovery Job Configuration
 
-1) Navigate to Orchestrators > Management in the platform.
+1) Navigate to `Orchestrators > Management` in the platform.
 
    ![Manage Orchestrators](/Images/orch-manage.png)
 
@@ -39,11 +38,11 @@ Certificate Store Type within your organization’s security framework.
 
 ### Create the discovery job
 
-1) Navigate to "Locations > Certificate Stores"
+1) Navigate to `Locations > Certificate Stores`
 
    ![Locations Cert Stores](/Images/locations-certstores.png)
 
-2) Click the "Discover" tab, and then the "Schedule" button.
+2) Click the `Discover` tab, and then the `Schedule` button.
 
    ![Discovery Schedule](/Images/discover-schedule.png)
 
@@ -90,7 +89,7 @@ server credentials in the following way:
 
 Follow these steps to store the values:
 
-1) Enter the _Tenant Id_ in the **Client Machine** field.
+1) Enter the _Tenant ID_ in the **Client Machine** field.
 
    ![Discovery Form](/Images/discovery-form-client-machine.png)
 
@@ -104,12 +103,12 @@ Follow these steps to store the values:
 
 4) Enter again to confirm, and click save.
 
-5) Click "UPDATE SERVER PASSWORD" and update with the appropriate value (`<client secret>` or `managed`) following the
+5) Click `UPDATE SERVER PASSWORD` and update with the appropriate value (`<client secret>` or `managed`) following the
    same steps as above.
 
 6) Select a time to run the discovery job.
 
-7) Enter commma seperated list of tenant ID's in the "Directories to search" field.'
+7) Enter comma seperated list of tenant ID's in the `Directories to search` field.
 
 > :warning:
 > If nothing is entered here, the default Tenant ID included with the credentials will be used. For system managed
@@ -119,7 +118,7 @@ Follow these steps to store the values:
 
 ### Approve the Certificate Store
 
-When the Discovery job runs successfully, it will list the existing Azure Keyvaults that are acessible by our service
+When the Discovery job runs successfully, it will list the existing Azure Keyvaults that are accessible by our service
 principal.
 
 In this example, our job returned these Azure Keyvaults.
@@ -159,7 +158,7 @@ The steps to take this are:
 
 - **Category**: Azure Keyvault
 - **Container**: _optional_
-- **Client Machine**: If applicable; Tenant Id.
+- **Client Machine**: If applicable; Tenant ID.
 
     - Note: These will only have to be entered once, even if adding multiple certificate stores.
     - Follow the steps [here](#store-the-server-credentials-in-keyfactor) to enter them.
