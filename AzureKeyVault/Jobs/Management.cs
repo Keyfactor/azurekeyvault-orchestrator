@@ -15,6 +15,8 @@ using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
 using Microsoft.Extensions.Logging;
 using Keyfactor.Orchestrators.Extensions.Interfaces;
+using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 {
@@ -39,10 +41,16 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 FailureMessage = "Invalid Management Operation"
             };
             object tagsObj;
+            object preserveTagsObj;
             string tagsJSON;
+            bool preserveTags;
 
             config.JobProperties.TryGetValue("CertificateTags", out tagsObj);
-            
+
+            config.JobProperties.TryGetValue(EntryParameters.PRESERVE_TAGS, out preserveTagsObj);
+
+            preserveTags = (bool)preserveTagsObj;
+
             tagsJSON = tagsObj as string;
 
             switch (config.OperationType)
@@ -53,8 +61,8 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                     break;
                 case CertStoreOperationType.Add:
                     logger.LogDebug($"Begin Management > Add...");
-                    
-                    complete = PerformAddition(config.JobCertificate.Alias, config.JobCertificate.PrivateKeyPassword, config.JobCertificate.Contents, tagsJSON, config.JobHistoryId, config.Overwrite);
+
+                    complete = PerformAddition(config.JobCertificate.Alias, config.JobCertificate.PrivateKeyPassword, config.JobCertificate.Contents, tagsJSON, config.JobHistoryId, config.Overwrite, preserveTags);
                     break;
                 case CertStoreOperationType.Remove:
                     logger.LogDebug($"Begin Management > Remove...");
@@ -96,9 +104,24 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         #endregion
 
         #region Add
-        protected virtual JobResult PerformAddition(string alias, string pfxPassword, string entryContents, string tagsJSON, long jobHistoryId, bool overwrite)
+        protected virtual JobResult PerformAddition(string alias, string pfxPassword, string entryContents, string tagsJSON, long jobHistoryId, bool overwrite, bool preserveTags)
         {
             var complete = new JobResult() { Result = OrchestratorJobStatusJobResult.Failure, JobHistoryId = jobHistoryId };
+
+            var tagDict = new Dictionary<string, string>();
+
+            if (!string.IsNullOrEmpty(tagsJSON))
+            {
+                if (!tagsJSON.IsValidJson())
+                {
+                    logger.LogError($"the entry parameter provided for Certificate Tags: \" {tagsJSON} \", does not seem to be valid JSON.");
+                    throw new Exception($"the string \" {tagsJSON} \" is not a valid json string. Please enter a valid json string for CertificateTags in the entry parameter or leave empty for no tags to be applied.");
+                }
+                else
+                {
+                    tagDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(tagsJSON);
+                }
+            }
 
             if (!string.IsNullOrWhiteSpace(pfxPassword)) // This is a PFX Entry
             {
@@ -110,11 +133,27 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
                 try
                 {
+                    var existingTags = new Dictionary<string, string>();
+                    logger.LogTrace($"checking for an existing cert with the alias {alias}");
+                    var existing = AzClient.GetCertificate(alias).Result;
+                    if (existing != null)
+                    {
+                        logger.LogTrace($"there is an existing cert..");
+                    }
+
+                    existingTags = existing?.Properties.Tags as Dictionary<string, string> ?? new Dictionary<string, string>();
+
+                    logger.LogTrace("existing cert tags: ");
+                    if (!existingTags.Any()) logger.LogTrace("(none)");
+
+                    foreach (var tag in existingTags)
+                    {
+                        logger.LogTrace(tag.Key + " : " + tag.Value);
+                    }
+
                     // if overwrite is unchecked, check for an existing cert first
                     if (!overwrite)
                     {
-                        logger.LogTrace($"checking for an existing cert with the alias {alias}");
-                        var existing = AzClient.GetCertificate(alias).Result;
                         if (existing != null)
                         {
                             var message = $"A certificate named {alias} already exists and the overwrite checkbox was unchecked.  No action was taken.";
@@ -124,8 +163,18 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                             return complete;
                         }
                     }
+                    else if (preserveTags)
+                    { // if preserveTags is true, we want to get the existing tags before replacing the cert
+                        foreach (var existingTag in existingTags)
+                        {
+                            if (!tagDict.ContainsKey(existingTag.Key)) // if it's not being overwritten by what was provided..
+                            {
+                                tagDict[existingTag.Key] = existingTag.Value; // then we include it
+                            }
+                        }
+                    }
 
-                    var cert = AzClient.ImportCertificateAsync(alias, entryContents, pfxPassword, tagsJSON).Result;
+                    var cert = AzClient.ImportCertificateAsync(alias, entryContents, pfxPassword, tagDict).Result;
 
                     // Ensure the return object has a AKV version tag, and Thumbprint
                     if (!string.IsNullOrEmpty(cert.Properties.Version) &&
