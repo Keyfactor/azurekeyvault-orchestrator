@@ -18,10 +18,8 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
     public abstract class AzureKeyVaultJob<T> : IOrchestratorJobExtension
     {
         public string ExtensionName => AzureKeyVaultConstants.STORE_TYPE_NAME;
-
         internal protected virtual AzureClient AzClient { get; set; }
         internal protected virtual AkvProperties VaultProperties { get; set; }
-
         internal protected IPAMSecretResolver PamSecretResolver { get; set; }
         internal protected ILogger logger { get; set; }
 

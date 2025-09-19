@@ -17,13 +17,11 @@ using Azure.ResourceManager;
 using Azure.ResourceManager.KeyVault;
 using Azure.ResourceManager.KeyVault.Models;
 using Azure.ResourceManager.Resources;
-using Azure.ResourceManager.Resources.Models;
 using Azure.Security.KeyVault.Certificates;
 using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 {
@@ -196,7 +194,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             }
         }
 
-        public virtual async Task<KeyVaultCertificateWithPolicy> ImportCertificateAsync(string certName, string contents, string pfxPassword, string tags = null)
+        public virtual async Task<KeyVaultCertificateWithPolicy> ImportCertificateAsync(string certName, string contents, string pfxPassword, Dictionary<string,string> tags)
         {
             try
             {
@@ -217,25 +215,14 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
                 logger.LogTrace($"calling ImportCertificateAsync on the KeyVault certificate client to import certificate {certName}");
 
-                var tagDict = new Dictionary<string, string>();
-
-                if (!string.IsNullOrEmpty(tags))
-                {
-                    if (!tags.IsValidJson())
-                    {
-                        logger.LogError($"the entry parameter provided for Certificate Tags: \" {tags} \", does not seem to be valid JSON.");
-                        throw new Exception($"the string \" {tags} \" is not a valid json string. Please enter a valid json string for CertificateTags in the entry parameter or leave empty for no tags to be applied.");
-                    }
-                    logger.LogTrace($"converting the json value provided for tags into a Dictionary<string,string>");
-                    tagDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(tags);
-                    logger.LogTrace($"{tagDict.Count} tag(s) will be associated with the certificate in Azure KeyVault");
-                }
-
                 var options = new ImportCertificateOptions(certName, p12bytes);
 
-                foreach (var tag in tagDict.Keys)
+                if (tags.Any())
                 {
-                    options.Tags.Add(tag, tagDict[tag]);
+                    foreach (var tag in tags)
+                    {
+                        options.Tags.Add(tag);
+                    }
                 }
 
                 var cert = await CertClient.ImportCertificateAsync(options);
@@ -396,9 +383,9 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 var warning = $"Exception thrown performing discovery on tenantId {searchTenantId} and subscription ID {searchSubscription}.  Exception message: {ex.Message}";
 
                 logger.LogWarning(warning);
-                warnings.Add(warning);
-                //throw;
+                warnings.Add(warning);                
             }
+
             return (vaultNames, warnings);
         }
     }
