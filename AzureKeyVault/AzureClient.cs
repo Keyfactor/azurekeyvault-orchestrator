@@ -32,16 +32,19 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         {
             get
             {
-                switch (VaultProperties.AzureCloud?.ToLower())
+                logger.LogTrace($"the AzureCloud is {VaultProperties.AzureCloud}, so we will use the following endpoint for authentication: ");
+                switch (VaultProperties.AzureCloud?.Trim()?.ToLowerInvariant())
                 {
-
                     case "china":
+                        logger.LogTrace(AzureAuthorityHosts.AzureChina.ToString());
                         return AzureAuthorityHosts.AzureChina;
                     //case "germany":
                     //    return AzureAuthorityHosts.AzureGermany; // germany is no longer a valid azure authority host as of 2021
                     case "government":
+                        logger.LogTrace(AzureAuthorityHosts.AzureGovernment.ToString());
                         return AzureAuthorityHosts.AzureGovernment;
                     default:
+                        logger.LogTrace(AzureAuthorityHosts.AzurePublicCloud.ToString());
                         return AzureAuthorityHosts.AzurePublicCloud;
                 }
             }
@@ -92,6 +95,8 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         {
             TokenCredential credential;
             var credentialOptions = new DefaultAzureCredentialOptions { AuthorityHost = AzureCloudEndpoint, AdditionallyAllowedTenants = { "*" } };
+            logger.LogTrace($"creating an ARM client for management operations with authorityhost {AzureCloudEndpoint.ToString()}");
+
             if (this.VaultProperties.UseAzureManagedIdentity)
             {
                 logger.LogTrace("getting management client for a managed identity");

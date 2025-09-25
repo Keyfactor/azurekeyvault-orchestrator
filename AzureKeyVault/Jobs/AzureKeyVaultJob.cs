@@ -94,12 +94,15 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                     VaultProperties.SubscriptionId = properties.SubscriptionId ?? VaultProperties.SubscriptionId;
                     VaultProperties.ResourceGroupName = !string.IsNullOrEmpty(properties.ResourceGroupName as string) ? properties.ResourceGroupName : VaultProperties.ResourceGroupName;
                     VaultProperties.VaultName = properties.VaultName ?? VaultProperties.VaultName; // check the field in case of legacy paths.                    
+                    
                     VaultProperties.TenantId = !string.IsNullOrEmpty(VaultProperties.TenantId) ? VaultProperties.TenantId : config.CertificateStoreDetails?.ClientMachine; // Client Machine could be null in the case of managed identity.  That's ok.
-                    VaultProperties.AzureCloud = !string.IsNullOrEmpty(properties.AzureCloud as string) ? properties.AzureCloud : VaultProperties.AzureCloud;
-                    VaultProperties.PrivateEndpoint = !string.IsNullOrEmpty(properties.PrivateEndpoint as string) ? properties.PrivateEndpoint : VaultProperties.PrivateEndpoint;
-
+                    VaultProperties.AzureCloud = properties.AzureCloud;
+                    logger.LogTrace($"Azure Cloud: {VaultProperties.AzureCloud}");
+                    VaultProperties.PrivateEndpoint = properties.PrivateEndpoint;
+                    logger.LogTrace($"Private Endpoint: {VaultProperties.PrivateEndpoint}");
                     string skuType = !string.IsNullOrEmpty(properties.SkuType as string) ? properties.SkuType : null;
                     VaultProperties.PremiumSKU = skuType?.ToLower() == "premium";
+                    
                     VaultProperties.VaultRegion = !string.IsNullOrEmpty(properties.VaultRegion as string) ? properties.VaultRegion : VaultProperties.VaultRegion;
                     VaultProperties.VaultRegion = VaultProperties.VaultRegion?.ToLower();
                 }
