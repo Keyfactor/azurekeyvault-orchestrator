@@ -13,6 +13,11 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         public const string STORE_TYPE_NAME = "AKV";
     }
 
+    static class EntryParameters {
+        public const string TAGS = "CertificateTags";
+        public const string PRESERVE_TAGS = "PreserveExistingTags";
+    }
+
     static class JobTypes
     {
         public const string CREATE = "Create";
