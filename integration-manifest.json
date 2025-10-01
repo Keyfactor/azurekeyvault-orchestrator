@@ -33,7 +33,20 @@
                 "OnRemove": false,
                 "OnReenrollment": false
               }
-            }
+            },
+            {
+              "Name": "PreserveExistingTags",
+              "DisplayName": "Preserve Existing Tags",
+              "Description": "If true, this will perform a union of any tags provided with enrollment with the tags on the existing cert with the same alias and apply the result to the new certificate.",
+              "Type": "Bool",
+              "DefaultValue": "False",
+              "RequiredWhen": {
+                "HasPrivateKey": false,
+                "OnAdd": false,
+                "OnRemove": false,
+                "OnReenrollment": false
+              }
+            }            
           ],
           "JobProperties": [],
           "LocalStore": false,
