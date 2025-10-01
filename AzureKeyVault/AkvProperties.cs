@@ -45,7 +45,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 {
                     return PrivateEndpoint.TrimStart('.');
                 }
-                switch (AzureCloud)
+                switch (AzureCloud?.Trim()?.ToLowerInvariant())
                 {
                     case "china":
                         return "vault.azure.cn";
@@ -58,6 +58,6 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 }
             }
         }
-        internal protected string VaultURL => $"https://{VaultName}.{VaultEndpoint}/";
+        public string VaultURL => $"https://{VaultName}.{VaultEndpoint}/";
     }
 }

@@ -40,7 +40,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
                 inventoryItems = AzClient.GetCertificatesAsync().Result?.ToList();
 
-                logger.LogTrace($"Found {inventoryItems.Count()} Total Certificates in Azure Key Vault.");
+                logger.LogTrace($"Found {inventoryItems.Count} Total Certificates in Azure Key Vault.");
             }
 
             catch (Exception ex)
