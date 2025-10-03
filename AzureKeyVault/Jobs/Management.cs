@@ -45,13 +45,18 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             string tagsJSON;
             bool preserveTags;
 
-            config.JobProperties.TryGetValue("CertificateTags", out tagsObj);
+            logger.LogTrace("getting entry parameters.. ");
+
+            config.JobProperties.TryGetValue(EntryParameters.TAGS, out tagsObj);
 
             config.JobProperties.TryGetValue(EntryParameters.PRESERVE_TAGS, out preserveTagsObj);
 
-            preserveTags = (bool)preserveTagsObj;
+            preserveTags = Boolean.Parse(preserveTagsObj as string);
 
             tagsJSON = tagsObj as string;
+
+            logger.LogTrace($"PreserveExistingTags string value: {preserveTagsObj as string}");
+            logger.LogTrace($"Tags: {tagsJSON}");
 
             switch (config.OperationType)
             {
