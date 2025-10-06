@@ -29,7 +29,7 @@
 		<PackageReference Include="BouncyCastle.NetCore" Version="2.2.1" />
 		<PackageReference Include="Keyfactor.Logging" Version="1.1.2" />
 		<PackageReference Include="Keyfactor.Orchestrators.Common" Version="3.2.0" />
-		<PackageReference Include="Keyfactor.Orchestrators.IOrchestratorJobExtensions" Version="0.7.0" />
+		<PackageReference Include="Keyfactor.Orchestrators.IOrchestratorJobExtensions" Version="1.0.0" />
 		<PackageReference Include="Keyfactor.Platform.IPAMProvider" Version="1.0.0" />
 		<PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Identity.Client" Version="4.68.0" />
