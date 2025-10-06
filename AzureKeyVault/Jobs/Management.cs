@@ -17,6 +17,7 @@ using Microsoft.Extensions.Logging;
 using Keyfactor.Orchestrators.Extensions.Interfaces;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using System.Security.AccessControl;
 
 namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 {
@@ -35,28 +36,21 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
             InitializeStore(config);
 
+            logger.LogTrace($"raw entry parameters from command: {JsonConvert.SerializeObject(config.JobProperties)}");
+
             JobResult complete = new JobResult()
             {
                 Result = OrchestratorJobStatusJobResult.Failure,
                 FailureMessage = "Invalid Management Operation"
             };
-            object tagsObj;
-            object preserveTagsObj;
+
             string tagsJSON;
             bool preserveTags;
 
-            logger.LogTrace("getting entry parameters.. ");
+            logger.LogTrace("parsing entry parameters.. ");
 
-            config.JobProperties.TryGetValue(EntryParameters.TAGS, out tagsObj);
-
-            config.JobProperties.TryGetValue(EntryParameters.PRESERVE_TAGS, out preserveTagsObj);
-
-            preserveTags = Boolean.Parse(preserveTagsObj as string);
-
-            tagsJSON = tagsObj as string;
-
-            logger.LogTrace($"PreserveExistingTags string value: {preserveTagsObj as string}");
-            logger.LogTrace($"Tags: {tagsJSON}");
+            tagsJSON = config.JobProperties[EntryParameters.TAGS] as string ?? string.Empty;
+            preserveTags = config.JobProperties[EntryParameters.PRESERVE_TAGS] as bool? ?? false;
 
             switch (config.OperationType)
             {
