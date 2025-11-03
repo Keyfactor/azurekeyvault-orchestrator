@@ -276,9 +276,22 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
                 logger.LogTrace($"got a pageable response");
             }
+            catch (AuthenticationFailedException ex)
+            {
+                logger.LogError($"Authentication failed: {ex.Message}");
+                logger.LogError(LogHandler.FlattenException(ex));
+                throw;
+            }
+            catch (RequestFailedException ex) // Catch other potential Azure-specific errors
+            {
+                logger.LogError($"Azure Key Vault operation failed: {ex.Status} - {ex.Message}");
+                logger.LogError(LogHandler.FlattenException(ex));
+                throw;
+            }
             catch (Exception ex)
             {
                 logger.LogError($"Error performing inventory.  {ex.Message}", ex);
+                logger.LogError(LogHandler.FlattenException(ex));
                 throw;
             }
 
