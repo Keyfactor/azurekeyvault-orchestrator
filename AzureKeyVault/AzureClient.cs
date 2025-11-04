@@ -158,8 +158,17 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
                 logger.LogTrace($"getting subscription info for provided subscription id {VaultProperties.SubscriptionId}");
 
-                SubscriptionResource subscription = KvManagementClient.GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(VaultProperties.SubscriptionId));
-                ResourceGroupResource resourceGroup = subscription.GetResourceGroup(VaultProperties.ResourceGroupName);
+                var subscription = KvManagementClient.GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(VaultProperties.SubscriptionId));
+                
+                var resourceGroups = subscription.GetResourceGroups();
+                ResourceGroupResource resourceGroup = await resourceGroups.GetAsync(VaultProperties.ResourceGroupName);
+                logger.LogTrace("calling getAsync on resourcegroup...");
+                await resourceGroup.GetAsync();
+                logger.LogTrace("completed getAsync on resource group...");
+
+                var s = resourceGroup.HasData.ToString();
+
+                logger.LogTrace($"resource group has data?: {s}");
 
                 AzureLocation loc;
 
@@ -170,7 +179,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                     {
                         logger.LogTrace($"no Vault Region location specified for new Vault, Getting available regions for resource group {resourceGroup.Data.Name}.");
                         var locOptions = await resourceGroup.GetAvailableLocationsAsync();
-                        logger.LogTrace($"got location options for subscription {subscription.Data.SubscriptionId}", locOptions);
+                        logger.LogTrace($"got location options for subscription {VaultProperties.SubscriptionId}", locOptions);
                         loc = locOptions.Value.FirstOrDefault();
                     }
                     catch (Exception ex)
