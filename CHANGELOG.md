@@ -1,3 +1,7 @@
+- 3.1.11
+  - bug fix for error when creating new Azure Keyvaults
+  - documentation updates
+	
 - 3.1.10
   - bug fix for government cloud host name resolution
 	
