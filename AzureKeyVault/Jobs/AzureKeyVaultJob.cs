@@ -40,7 +40,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 // ClientSecret can be omitted for managed identities, required for service principal auth
                 VaultProperties.ClientSecret = PAMUtilities.ResolvePAMField(PamSecretResolver, logger, "Server Password", config.ServerPassword);
 
-                if (VaultProperties.ClientSecret == null)
+                if (string.IsNullOrEmpty(VaultProperties.ClientSecret))
                 {
                     logger.LogTrace("No client secret provided, assuming Managed Identity authentication");
                 }
