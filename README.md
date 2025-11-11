@@ -70,7 +70,7 @@ The high level steps required to configure the Azure Keyvault Orchestrator exten
 
 1) [Configure the Azure Keyvault for client access](#configure-the-azure-keyvault-for-client-access)
 
-1) [Create the Store Type in Keyfactor](#create-the-akv-certificate-store-type)
+1) [Create the Store Type in Keyfactor](#akv-certificate-store-type)
 
 1) [Install the Extension on the Orchestrator](#installation)
 
@@ -544,7 +544,7 @@ To use the Azure Key Vault Universal Orchestrator extension, you **must** create
 
 
 The Azure Keyvault Certificate Store Type is designed to integrate with Microsoft Azure Key Vault, enabling users to
-manage and automate the lifecycle of cryptographic certificates stored in Azure Key Vault through Keyfactor Command.
+manage and automate the lifecycle of cryptographic certificates stored in Azure Keyvault through Keyfactor Command.
 This Certificate Store Type represents the connection and configuration necessary to interact with specific instances of
 Azure Key Vault, allowing for operations such as inventory, addition, removal, and discovery of certificates and
 certificate stores.
@@ -564,6 +564,11 @@ The integration does not require a specific SDK, as it interacts with Azure serv
 However, ensuring that the orchestrator has network access to Azure endpoints is crucial for smooth operation. Being
 mindful of these caveats and limitations will help ensure successful deployment and use of the Azure Keyvault
 Certificate Store Type within your organization’s security framework.
+
+> :warning:
+> The alias you provide when enrolling a certificate will be used as the certificate name in Azure Keyvault.
+> Consequently; [it must _only_ contain alphanumeric characters and hyphens](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules#microsoftkeyvault).
+> If you encounter the error "The request URI contains an invalid name" when attempting to perform an enrollment, it is likely due to the use of disallowed characters in the alias.
 
 
 
@@ -633,7 +638,7 @@ the Keyfactor Command Portal
    ##### Advanced Tab
    | Attribute | Value | Description |
    | --------- | ----- | ----- |
-   | Supports Custom Alias | Optional | Determines if an individual entry within a store can have a custom Alias. |
+   | Supports Custom Alias | Required | Determines if an individual entry within a store can have a custom Alias. |
    | Private Key Handling | Optional | This determines if Keyfactor can send the private key associated with a certificate to the store. Required because IIS certificates without private keys would be invalid. |
    | PFX Password Style | Default | 'Default' - PFX password is randomly generated, 'Custom' - PFX password may be specified when the enrollment job is created (Requires the Allow Custom Password application setting to be enabled.) |
 
