@@ -674,6 +674,18 @@ the Keyfactor Command Portal
 
    ![AKV Entry Parameters Tab](docsource/images/AKV-entry-parameters-store-type-dialog.png)
 
+
+   ##### CertificateTags
+
+   ![AKV Entry Parameter - CertificateTags](docsource/images/AKV-entry-parameters-store-type-dialog-CertificateTags.png)
+
+
+   ##### PreserveExistingTags
+
+   ![AKV Entry Parameter - PreserveExistingTags](docsource/images/AKV-entry-parameters-store-type-dialog-PreserveExistingTags.png)
+
+
+
    </details>
 
 ## Installation
