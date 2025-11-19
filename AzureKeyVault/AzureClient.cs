@@ -278,12 +278,26 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         {
             List<CurrentInventoryItem> inventoryItems = new List<CurrentInventoryItem>();
             AsyncPageable<CertificateProperties> inventory = null;
+            var fullInventoryList = new List<CertificateProperties>();
+            var failedCount = 0;
+            Exception innerException = null;
+
             try
             {
                 logger.LogTrace("calling GetPropertiesOfCertificates() on the Certificate Client");
                 inventory = CertClient.GetPropertiesOfCertificatesAsync();
+                
+                logger.LogTrace($"created pageable request");
+                
+                logger.LogTrace("iterating over result pages for complete list..");
 
-                logger.LogTrace($"got a pageable response");
+                await foreach (var cert in inventory)
+                {
+                    logger.LogTrace($"adding cert with ID: {cert.Id} to the list.");
+                    fullInventoryList.Add(cert); // convert to list from pages
+                }
+
+                logger.LogTrace($"compiled full inventory list of {fullInventoryList.Count()} certificate(s)");
             }
             catch (AuthenticationFailedException ex)
             {
@@ -303,20 +317,6 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 logger.LogError(LogHandler.FlattenException(ex));
                 throw;
             }
-
-            logger.LogTrace("iterating over result pages for complete list..");
-
-            var fullInventoryList = new List<CertificateProperties>();
-            var failedCount = 0;
-            Exception innerException = null;
-
-            await foreach (var cert in inventory)
-            {
-                logger.LogTrace($"adding cert with ID: {cert.Id} to the list.");
-                fullInventoryList.Add(cert); // convert to list from pages
-            }
-
-            logger.LogTrace($"compiled full inventory list of {fullInventoryList.Count()} certificate(s)");
 
             foreach (var certificate in fullInventoryList)
             {
@@ -339,8 +339,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 catch (Exception ex)
                 {
                     failedCount++;
-                    innerException = ex;
-                    logger.LogError($"Failed to retreive details for certificate {certificate.Name}.  Exception: {ex.Message}");
+                    logger.LogError($"Failed to retreive details for certificate {certificate.Name}.  Exception: {LogHandler.FlattenException(ex)}");
                     // continuing with inventory instead of throwing, in case there's an issue with a single certificate
                 }
             }
