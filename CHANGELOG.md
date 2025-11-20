@@ -1,3 +1,10 @@
+- 3.1.11
+  - bug fix for error when creating new Azure Keyvaults
+  - documentation updates
+	
+- 3.1.10
+  - bug fix for government cloud host name resolution
+	
 - 3.1.9
   - Added optional entry parameter to indicate that existing tags should be preserved if certificate is replaced
   - bug fix for government cloud host name resolution

@@ -70,7 +70,7 @@ The high level steps required to configure the Azure Keyvault Orchestrator exten
 
 1) [Configure the Azure Keyvault for client access](#configure-the-azure-keyvault-for-client-access)
 
-1) [Create the Store Type in Keyfactor](#create-the-akv-certificate-store-type)
+1) [Create the Store Type in Keyfactor](#akv-certificate-store-type)
 
 1) [Install the Extension on the Orchestrator](#installation)
 
@@ -544,7 +544,7 @@ To use the Azure Key Vault Universal Orchestrator extension, you **must** create
 
 
 The Azure Keyvault Certificate Store Type is designed to integrate with Microsoft Azure Key Vault, enabling users to
-manage and automate the lifecycle of cryptographic certificates stored in Azure Key Vault through Keyfactor Command.
+manage and automate the lifecycle of cryptographic certificates stored in Azure Keyvault through Keyfactor Command.
 This Certificate Store Type represents the connection and configuration necessary to interact with specific instances of
 Azure Key Vault, allowing for operations such as inventory, addition, removal, and discovery of certificates and
 certificate stores.
@@ -564,6 +564,11 @@ The integration does not require a specific SDK, as it interacts with Azure serv
 However, ensuring that the orchestrator has network access to Azure endpoints is crucial for smooth operation. Being
 mindful of these caveats and limitations will help ensure successful deployment and use of the Azure Keyvault
 Certificate Store Type within your organization’s security framework.
+
+> :warning:
+> The alias you provide when enrolling a certificate will be used as the certificate name in Azure Keyvault.
+> Consequently; [it must _only_ contain alphanumeric characters and hyphens](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules#microsoftkeyvault).
+> If you encounter the error "The request URI contains an invalid name" when attempting to perform an enrollment, it is likely due to the use of disallowed characters in the alias.
 
 
 
@@ -633,7 +638,7 @@ the Keyfactor Command Portal
    ##### Advanced Tab
    | Attribute | Value | Description |
    | --------- | ----- | ----- |
-   | Supports Custom Alias | Optional | Determines if an individual entry within a store can have a custom Alias. |
+   | Supports Custom Alias | Required | Determines if an individual entry within a store can have a custom Alias. |
    | Private Key Handling | Optional | This determines if Keyfactor can send the private key associated with a certificate to the store. Required because IIS certificates without private keys would be invalid. |
    | PFX Password Style | Default | 'Default' - PFX password is randomly generated, 'Custom' - PFX password may be specified when the enrollment job is created (Requires the Allow Custom Password application setting to be enabled.) |
 
@@ -658,6 +663,44 @@ the Keyfactor Command Portal
 
    ![AKV Custom Fields Tab](docsource/images/AKV-custom-fields-store-type-dialog.png)
 
+
+   ###### Tenant Id
+   The ID of the primary Azure Tenant where the KeyVaults are hosted
+
+   ![AKV Custom Field - TenantId](docsource/images/AKV-custom-field-TenantId-dialog.png)
+
+
+
+   ###### SKU Type
+   The SKU type for newly created KeyVaults (only needed if needing to create new KeyVaults in your Azure subscription via Command)
+
+   ![AKV Custom Field - SkuType](docsource/images/AKV-custom-field-SkuType-dialog.png)
+
+
+
+   ###### Vault Region
+   The Azure Region to put newly created KeyVaults (only needed if needing to create new KeyVaults in your Azure subscription via Command)
+
+   ![AKV Custom Field - VaultRegion](docsource/images/AKV-custom-field-VaultRegion-dialog.png)
+
+
+
+   ###### Azure Cloud
+   The Azure Cloud where the KeyVaults are located (only necessary if not using the standard Azure Public cloud)
+
+   ![AKV Custom Field - AzureCloud](docsource/images/AKV-custom-field-AzureCloud-dialog.png)
+
+
+
+   ###### Private KeyVault Endpoint
+   The private endpoint of your vault instance (if a private endpoint is configured in Azure)
+
+   ![AKV Custom Field - PrivateEndpoint](docsource/images/AKV-custom-field-PrivateEndpoint-dialog.png)
+
+
+
+
+
    ##### Entry Parameters Tab
 
    | Name | Display Name | Description | Type | Default Value | Entry has a private key | Adding an entry | Removing an entry | Reenrolling an entry |
@@ -668,6 +711,20 @@ the Keyfactor Command Portal
    The Entry Parameters tab should look like this:
 
    ![AKV Entry Parameters Tab](docsource/images/AKV-entry-parameters-store-type-dialog.png)
+
+
+   ##### Certificate Tags
+   If desired, tags can be applied to the KeyVault entries.  Provide them as a JSON string of key-value pairs ie: '{'tag-name': 'tag-content', 'other-tag-name': 'other-tag-content'}'
+
+   ![AKV Entry Parameter - CertificateTags](docsource/images/AKV-entry-parameters-store-type-dialog-CertificateTags.png)
+
+
+   ##### Preserve Existing Tags
+   If true, this will perform a union of any tags provided with enrollment with the tags on the existing cert with the same alias and apply the result to the new certificate.
+
+   ![AKV Entry Parameter - PreserveExistingTags](docsource/images/AKV-entry-parameters-store-type-dialog-PreserveExistingTags.png)
+
+
 
    </details>
 
