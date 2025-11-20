@@ -663,6 +663,44 @@ the Keyfactor Command Portal
 
    ![AKV Custom Fields Tab](docsource/images/AKV-custom-fields-store-type-dialog.png)
 
+
+   ###### Tenant Id
+   The ID of the primary Azure Tenant where the KeyVaults are hosted
+
+   ![AKV Custom Field - TenantId](docsource/images/AKV-custom-field-TenantId-dialog.png)
+
+
+
+   ###### SKU Type
+   The SKU type for newly created KeyVaults (only needed if needing to create new KeyVaults in your Azure subscription via Command)
+
+   ![AKV Custom Field - SkuType](docsource/images/AKV-custom-field-SkuType-dialog.png)
+
+
+
+   ###### Vault Region
+   The Azure Region to put newly created KeyVaults (only needed if needing to create new KeyVaults in your Azure subscription via Command)
+
+   ![AKV Custom Field - VaultRegion](docsource/images/AKV-custom-field-VaultRegion-dialog.png)
+
+
+
+   ###### Azure Cloud
+   The Azure Cloud where the KeyVaults are located (only necessary if not using the standard Azure Public cloud)
+
+   ![AKV Custom Field - AzureCloud](docsource/images/AKV-custom-field-AzureCloud-dialog.png)
+
+
+
+   ###### Private KeyVault Endpoint
+   The private endpoint of your vault instance (if a private endpoint is configured in Azure)
+
+   ![AKV Custom Field - PrivateEndpoint](docsource/images/AKV-custom-field-PrivateEndpoint-dialog.png)
+
+
+
+
+
    ##### Entry Parameters Tab
 
    | Name | Display Name | Description | Type | Default Value | Entry has a private key | Adding an entry | Removing an entry | Reenrolling an entry |
@@ -675,12 +713,14 @@ the Keyfactor Command Portal
    ![AKV Entry Parameters Tab](docsource/images/AKV-entry-parameters-store-type-dialog.png)
 
 
-   ##### CertificateTags
+   ##### Certificate Tags
+   If desired, tags can be applied to the KeyVault entries.  Provide them as a JSON string of key-value pairs ie: '{'tag-name': 'tag-content', 'other-tag-name': 'other-tag-content'}'
 
    ![AKV Entry Parameter - CertificateTags](docsource/images/AKV-entry-parameters-store-type-dialog-CertificateTags.png)
 
 
-   ##### PreserveExistingTags
+   ##### Preserve Existing Tags
+   If true, this will perform a union of any tags provided with enrollment with the tags on the existing cert with the same alias and apply the result to the new certificate.
 
    ![AKV Entry Parameter - PreserveExistingTags](docsource/images/AKV-entry-parameters-store-type-dialog-PreserveExistingTags.png)
 
