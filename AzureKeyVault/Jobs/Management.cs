@@ -46,11 +46,13 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
             string tagsJSON;
             bool preserveTags;
+            bool nonExportable;
 
             logger.LogTrace("parsing entry parameters.. ");
 
             tagsJSON = config.JobProperties[EntryParameters.TAGS] as string ?? string.Empty;
             preserveTags = config.JobProperties[EntryParameters.PRESERVE_TAGS] as bool? ?? false;
+            nonExportable = config.JobProperties[EntryParameters.NON_EXPORTABLE] as bool? ?? false;
 
             switch (config.OperationType)
             {
@@ -61,7 +63,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 case CertStoreOperationType.Add:
                     logger.LogDebug($"Begin Management > Add...");
 
-                    complete = PerformAddition(config.JobCertificate.Alias, config.JobCertificate.PrivateKeyPassword, config.JobCertificate.Contents, tagsJSON, config.JobHistoryId, config.Overwrite, preserveTags);
+                    complete = PerformAddition(config.JobCertificate.Alias, config.JobCertificate.PrivateKeyPassword, config.JobCertificate.Contents, tagsJSON, config.JobHistoryId, config.Overwrite, preserveTags, nonExportable);
                     break;
                 case CertStoreOperationType.Remove:
                     logger.LogDebug($"Begin Management > Remove...");
@@ -103,7 +105,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         #endregion
 
         #region Add
-        protected virtual JobResult PerformAddition(string alias, string pfxPassword, string entryContents, string tagsJSON, long jobHistoryId, bool overwrite, bool preserveTags)
+        protected virtual JobResult PerformAddition(string alias, string pfxPassword, string entryContents, string tagsJSON, long jobHistoryId, bool overwrite, bool preserveTags, bool nonExportable)
         {
             var complete = new JobResult() { Result = OrchestratorJobStatusJobResult.Failure, JobHistoryId = jobHistoryId };
 
@@ -173,7 +175,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                         }
                     }
 
-                    var cert = AzClient.ImportCertificateAsync(alias, entryContents, pfxPassword, tagDict).Result;
+                    var cert = AzClient.ImportCertificateAsync(alias, entryContents, pfxPassword, tagDict, nonExportable).Result;
 
                     // Ensure the return object has a AKV version tag, and Thumbprint
                     if (!string.IsNullOrEmpty(cert.Properties.Version) &&

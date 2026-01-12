@@ -199,7 +199,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             }
         }
 
-        public virtual async Task<KeyVaultCertificateWithPolicy> ImportCertificateAsync(string certName, string contents, string pfxPassword, Dictionary<string,string> tags)
+        public virtual async Task<KeyVaultCertificateWithPolicy> ImportCertificateAsync(string certName, string contents, string pfxPassword, Dictionary<string,string> tags, bool nonExportable)
         {
             try
             {
@@ -221,6 +221,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 logger.LogTrace($"calling ImportCertificateAsync on the KeyVault certificate client to import certificate {certName}");
 
                 var options = new ImportCertificateOptions(certName, p12bytes);
+                options.Policy.Exportable = nonExportable;
 
                 if (tags.Any())
                 {

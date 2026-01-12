@@ -46,7 +46,20 @@
                 "OnRemove": false,
                 "OnReenrollment": false
               }
-            }            
+            },
+            {
+              "Name": "NonExportable",
+              "DisplayName": "Non Exportable",
+              "Description": "If true, this will mark the certificate as 'non-exportable' when importing into Azure KeyVault",
+              "Type": "Bool",
+              "DefaultValue": "False",
+              "RequiredWhen": {
+                "HasPrivateKey": false,
+                "OnAdd": false,
+                "OnRemove": false,
+                "OnReenrollment": false
+              }
+            }  
           ],
           "JobProperties": [],
           "LocalStore": false,
