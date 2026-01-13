@@ -1,3 +1,5 @@
+- 3.2.0
+  - Fancy new features here
 - 3.1.9
   - Added optional entry parameter to indicate that existing tags should be preserved if certificate is replaced
   - bug fix for government cloud host name resolution
