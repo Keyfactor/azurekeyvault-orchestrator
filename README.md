@@ -702,7 +702,7 @@ the Keyfactor Command Portal
    | ---- | ------------ | ---- | ------------- | ----------------------- | ---------------- | ----------------- | ------------------- | ----------- |
    | CertificateTags | Certificate Tags | If desired, tags can be applied to the KeyVault entries.  Provide them as a JSON string of key-value pairs ie: '{'tag-name': 'tag-content', 'other-tag-name': 'other-tag-content'}' | string |  | 🔲 Unchecked | 🔲 Unchecked | 🔲 Unchecked | 🔲 Unchecked |
    | PreserveExistingTags | Preserve Existing Tags | If true, this will perform a union of any tags provided with enrollment with the tags on the existing cert with the same alias and apply the result to the new certificate. | Bool | False | 🔲 Unchecked | 🔲 Unchecked | 🔲 Unchecked | 🔲 Unchecked |
-   | NonExportable | Non Exportable | If true, this will mark the certificate as 'non-exportable' when importing into Azure KeyVault | Bool | False | 🔲 Unchecked | 🔲 Unchecked | 🔲 Unchecked | 🔲 Unchecked |
+   | NonExportable | Non Exportable Private Key | If true, this will mark the certificate as having a non-exportable private key when importing into Azure KeyVault | Bool | False | 🔲 Unchecked | 🔲 Unchecked | 🔲 Unchecked | 🔲 Unchecked |
 
    The Entry Parameters tab should look like this:
 
@@ -721,8 +721,8 @@ the Keyfactor Command Portal
    ![AKV Entry Parameter - PreserveExistingTags](docsource/images/AKV-entry-parameters-store-type-dialog-PreserveExistingTags.png)
 
 
-   ##### Non Exportable
-   If true, this will mark the certificate as 'non-exportable' when importing into Azure KeyVault
+   ##### Non Exportable Private Key
+   If true, this will mark the certificate as having a non-exportable private key when importing into Azure KeyVault
 
    ![AKV Entry Parameter - NonExportable](docsource/images/AKV-entry-parameters-store-type-dialog-NonExportable.png)
 
