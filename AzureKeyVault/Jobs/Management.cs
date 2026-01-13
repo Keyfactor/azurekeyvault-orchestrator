@@ -17,7 +17,6 @@ using Microsoft.Extensions.Logging;
 using Keyfactor.Orchestrators.Extensions.Interfaces;
 using System.Collections.Generic;
 using Newtonsoft.Json;
-using System.Security.AccessControl;
 
 namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 {
@@ -140,16 +139,16 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                     if (existing != null)
                     {
                         logger.LogTrace($"there is an existing cert..");
-                    }
 
-                    existingTags = existing?.Properties.Tags as Dictionary<string, string> ?? new Dictionary<string, string>();
+                        existingTags = existing?.Properties.Tags as Dictionary<string, string> ?? new Dictionary<string, string>();
 
-                    logger.LogTrace("existing cert tags: ");
-                    if (!existingTags.Any()) logger.LogTrace("(none)");
+                        logger.LogTrace("existing cert tags: ");
+                        if (!existingTags.Any()) logger.LogTrace("(none)");
 
-                    foreach (var tag in existingTags)
-                    {
-                        logger.LogTrace(tag.Key + " : " + tag.Value);
+                        foreach (var tag in existingTags)
+                        {
+                            logger.LogTrace(tag.Key + " : " + tag.Value);
+                        }
                     }
 
                     // if overwrite is unchecked, check for an existing cert first

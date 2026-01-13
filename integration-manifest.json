@@ -49,8 +49,8 @@
             },
             {
               "Name": "NonExportable",
-              "DisplayName": "Non Exportable",
-              "Description": "If true, this will mark the certificate as 'non-exportable' when importing into Azure KeyVault",
+              "DisplayName": "Non Exportable Private Key",
+              "Description": "If true, this will mark the certificate as having a non-exportable private key when importing into Azure KeyVault",
               "Type": "Bool",
               "DefaultValue": "False",
               "RequiredWhen": {
