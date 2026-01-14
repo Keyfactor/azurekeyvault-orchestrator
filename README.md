@@ -658,16 +658,75 @@ the Keyfactor Command Portal
 
    ![AKV Custom Fields Tab](docsource/images/AKV-custom-fields-store-type-dialog.png)
 
+
+   ###### Tenant Id
+   The ID of the primary Azure Tenant where the KeyVaults are hosted
+
+   ![AKV Custom Field - TenantId](docsource/images/AKV-custom-field-TenantId-dialog.png)
+
+
+
+   ###### SKU Type
+   The SKU type for newly created KeyVaults (only needed if needing to create new KeyVaults in your Azure subscription via Command)
+
+   ![AKV Custom Field - SkuType](docsource/images/AKV-custom-field-SkuType-dialog.png)
+
+
+
+   ###### Vault Region
+   The Azure Region to put newly created KeyVaults (only needed if needing to create new KeyVaults in your Azure subscription via Command)
+
+   ![AKV Custom Field - VaultRegion](docsource/images/AKV-custom-field-VaultRegion-dialog.png)
+
+
+
+   ###### Azure Cloud
+   The Azure Cloud where the KeyVaults are located (only necessary if not using the standard Azure Public cloud)
+
+   ![AKV Custom Field - AzureCloud](docsource/images/AKV-custom-field-AzureCloud-dialog.png)
+
+
+
+   ###### Private KeyVault Endpoint
+   The private endpoint of your vault instance (if a private endpoint is configured in Azure)
+
+   ![AKV Custom Field - PrivateEndpoint](docsource/images/AKV-custom-field-PrivateEndpoint-dialog.png)
+
+
+
+
+
    ##### Entry Parameters Tab
 
    | Name | Display Name | Description | Type | Default Value | Entry has a private key | Adding an entry | Removing an entry | Reenrolling an entry |
    | ---- | ------------ | ---- | ------------- | ----------------------- | ---------------- | ----------------- | ------------------- | ----------- |
    | CertificateTags | Certificate Tags | If desired, tags can be applied to the KeyVault entries.  Provide them as a JSON string of key-value pairs ie: '{'tag-name': 'tag-content', 'other-tag-name': 'other-tag-content'}' | string |  | 🔲 Unchecked | 🔲 Unchecked | 🔲 Unchecked | 🔲 Unchecked |
    | PreserveExistingTags | Preserve Existing Tags | If true, this will perform a union of any tags provided with enrollment with the tags on the existing cert with the same alias and apply the result to the new certificate. | Bool | False | 🔲 Unchecked | 🔲 Unchecked | 🔲 Unchecked | 🔲 Unchecked |
+   | NonExportable | Non Exportable Private Key | If true, this will mark the certificate as having a non-exportable private key when importing into Azure KeyVault | Bool | False | 🔲 Unchecked | 🔲 Unchecked | 🔲 Unchecked | 🔲 Unchecked |
 
    The Entry Parameters tab should look like this:
 
    ![AKV Entry Parameters Tab](docsource/images/AKV-entry-parameters-store-type-dialog.png)
+
+
+   ##### Certificate Tags
+   If desired, tags can be applied to the KeyVault entries.  Provide them as a JSON string of key-value pairs ie: '{'tag-name': 'tag-content', 'other-tag-name': 'other-tag-content'}'
+
+   ![AKV Entry Parameter - CertificateTags](docsource/images/AKV-entry-parameters-store-type-dialog-CertificateTags.png)
+
+
+   ##### Preserve Existing Tags
+   If true, this will perform a union of any tags provided with enrollment with the tags on the existing cert with the same alias and apply the result to the new certificate.
+
+   ![AKV Entry Parameter - PreserveExistingTags](docsource/images/AKV-entry-parameters-store-type-dialog-PreserveExistingTags.png)
+
+
+   ##### Non Exportable Private Key
+   If true, this will mark the certificate as having a non-exportable private key when importing into Azure KeyVault
+
+   ![AKV Entry Parameter - NonExportable](docsource/images/AKV-entry-parameters-store-type-dialog-NonExportable.png)
+
+
 
    </details>
 
@@ -675,15 +734,14 @@ the Keyfactor Command Portal
 
 1. **Download the latest Azure Key Vault Universal Orchestrator extension from GitHub.**
 
-    Navigate to the [Azure Key Vault Universal Orchestrator extension GitHub version page](https://github.com/Keyfactor/azurekeyvault-orchestrator/releases/latest). Refer to the compatibility matrix below to determine whether the `net6.0` or `net8.0` asset should be downloaded. Then, click the corresponding asset to download the zip archive.
+    Navigate to the [Azure Key Vault Universal Orchestrator extension GitHub version page](https://github.com/Keyfactor/azurekeyvault-orchestrator/releases/latest). Refer to the compatibility matrix below to determine the asset should be downloaded. Then, click the corresponding asset to download the zip archive.
 
    | Universal Orchestrator Version | Latest .NET version installed on the Universal Orchestrator server | `rollForward` condition in `Orchestrator.runtimeconfig.json` | `azurekeyvault-orchestrator` .NET version to download |
    | --------- | ----------- | ----------- | ----------- |
    | Older than `11.0.0` | | | `net6.0` |
    | Between `11.0.0` and `11.5.1` (inclusive) | `net6.0` | | `net6.0` |
-   | Between `11.0.0` and `11.5.1` (inclusive) | `net8.0` | `Disable` | `net6.0` |
-   | Between `11.0.0` and `11.5.1` (inclusive) | `net8.0` | `LatestMajor` | `net8.0` |
-   | `11.6` _and_ newer | `net8.0` | | `net8.0` |
+   | Between `11.0.0` and `11.5.1` (inclusive) | `net8.0` | `Disable` | `net6.0` || Between `11.0.0` and `11.5.1` (inclusive) | `net8.0` | `LatestMajor` | `net8.0` |
+   | `11.6` _and_ newer | `net8.0` | | `net8.0` | 
 
     Unzip the archive containing extension assemblies to a known location.
 
