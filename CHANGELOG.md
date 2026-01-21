@@ -1,8 +1,9 @@
 - 3.2.0
-  - Fancy new features here
+  - Added an optional entry parameter to indicate whether the private key of the cert should be not exportable when stored in KeyVault
+  - Now specifying the pkcs12 format when wirting certs to Azure KeyVault.  This should prevent the error when a PEM cert was added outside of Command and then we attempt to update without specifying the format (Azure assumes PEM and throws an error if not).
+
 - 3.1.9
   - Added optional entry parameter to indicate that existing tags should be preserved if certificate is replaced
-  - bug fix for government cloud host name resolution
 
 - 3.1.8
   - Fixed bug where enrollment would fail if the CertificateTags field was not defined as an entry parameter	
@@ -13,7 +14,6 @@
   - Added support for Azure KeyVault Certificate Metadata via Entry Parameters
   - Fixed issue where an error would be returned during Inventory if 0 certificates were found
   - Converted to BouncyCastle crypto libraries
-
 	
 - 3.1.6
   - Preventing CertStore parameters from getting used if present but empty. 	
