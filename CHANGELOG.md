@@ -1,6 +1,6 @@
 - 3.2.0
-  - added an optional entry parameter to indicate whether the private key of the cert should be not exportable when stored in KeyVault
-  - now specifying the pkcs12 format when wirting certs to Azure KeyVault.  This should prevent the error when a PEM cert was added outside of Command and then we attempt to update without specifying the format (Azure assumes PEM and throws an error if not).
+  - Added an optional entry parameter to indicate whether the private key of the cert should be not exportable when stored in KeyVault
+  - Now specifying the pkcs12 format when wirting certs to Azure KeyVault.  This should prevent the error when a PEM cert was added outside of Command and then we attempt to update without specifying the format (Azure assumes PEM and throws an error if not).
 
 - 3.1.9
   - Added optional entry parameter to indicate that existing tags should be preserved if certificate is replaced
