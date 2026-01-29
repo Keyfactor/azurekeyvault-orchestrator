@@ -16,6 +16,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
     static class EntryParameters {
         public const string TAGS = "CertificateTags";
         public const string PRESERVE_TAGS = "PreserveExistingTags";
+        public const string NON_EXPORTABLE = "NonExportable";
     }
 
     static class JobTypes
