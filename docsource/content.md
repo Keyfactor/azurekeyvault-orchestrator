@@ -21,83 +21,15 @@ operations.
 
 The high level steps required to configure the Azure Keyvault Orchestrator extension are:
 
-1) [Migrating from the Windows Orchestrator for Azure KeyVault](#migrating-from-the-windows-orchestrator-for-azure-keyvault)
+1) [Configure client access; permissions and authentication](#configure-the-azure-keyvault-for-client-access)
 
-1) [Configure the Azure Keyvault for client access](#configure-the-azure-keyvault-for-client-access)
-
-1) [Create the Store Type in Keyfactor](#create-the-akv-certificate-store-type)
+1) [Create the Store Type in Keyfactor](#AKV-Certificate-Store-Type)
 
 1) [Install the Extension on the Orchestrator](#installation)
 
 1) [Create the Certificate Store](#add-a-new-or-existing-azure-keyvault-certificate-store)
 
-_Note that the certificate store type used by this Universal Orchestrator support for Azure Keyvault is not compatible
-with the certificate store type used by with Windows Orchestrator version for Azure Keyvault.
-If your Keyfactor instance has used the Windows Orchestrator for Azure Keyvault, a specific migration process is
-required.
-See [Migrating from the Windows Orchestrator for Azure KeyVault](#migrating-from-the-windows-orchestrator-for-azure-keyvault)
-section below._
-
-<details>
-  <summary>
-    <h4>Migrating from the Windows Orchestrator for Azure KeyVault</h4></summary>
-If you were previously using the Azure Keyvault extension for the **Windows** Orchestrator, it is necessary to remove the Store Type definition as well as any Certificate stores that use the previous store type.
-This is because the store type parameters have changed in order to facilitate the Discovery and Create functionality.
-
-If you have an existing AKV store type that was created for use with the Windows Orchestrator, you will need to follow
-the steps in one of the below sections in order to transfer the capability to the Universal Orchestrator.
-
-> :warning:
-> Before removing the certificate stores, view their configuration details and copy the values.
-> Copying the values in the store parameters will save time when re-creating the stores.
-
-Follow the below steps to remove the AKV capability from **each** active Windows Orchestrator that supports it:
-
-##### If the Windows Orchestrator should still manage other cert store types
-
-_If the Windows Orchestrator will still be used to manage some store types, we will remove only the Azure Keyvault
-functionality._
-
-1) On the Windows Orchestrator host machine, run the Keyfactor Agent Configuration Wizard
-1) Proceed through the steps to "Select Features"
-1) Expand "Cert Stores" and un-check "Azure Keyvault"
-1) Click "Apply Configuration"
-
-1) Open the Keyfactor Platform and navigate to **Orchestrators > Management**
-1) Confirm that "AKV" no longer appears under "Capabilities"
-1) Navigate to **Orchestrators > Management**, select the orchestrator and click "DISAPPROVE" to disapprove it and
-   cancel pending jobs.
-1) Navigate to **Locations > Certificate Stores**
-1) Select any stores with the Category "Azure Keyvault" and click "DELETE" to remove them from Keyfactor.
-1) Navigate to the Administrative menu (gear icon) and then **> Certificate Store Types**
-1) Select Azure Keyvault, click "DELETE" and confirm.
-1) Navigate to **Orchestrators > Management**, select the orchestrator and click "APPROVE" to re-approve it for use.
-
-1) Repeat these steps for any other Windows Orchestrators that support the AKV store type.
-
-##### If the Windows Orchestrator can be retired completely
-
-_If the Windows Orchestrator is being completely replaced with the Universal Orchestrator, we can remove all associated
-stores and jobs._
-
-1) Navigate to **Orchestrators > Management** and select the Windows Orchestrator from the list.
-1) With the orchestrator selected, click the "RESET" button at the top of the list
-1) Make sure the orchestrator is still selected, and click "DISAPPROVE".
-1) Click "OK" to confirm that you will remove all jobs and certificate stores associated to this orchestrator.
-1) Navigate to the Administrative (gear icon in the top right) and then **Certificate Store Types**
-1) Select "Azure Keyvault", click "DELETE" and confirm.
-1) Repeat these steps for any other Windows Orchestrators that support the AKV store type (if they can also be retired).
-
-Note: Any Azure Keyvault certificate stores removed can be re-added once the Universal Orchestrator is configured with
-the AKV capability.
-
-#### Migrating from  version 1.x or version 2.x of the Azure Keyvault Orchestrator Extension
-
-It is not necessary to re-create all of the certificate stores when migrating from a previous version of this extension,
-though it is important to note that Azure KeyVaults found during a Discovery job
-will return with latest store path format: `{subscription id}:{resource group name}:{new vault name}`.
-
-</details>
+> :warning: If you are still using the (deprecated) Windows Orchestrator, you can find instructions for migrating by searching previous versions of this README.
 
 ---
 
@@ -105,8 +37,8 @@ will return with latest store path format: `{subscription id}:{resource group na
 
 In order for this orchestrator extension to be able to interact with your instances of Azure Keyvault, it will need to
 authenticate with a identity that has sufficient permissions to perform the jobs. Microsoft Azure implements both Role
-Based Access Control (RBAC) and the classic Access Policy method. RBAC is the preferred method, as it allows the
-assignment of granular level, inheretable access control on both the contents of the KeyVaults, as well as higher-level
+Based Access Control (RBAC) and the classic Access Policy method. RBAC is the preferred method, and currently the default used by Azure.
+It allows the assignment of granular level, inheretable access control on both the contents of the KeyVaults, as well as higher-level
 management operations. For more information and a comparison of the two access control strategies, refer
 to [this article](learn.microsoft.com/en-us/azure/key-vault/general/rbac-access-policy).
 
@@ -114,277 +46,14 @@ to [this article](learn.microsoft.com/en-us/azure/key-vault/general/rbac-access-
 
 Azure KeyVaults originally utilized access policies for permissions and since then, Microsoft has begun recommending
 Role Based Access Control (RBAC) as the preferred method of authorization.  
-As of this version, new KeyVaults created via this integration are created with Access Policy authorization. This will
-change to RBAC in the next release.
+New KeyVaults created via this integration are created with the default authorization method that is configured in the Azure environment.
+
 The access control type the KeyVault implements can be changed in the KeyVault configuration within the Azure Portal.
-New KeyVaults created via Keyfactor by way of this integration will be accessible for subsequent actions regardless of
-the access control type.
+New KeyVaults created via Keyfactor by way of this integration will use the default that is configured in your Azure environment (as of February 2026, if not specified, RBAC).
 
-##### Configure Role Based Access Control (RBAC)
+> :exclamation: Additional guidance regarding the minimum permissions needed for each job and sample RBAC policy definitions with descriptions can be found [here](rbac.md). 
 
-In order to illustrate the minimum permissions that the authenticating entity (service principal or managed identity)
-requires,
-we have created 3 seperate custom role definitions that you can use as a reference when creating an RBAC role definition
-in your Azure environment.
 
-The reason for 3 definitions is that certain orchestrator jobs, such as Create (new KeyVault) or Discovery require more
-elevated permissions at a different scope than the basic certificate operations (Inventory, Add, Remove) performed
-within a specific KeyVault.
-
-If you know that you will utilize all of the capabilities of this integration; the last custom role definition contains
-all necessary permissions for performing all of the Jobs (Discovery, Create KeyVault, Inventory/Add/Remove
-certificates).
-
-##### Built-in vs. custom roles
-
-> :warning: The custom role definitions below are designed to contain the absolute minimum permissions required. They
-> are not intended to be used verbatim without consulting your organization's security team and/or Azure Administrator.
-> Keyfactor does not provide consulting on internal security practices.
-
-It is possible to use the built-in roles provided by Microsoft for these operations. The built-in roles may contain more
-permissions than necessary.
-Whether to create custom role definitions or use an existing or pre-built role will depend on your organization's
-securuity requirements.  
-For each job type performed by this orchestrator, we've included the minimally sufficient built-in role name(s) along
-with our custom role definitions that limit permissions to the specific actions and scopes necessary.
-
-<details>
-  <summary><h4>Create Vault permissions</h4></summary>
-
-In order to allow for the ability to create new Azure KeyVaults from within command, here is a role that defines the
-necessary permissions to do so. If you will never be creating new Azure KeyVaults from within Command, then it is
-unnecessary to provide the authenticating entity with these permissions.
-
-> :warning: When creating a new KeyVault, we grant the creating entity the built-in "Key Vault Certificates Officer"
-> role in order to be able to perform subsequent actions on the contents of the
-> KeyVault. [click here](github.com/MicrosoftDocs/azure-docs/blob/main/articles/role-based-access-control/built-in-roles/security.md#key-vault-certificates-officer)
-> to see the list of permissions included in the Key Vault Certificates Officer built-in role.
-
-- built-in roles (both are required):
-    - ["Key Vault Contributor"](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/security#key-vault-contributor)
-    - ["Key Vault Access Administrator"](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/security#key-vault-data-access-administrator)
-
-- lowest level scope required - a resource group that will contain the new KeyVault.
-
-- condition:
-
-```js
-"((!(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})) OR (@Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals{a4417e6f-fecd-4de8-b567-7b0420556985})) AND ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})) OR (@Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals{a4417e6f-fecd-4de8-b567-7b0420556985}))"
-```
-
-the above condition limits the ability to assign roles to a single role only (Key Vault Certificates Officer). This is
-more restrictive than the condition on the built-in role
-of [Key Vault Access Administrator](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/security#key-vault-data-access-administrator).
-
-- custom role definition:
-
-```js
-{
-    "properties": {
-        "roleName": "KeyfactorVaultCreator",
-        "description": "This role contains all of the necessary permissions to perform Inventory, Add and Remove operations on certificates on All KeyVaults within a Resource Group.  It also contains sufficient permissions to create a new KeyVault within the resource group.",
-        "assignableScopes": [
-          "/subscriptions/{subscriptionId1}", // allow to be applied to a specific subscription
-          "/subscriptions/{subscriptionId2}", // and another.. etc.
-          "/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}", // allow to be scoped to a specific resource group
-          "/subscriptions/{subscriptionId2}/resourcegroups/{resourceGroupName2}", // and another.. 
-          "/providers/Microsoft.Management/managementGroups/{groupId1}" // allow to be applied for all subscriptions under management group           
-        ],
-        "permissions": [
-            {
-                "actions": [
-                    "Microsoft.KeyVault/vaults/*",
-                    "Microsoft.Authorization/*/read",                                        
-                    "Microsoft.KeyVault/register/action",                    
-                    "Microsoft.KeyVault/checkNameAvailability/read",
-                    "Microsoft.KeyVault/vaults/accessPolicies/*",
-                    "Microsoft.Resources/deployments/*",
-                    "Microsoft.KeyVault/locations/*/read",
-                    "Microsoft.Resources/subscriptions/resourceGroups/read",
-                    "Microsoft.Management/managementGroups/read",
-                    "Microsoft.Resources/subscriptions/read",
-                    "Microsoft.Authorization/roleAssignments/*",                     
-                    "Microsoft.KeyVault/operations/read"                    
-                ],
-                "notActions": [],
-                "dataActions": [],
-                "notDataActions": [],
-                "conditionVersion": "2.0",
-                "condition": "((!(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})) OR (@Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals{a4417e6f-fecd-4de8-b567-7b0420556985})) AND ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})) OR (@Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals{a4417e6f-fecd-4de8-b567-7b0420556985}))"
-            }
-        ]
-    }
-}
-```
-
-</details>
-<details>
-  <summary><h4>Discover Vaults Permissions</h4></summary>
-
-If you would like this integration to search across your subscriptions to discover instances of existing Azure
-KeyVaults, this role definition contains the necessary permissions for this.
-If you are working with a smaller number of KeyVaults and/or do not plan on utilizing a Discovery job to retrieve all
-KeyVaults across your subscriptions, the permissions defined in this role are not necessary.
-
-- built-in
-  role: ["Key Vault Reader"](github.com/MicrosoftDocs/azure-docs/blob/main/articles/role-based-access-control/built-in-roles/security.md#key-vault-reader)
-- lowest level scope - a resource group
-- custom role definition:
-
-```js
-{
-    "properties": {
-        "roleName": "KeyfactorVaultDiscovery",
-        "description": "This role contains all of the necessary permissions to search for KeyVaults across a subscription",
-        "assignableScopes": [
-          "/subscriptions/{subscriptionId1}", // allow to be applied to a specific subscription
-          "/subscriptions/{subscriptionId2}", // and another.. etc.
-          "/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}", // allow to be scoped to a specific resource group
-          "/subscriptions/{subscriptionId2}/resourcegroups/{resourceGroupName2}", // and another.. 
-          "/providers/Microsoft.Management/managementGroups/{groupId1}" // allow to be applied for all resources under management group           
-        ],
-        "permissions": [
-            {
-              "actions": [
-                "Microsoft.Authorization/*/read",
-                "Microsoft.Resources/subscriptions/resourceGroups/read",
-                "Microsoft.KeyVault/checkNameAvailability/read",
-                "Microsoft.KeyVault/locations/*/read",
-                "Microsoft.KeyVault/vaults/read",
-                "Microsoft.KeyVault/operations/read"
-               ],
-               "notActions": [],
-               "dataActions": [        
-               ],
-               "notDataActions": [],  
-             }
-          ]
-    }
-}
-```
-
-</details>
-<details>
-  <summary><h4>Inventory, Add, and Remove Certificate Permissions</h4></summary>
-
-This set of permissions is the minimum required to support the basic operations of performing an Inventory and
-Add/Removal of certificates.
-
-- built-in
-  role: ["Key Vault Certificates Officer"](github.com/MicrosoftDocs/azure-docs/blob/main/articles/role-based-access-control/built-in-roles/security.md#key-vault-certificates-officer)
-- lowest level scope - an individual keyvault
-- custom role definition:
-
-```js
-{
-    "properties": {
-        "roleName": "KeyfactorManageCerts",
-        "description": "This role contains all of the necessary permissions to perform Inventory, Add and Remove operations on certificates on All KeyVaults within the scope.",
-        "assignableScopes": [
-          "/providers/Microsoft.Management/managementGroups/{groupId1}", // allow scope for all subscriptions under management group
-          "/subscriptions/{subscriptionId}", // allow to scoped to a specific subscription
-          "/subscriptions/{subscriptionId2}", // and another.. etc.
-          "/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}", // allow to be scoped to a specific resource group
-          "/subscriptions/{subscriptionId2}/resourcegroups/{resourceGroupName2}", // and another..               
-          "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{vaultName}", // allow scope to a specific vault
-          "/subscriptions/{subscriptionId2}/resourceGroups/{resourceGroupName2}/providers/Microsoft.KeyVault/vaults/{vaultName2}", // .. and another
-        ],
-         "permissions": [
-           {
-             "actions": [
-               "Microsoft.Authorization/*/read",
-               "Microsoft.Resources/deployments/*",
-               "Microsoft.Resources/subscriptions/resourceGroups/read",
-               "Microsoft.KeyVault/checkNameAvailability/read",
-               "Microsoft.KeyVault/locations/*/read",
-               "Microsoft.KeyVault/vaults/*/read",
-               "Microsoft.KeyVault/operations/read",               
-             ],
-             "notActions": [],
-             "dataActions": [
-               "Microsoft.KeyVault/vaults/certificates/*",
-               "Microsoft.KeyVault/vaults/certificatecas/*",
-               "Microsoft.KeyVault/vaults/keys/*",
-               "Microsoft.KeyVault/vaults/secrets/readMetadata/action"
-             ],
-             "notDataActions": []
-           }
-    ],
-  }
-}
-```
-
-</details>
-
-<details>
-  <summary><h4>Combined permissions for all operations (Create, Discovery, Inventory, Add and Remove certificates)</h4></summary>
-
-This section defines a single custom role that contains the necessary permissions to perform all operations allowed by
-this integration. The minimum scope allowable is an individual resource group. If this custom role is associated with
-the authenticating identity, it will be able to discover existing KeyVaults, Create new ones, and perform inventory as
-well as adding and removing certificates within the KeyVault.
-
-- minimally sufficient built-in roles (all are required):
-    - ["Key Vault Certificates Officer"](github.com/MicrosoftDocs/azure-docs/blob/main/articles/role-based-access-control/built-in-roles/security.md#key-vault-certificates-officer)
-    - ["Key Vault Contributor"](learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/security#key-vault-contributor)
-    - ["Key Vault Access Administrator"](learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/)
-- lowest level scope - an individual resource group
-- custom role definition:
-
-```js
-{
-    "properties": {
-        "roleName": "KeyfactorKeyVaultOperations",
-        "description": "This role contains all of the necessary permissions to perform Discovery, Create, Inventory, Add and Remove operations on certificates on All KeyVaults within The scope.",
-        "assignableScopes": [
-          "/subscriptions/{subscriptionId1}", // allow to be applied to a specific subscription
-          "/subscriptions/{subscriptionId2}", // and another.. etc.
-          "/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}", // allow to be scoped to a specific resource group
-          "/subscriptions/{subscriptionId2}/resourcegroups/{resourceGroupName2}", // and another.. 
-          "/providers/Microsoft.Management/managementGroups/{groupId1}" // allow to be applied for all subscriptions under management group           
-        ],
-        "permissions": [
-            {
-                "actions": [
-                    "Microsoft.KeyVault/vaults/*",
-                    "Microsoft.Authorization/*/read",                                        
-                    "Microsoft.KeyVault/register/action",                    
-                    "Microsoft.KeyVault/checkNameAvailability/read",
-                    "Microsoft.KeyVault/vaults/accessPolicies/*",
-                    "Microsoft.Resources/deployments/*",
-                    "Microsoft.Resources/subscriptions/resourceGroups/read",
-                    "Microsoft.Management/managementGroups/read",
-                    "Microsoft.Resources/subscriptions/read",
-                    "Microsoft.Authorization/roleAssignments/*",                     
-                    "Microsoft.KeyVault/operations/read"                                
-                    "Microsoft.KeyVault/locations/*/read",
-                    "Microsoft.KeyVault/vaults/*/read",
-                ],
-                "notActions": [],
-                "dataActions": [
-                   "Microsoft.KeyVault/vaults/certificates/*",
-                   "Microsoft.KeyVault/vaults/certificatecas/*",
-                   "Microsoft.KeyVault/vaults/keys/*",
-                   "Microsoft.KeyVault/vaults/secrets/*"
-             ],
-                "notDataActions": [],
-                "conditionVersion": "2.0",
-                "condition": "((!(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})) OR (@Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals{a4417e6f-fecd-4de8-b567-7b0420556985})) AND ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})) OR (@Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals{a4417e6f-fecd-4de8-b567-7b0420556985}))"
-            }
-        ]
-    }
-}
-```
-
-> :warning: You still may decide to split the capabilities into seperate roles in order to apply each of them to the
-> lowest level scope
-> required. We have tried to provide you with an absolute minimum set of required permissions necessary to perform each
-> operation. Refer to
-> your organization's security policies and/or consult with your information security team in order to determine which
-> role combinations would
-> be most appropriate for your needs.
-
-</details>
 
 #### Endpoint Access / Firewall
 
@@ -415,7 +84,7 @@ The Azure KeyVault orchestrator plugin supports several authentication options:
 Steps for setting up each option are detailed below.
 
 <details>
-  <summary><h4>Authentication via Service Principal</h4></summary>
+  <summary><b>Authentication via Service Principal</b></summary>
 
 For the Orchestrator to be able to interact with the instance of Azure Keyvault, we will need to create an entity in
 Azure that will encapsulate the permissions we would like to grant it. In Azure, these intermediate entities are
@@ -458,7 +127,7 @@ We will store these values securely in Keyfactor in subsequent steps.
 </details>
 
 <details>
-  <summary><h4>Authentication via User Assigned Managed Identity</h4></summary>
+  <summary><b>Authentication via User Assigned Managed Identity</b></summary>
 
 Authentication has been somewhat simplified with the introduction of Azure Managed Identities. If the orchestrator is
 running on an Azure Virtual Machine, Managed identities allow an Azure administrator to
@@ -484,7 +153,7 @@ Id field on the certificate store definition (the Client Secret can be left blan
 </details>
 
 <details>
-<summary><h4>Authentication via System Assigned Managed Identity</h4></summary>
+<summary><b>Authentication via System Assigned Managed Identity</b></summary>
 
 In order to use a _System_ assigned managed identity, there is no need to enter the server credentials. If no server
 credentials are provided, the extension assumes authentication is via system assigned managed identity.
@@ -492,7 +161,7 @@ credentials are provided, the extension assumes authentication is via system ass
 </details>
 
 
-## Discovery
+### Running a Discovery Job
 
 Now that we have the extension registered on the Orchestrator, we can navigate back to the Keyfactor platform and finish
 the setup. If there are existing Azure Key Vaults, complete the below steps to discover and add them. If there are no
@@ -618,7 +287,7 @@ To add one of these results to Keyfactor as a certificate store:
 
 1) Click "SAVE".
 
-#### Add a new or existing Azure Keyvault certificate store
+### Add an existing Azure Keyvault certificate store
 
 You can also add a certificate store that corresponds to an Azure Keyvault individually without the need to run the
 discovery / approval workflow.
@@ -651,13 +320,18 @@ Azure and clicking "Properties" in the left menu.
 ![Resource Id](/Images/resource-id.png)
 
 - Use these values to create the store path
+- Save the certificate store
+- If an inventory schedule was provided, a new inventory job should appear in _Orchestrators > Jobs_.
 
-If the Keyvault does not exist in Azure, and you would like to create it:
+### Create a new Azure Keyvault
 
 - Enter a value for the store path in the following format: `{subscription id}:{resource group name}:{new vault name}`
-
-- For a non-existing Keyvault that you would like to create in Azure, make sure you have the "Create Certificate Store"
-  box checked.
+- Make sure that the "Create Certificate Store" box is checked.
+- Optionally choose values for the **SKUtype**, **Vault Region**, **Azure Cloud** and **Private Endpoint** (as applicable).
+  - The **SKUType** and **Vault Region** fields are _only_ used when creating new KeyVaults.
+- Save the certificate store
+-Navigate to _Orchestrators > Jobs_; you should see the "Management" job that was generated in order to create the Keyvault.
+- Once this job completes, a new Keyvault should have been created 
 
 > :warning: The identity you are using for authentication will need to have sufficient Azure permissions to be able to
 > create new Keyvaults.
