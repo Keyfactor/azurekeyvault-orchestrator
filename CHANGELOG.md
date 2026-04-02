@@ -1,7 +1,6 @@
 - 3.2.2 
   - Updated screenshots in README
   - Returning entry parameters along with inventory
-	
 - 3.2.1
   - Documentation updates and improvements
   - Updated NuGet packages
