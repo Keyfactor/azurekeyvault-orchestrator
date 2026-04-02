@@ -50,7 +50,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             logger.LogTrace("parsing entry parameters.. ");
 
             tagsJSON = config.JobProperties[EntryParameters.TAGS] as string ?? string.Empty;
-            preserveTags = config.JobProperties[EntryParameters.PRESERVE_TAGS] as bool? ?? false;
+            preserveTags = config.JobProperties[EntryParameters.PRESERVE_TAGS] as bool? ?? true;
             nonExportable = config.JobProperties[EntryParameters.NON_EXPORTABLE] as bool? ?? false;
 
             switch (config.OperationType)

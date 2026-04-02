@@ -22,6 +22,8 @@ using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
 using Microsoft.Extensions.Logging;
+using Microsoft.VisualBasic;
+using Newtonsoft.Json;
 
 namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 {
@@ -38,8 +40,6 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                     case "china":
                         logger.LogTrace(AzureAuthorityHosts.AzureChina.ToString());
                         return AzureAuthorityHosts.AzureChina;
-                    //case "germany":
-                    //    return AzureAuthorityHosts.AzureGermany; // germany is no longer a valid azure authority host as of 2021
                     case "government":
                         logger.LogTrace(AzureAuthorityHosts.AzureGovernment.ToString());
                         return AzureAuthorityHosts.AzureGovernment;
@@ -304,7 +304,23 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 {
                     var cert = await CertClient.GetCertificateAsync(certificate.Name);
                     logger.LogTrace($"got certificate details");
+                    logger.LogTrace($"cert properties: {JsonConvert.SerializeObject(cert.Value?.Properties)}");
+                    var itemEntryParams = new Dictionary<string, object>();
 
+                    if (cert.Value?.Properties?.Tags != null && cert.Value.Properties.Tags.Count > 0) { // set tags entry parameter to value
+                        itemEntryParams.Add(EntryParameters.TAGS, JsonConvert.SerializeObject(cert.Value.Properties.Tags));                    
+                    }
+                    
+                    if (cert.Value.Policy != null) // set nonexportable entry parameter to value
+                    {
+                        var exportable = cert.Value.Policy?.Exportable;
+                        itemEntryParams.Add(EntryParameters.NON_EXPORTABLE, !exportable);
+                    }
+
+                    itemEntryParams.Add(EntryParameters.PRESERVE_TAGS, null); // we can never know this; it's only evaluated on enrollment; set to null
+
+                    logger.LogTrace($"evaluated entry parameters to be returned: {JsonConvert.SerializeObject(itemEntryParams)}");
+                    
                     inventoryItems.Add(new CurrentInventoryItem()
                     {
                         Alias = cert.Value.Name,
@@ -312,7 +328,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                         ItemStatus = OrchestratorInventoryItemStatus.Unknown,
                         UseChainLevel = true,
                         Certificates = new List<string>() { Convert.ToBase64String(cert.Value.Cer) },
-                        Parameters = cert.Value.Properties.Tags as Dictionary<string, object>
+                        Parameters = itemEntryParams
                     });
                 }
                 catch (Exception ex)
