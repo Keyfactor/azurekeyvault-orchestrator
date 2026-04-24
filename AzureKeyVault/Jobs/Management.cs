@@ -26,16 +26,16 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         public Management(IPAMSecretResolver resolver)
         {
             PamSecretResolver = resolver;
-            logger = LogHandler.GetClassLogger<Management>();
+            Logger = LogHandler.GetClassLogger<Management>();
         }
 
         public JobResult ProcessJob(ManagementJobConfiguration config)
         {
-            logger.LogDebug($"Begin Management job");
+            Logger.LogDebug($"Begin Management job");
 
             InitializeStore(config);
 
-            logger.LogTrace($"raw entry parameters from command: {JsonConvert.SerializeObject(config.JobProperties)}");
+            Logger.LogTrace($"raw entry parameters from command: {JsonConvert.SerializeObject(config.JobProperties)}");
 
             JobResult complete = new JobResult()
             {
@@ -47,7 +47,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             bool preserveTags;
             bool nonExportable;
 
-            logger.LogTrace("parsing entry parameters.. ");
+            Logger.LogTrace("parsing entry parameters.. ");
 
             tagsJSON = config.JobProperties[EntryParameters.TAGS] as string ?? string.Empty;
             preserveTags = config.JobProperties[EntryParameters.PRESERVE_TAGS] as bool? ?? true;
@@ -56,16 +56,16 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             switch (config.OperationType)
             {
                 case CertStoreOperationType.Create:
-                    logger.LogDebug($"Begin Management > Create...");
-                    complete = PerformCreateVault(config.JobHistoryId).Result;
+                    Logger.LogDebug($"Begin Management > Create...");
+                    complete = PerformCreateVault(config.JobHistoryId).GetAwaiter().GetResult();
                     break;
                 case CertStoreOperationType.Add:
-                    logger.LogDebug($"Begin Management > Add...");
+                    Logger.LogDebug($"Begin Management > Add...");
 
                     complete = PerformAddition(config.JobCertificate.Alias, config.JobCertificate.PrivateKeyPassword, config.JobCertificate.Contents, tagsJSON, config.JobHistoryId, config.Overwrite, preserveTags, nonExportable);
                     break;
                 case CertStoreOperationType.Remove:
-                    logger.LogDebug($"Begin Management > Remove...");
+                    Logger.LogDebug($"Begin Management > Remove...");
                     complete = PerformRemoval(config.JobCertificate.Alias, tagsJSON, config.JobHistoryId);
                     break;
             }
@@ -114,7 +114,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             {
                 if (!tagsJSON.IsValidJson())
                 {
-                    logger.LogError($"the entry parameter provided for Certificate Tags: \" {tagsJSON} \", does not seem to be valid JSON.");
+                    Logger.LogError($"the entry parameter provided for Certificate Tags: \" {tagsJSON} \", does not seem to be valid JSON.");
                     throw new Exception($"the string \" {tagsJSON} \" is not a valid json string. Please enter a valid json string for CertificateTags in the entry parameter or leave empty for no tags to be applied.");
                 }
                 else
@@ -134,20 +134,20 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 try
                 {
                     var existingTags = new Dictionary<string, string>();
-                    logger.LogTrace($"checking for an existing cert with the alias {alias}");
-                    var existing = AzClient.GetCertificate(alias).Result;
+                    Logger.LogTrace($"checking for an existing cert with the alias {alias}");
+                    var existing = AzClient.GetCertificate(alias).GetAwaiter().GetResult();
                     if (existing != null)
                     {
-                        logger.LogTrace($"there is an existing cert..");
+                        Logger.LogTrace($"there is an existing cert..");
 
                         existingTags = existing?.Properties.Tags as Dictionary<string, string> ?? new Dictionary<string, string>();
 
-                        logger.LogTrace("existing cert tags: ");
-                        if (!existingTags.Any()) logger.LogTrace("(none)");
+                        Logger.LogTrace("existing cert tags: ");
+                        if (!existingTags.Any()) Logger.LogTrace("(none)");
 
                         foreach (var tag in existingTags)
                         {
-                            logger.LogTrace(tag.Key + " : " + tag.Value);
+                            Logger.LogTrace(tag.Key + " : " + tag.Value);
                         }
                     }
 
@@ -157,7 +157,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                         if (existing != null)
                         {
                             var message = $"A certificate named {alias} already exists and the overwrite checkbox was unchecked.  No action was taken.";
-                            logger.LogWarning(message);
+                            Logger.LogWarning(message);
                             complete.Result = OrchestratorJobStatusJobResult.Warning;
                             complete.FailureMessage = message;
                             return complete;
@@ -174,7 +174,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                         }
                     }
 
-                    var cert = AzClient.ImportCertificateAsync(alias, entryContents, pfxPassword, tagDict, nonExportable).Result;
+                    var cert = AzClient.ImportCertificateAsync(alias, entryContents, pfxPassword, tagDict, nonExportable).GetAwaiter().GetResult();
 
                     // Ensure the return object has a AKV version tag, and Thumbprint
                     if (!string.IsNullOrEmpty(cert.Properties.Version) &&
@@ -221,7 +221,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
             try
             {
-                var result = AzClient.DeleteCertificateAsync(alias).Result;
+                var result = AzClient.DeleteCertificateAsync(alias).GetAwaiter().GetResult();
 
                 if (result.Value.Name == alias)
                 {

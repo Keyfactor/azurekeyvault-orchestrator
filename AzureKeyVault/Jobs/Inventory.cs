@@ -23,12 +23,12 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         public Inventory(IPAMSecretResolver resolver)
         {
             PamSecretResolver = resolver;
-            logger = LogHandler.GetClassLogger<Inventory>();
+            Logger = LogHandler.GetClassLogger<Inventory>();
         }
         
         public JobResult ProcessJob(InventoryJobConfiguration config, SubmitInventoryUpdate callBack)
         {
-            logger.LogDebug($"Begin Inventory...");
+            Logger.LogDebug($"Begin Inventory...");
 
             InitializeStore(config);
 
@@ -36,16 +36,16 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
             try
             {
-                logger.LogTrace($"Making Request to get certificates from vault at {VaultProperties.VaultURL}");
+                Logger.LogTrace($"Making Request to get certificates from vault at {VaultProperties.VaultURL}");
 
-                inventoryItems = AzClient.GetCertificatesAsync().Result?.ToList();
+                inventoryItems = AzClient.GetCertificatesAsync().GetAwaiter().GetResult()?.ToList();
 
-                logger.LogTrace($"Found {inventoryItems.Count} Total Certificates in Azure Key Vault.");
+                Logger.LogTrace($"Found {inventoryItems.Count} Total Certificates in Azure Key Vault.");
             }
 
             catch (Exception ex)
             {
-                logger.LogTrace($"an error occured when performing inventory: {ex.Message}");
+                Logger.LogTrace($"an error occured when performing inventory: {ex.Message}");
                 return new JobResult
                 {
                     Result = OrchestratorJobStatusJobResult.Failure,

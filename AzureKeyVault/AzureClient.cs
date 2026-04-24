@@ -6,10 +6,6 @@
 //  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
 //  and limitations under the License.
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Azure;
 using Azure.Core;
 using Azure.Identity;
@@ -22,8 +18,11 @@ using Keyfactor.Logging;
 using Keyfactor.Orchestrators.Common.Enums;
 using Keyfactor.Orchestrators.Extensions;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualBasic;
 using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 {
@@ -34,22 +33,22 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         {
             get
             {
-                logger.LogTrace($"the AzureCloud is {VaultProperties.AzureCloud}, so we will use the following endpoint for authentication: ");
+                Logger.LogTrace($"the AzureCloud is {VaultProperties.AzureCloud}, so we will use the following endpoint for authentication: ");
                 switch (VaultProperties.AzureCloud?.Trim()?.ToLowerInvariant())
                 {
                     case "china":
-                        logger.LogTrace(AzureAuthorityHosts.AzureChina.ToString());
+                        Logger.LogTrace(AzureAuthorityHosts.AzureChina.ToString());
                         return AzureAuthorityHosts.AzureChina;
                     case "government":
-                        logger.LogTrace(AzureAuthorityHosts.AzureGovernment.ToString());
+                        Logger.LogTrace(AzureAuthorityHosts.AzureGovernment.ToString());
                         return AzureAuthorityHosts.AzureGovernment;
                     default:
-                        logger.LogTrace(AzureAuthorityHosts.AzurePublicCloud.ToString());
+                        Logger.LogTrace(AzureAuthorityHosts.AzurePublicCloud.ToString());
                         return AzureAuthorityHosts.AzurePublicCloud;
                 }
             }
         }
-        ILogger logger { get; set; }
+        ILogger Logger { get; set; }
 
         private protected virtual CertificateClient CertClient
         {
@@ -57,32 +56,32 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             {
                 if (_certClient != null)
                 {
-                    logger.LogTrace("getting previously initialized certificate client");
+                    Logger.LogTrace("getting previously initialized certificate client");
                     return _certClient;
                 }
-                logger.LogTrace("initializing new instance of client.");
+                Logger.LogTrace("initializing new instance of client.");
                 TokenCredential cred;
 
                 // check to see if they have selected to use an Azure Managed Identity for authentication.
 
                 if (this.VaultProperties.UseAzureManagedIdentity)
                 {
-                    logger.LogTrace("Entering the managed identity workflow");
+                    Logger.LogTrace("Entering the managed identity workflow");
 
                     var credentialOptions = new DefaultAzureCredentialOptions { AuthorityHost = AzureCloudEndpoint, AdditionallyAllowedTenants = { "*" } };
 
                     if (!string.IsNullOrEmpty(this.VaultProperties.ClientId)) // are they using a user assigned identity instead of a system assigned one (default)?
                     {
-                        logger.LogTrace("client ID provided, so it is a user assigned managed identity (instead of system assigned)");
+                        Logger.LogTrace("client ID provided, so it is a user assigned managed identity (instead of system assigned)");
                         credentialOptions.ManagedIdentityClientId = VaultProperties.ClientId;
                     }
                     cred = new DefaultAzureCredential(credentialOptions);
                 }
                 else
                 {
-                    logger.LogTrace("Using a service principal to authenticate, generating the credentials");
+                    Logger.LogTrace("Using a service principal to authenticate, generating the credentials");
                     cred = new ClientSecretCredential(VaultProperties.TenantId, VaultProperties.ClientId, VaultProperties.ClientSecret, new ClientSecretCredentialOptions() { AuthorityHost = AzureCloudEndpoint, AdditionallyAllowedTenants = { "*" } });
-                    logger.LogTrace("generated credentials");
+                    Logger.LogTrace("generated credentials");
                 }
                 _certClient = new CertificateClient(new Uri(VaultProperties.VaultURL), credential: cred);
 
@@ -95,29 +94,29 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         {
             TokenCredential credential;
             var credentialOptions = new DefaultAzureCredentialOptions { AuthorityHost = AzureCloudEndpoint, AdditionallyAllowedTenants = { "*" } };
-            logger.LogTrace($"creating an ARM client for management operations with authorityhost {AzureCloudEndpoint.ToString()}");
+            Logger.LogTrace($"creating an ARM client for management operations with authorityhost {AzureCloudEndpoint.ToString()}");
 
             if (this.VaultProperties.UseAzureManagedIdentity)
             {
-                logger.LogTrace("getting management client for a managed identity");
+                Logger.LogTrace("getting management client for a managed identity");
                 if (!string.IsNullOrEmpty(tenantId)) credentialOptions.TenantId = tenantId;
 
                 if (!string.IsNullOrEmpty(this.VaultProperties.ClientId)) // they have selected a managed identity and provided a client ID, so it is a user assigned identity
                 {
-                    logger.LogTrace("It is a user assigned managed identity");
+                    Logger.LogTrace("It is a user assigned managed identity");
                     credentialOptions.ManagedIdentityClientId = VaultProperties.ClientId;
                 }
                 credential = new DefaultAzureCredential(credentialOptions);
             }
             else
             {
-                logger.LogTrace($"getting credentials for a service principal identity with id {VaultProperties.ClientId} in Azure Tenant {credentialOptions.TenantId}");
+                Logger.LogTrace($"getting credentials for a service principal identity with id {VaultProperties.ClientId} in Azure Tenant {credentialOptions.TenantId}");
                 credential = new ClientSecretCredential(tenantId, VaultProperties.ClientId, VaultProperties.ClientSecret, credentialOptions);
-                logger.LogTrace("got credentials for service principal identity");
+                Logger.LogTrace("got credentials for service principal identity");
             }
 
             _mgmtClient = new ArmClient(credential);
-            logger.LogTrace("created management client");
+            Logger.LogTrace("created management client");
             return _mgmtClient;
         }
 
@@ -127,7 +126,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             {
                 if (_mgmtClient != null)
                 {
-                    logger.LogTrace("getting previously initialized management client");
+                    Logger.LogTrace("getting previously initialized management client");
                     return _mgmtClient;
                 }
                 return getArmClient(VaultProperties.TenantId);
@@ -141,12 +140,12 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         {
             VaultProperties = props;
 
-            logger = LogHandler.GetClassLogger<AzureClient>();
+            Logger = LogHandler.GetClassLogger<AzureClient>();
         }
 
         public virtual async Task<DeleteCertificateOperation> DeleteCertificateAsync(string certName)
         {
-            logger.LogTrace("calling method to delete certificate");
+            Logger.LogTrace("calling method to delete certificate");
             return await CertClient.StartDeleteCertificateAsync(certName);
         }
 
@@ -154,9 +153,9 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         {
             try
             {
-                logger.LogTrace($"Begin create vault in Subscription {VaultProperties.SubscriptionId} with storepath = {VaultProperties.StorePath}");
+                Logger.LogTrace($"Begin create vault in Subscription {VaultProperties.SubscriptionId} with storepath = {VaultProperties.StorePath}");
 
-                logger.LogTrace($"getting subscription info for provided subscription id {VaultProperties.SubscriptionId}");
+                Logger.LogTrace($"getting subscription info for provided subscription id {VaultProperties.SubscriptionId}");
 
                 SubscriptionResource subscription = KvManagementClient.GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(VaultProperties.SubscriptionId));
                 ResourceGroupResource resourceGroup = subscription.GetResourceGroup(VaultProperties.ResourceGroupName);
@@ -168,14 +167,14 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 {
                     try
                     {
-                        logger.LogTrace($"no Vault Region location specified for new Vault, Getting available regions for resource group {resourceGroup.Data.Name}.");
+                        Logger.LogTrace($"no Vault Region location specified for new Vault, Getting available regions for resource group {resourceGroup.Data.Name}.");
                         var locOptions = await resourceGroup.GetAvailableLocationsAsync();
-                        logger.LogTrace($"got location options for subscription {subscription.Data.SubscriptionId}", locOptions);
+                        Logger.LogTrace($"got location options for subscription {subscription.Data.SubscriptionId}", locOptions);
                         loc = locOptions.Value.FirstOrDefault();
                     }
                     catch (Exception ex)
                     {
-                        logger.LogError($"error retrieving default Azure Location: {ex.Message}");
+                        Logger.LogError($"error retrieving default Azure Location: {ex.Message}");
                         throw;
                     }
                 }
@@ -194,7 +193,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             }
             catch (Exception ex)
             {
-                logger.LogError($"Error when trying to create Azure Keyvault {ex.Message}");
+                Logger.LogError($"Error when trying to create Azure Keyvault {ex.Message}");
                 throw;
             }
         }
@@ -203,22 +202,22 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         {
             try
             {
-                logger.LogTrace("checking to see if the certificate exists and has been deleted");
+                Logger.LogTrace("checking to see if the certificate exists and has been deleted");
 
                 if (CertClient.GetDeletedCertificates().FirstOrDefault(i => i.Name == certName) != null)
                 {
-                    logger.LogTrace("certificate to import has been previously deleted, starting recovery operation.");
+                    Logger.LogTrace("certificate to import has been previously deleted, starting recovery operation.");
                     RecoverDeletedCertificateOperation recovery = await CertClient.StartRecoverDeletedCertificateAsync(certName);
-                    recovery.WaitForCompletion();
+                    await recovery.WaitForCompletionAsync();
                 }
 
-                logger.LogTrace($"converting to pkcs12 without password for importing to keyvault");
+                Logger.LogTrace($"converting to pkcs12 without password for importing to keyvault");
 
                 var p12bytes = Helpers.ConvertPfxToPasswordlessPkcs12(contents, pfxPassword);
 
-                logger.LogTrace($"got a byte array with length {p12bytes.Length}");
+                Logger.LogTrace($"got a byte array with length {p12bytes.Length}");
 
-                logger.LogTrace($"calling ImportCertificateAsync on the KeyVault certificate client to import certificate {certName}");
+                Logger.LogTrace($"calling ImportCertificateAsync on the KeyVault certificate client to import certificate {certName}");
 
                 var options = new ImportCertificateOptions(certName, p12bytes);
                 options.Policy = new CertificatePolicy { Exportable = !nonExportable, ContentType = CertificateContentType.Pkcs12 };
@@ -237,7 +236,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             }
             catch (Exception ex)
             {
-                logger.LogError($"There was an error importing the certificate: {ex.Message}");
+                Logger.LogError($"There was an error importing the certificate: {ex.Message}");
                 throw;
             }
         }
@@ -245,7 +244,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         public virtual async Task<KeyVaultCertificateWithPolicy> GetCertificate(string alias)
         {
             KeyVaultCertificateWithPolicy cert = null;
-            logger.LogTrace($"Attempting to retreive certificate with alias {alias} from the KeyVault.");
+            Logger.LogTrace($"Attempting to retreive certificate with alias {alias} from the KeyVault.");
 
             try { cert = await CertClient.GetCertificateAsync(alias); }
             catch (RequestFailedException rEx)
@@ -253,13 +252,13 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 if (rEx.ErrorCode == "CertificateNotFound")
                 {
                     // the request was successful, the cert does not exist.
-                    logger.LogTrace($"The certificate with alias {alias} was not found: {rEx.Message}");
+                    Logger.LogTrace($"The certificate with alias {alias} was not found: {rEx.Message}");
                     return null;
                 }
             }
             catch (Exception ex)
             {
-                logger.LogError($"Error retreiving certificate with alias {alias}.  {ex.Message}", ex);
+                Logger.LogError($"Error retreiving certificate with alias {alias}.  {ex.Message}", ex);
                 throw;
             }
 
@@ -272,18 +271,18 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             AsyncPageable<CertificateProperties> inventory = null;
             try
             {
-                logger.LogTrace("calling GetPropertiesOfCertificates() on the Certificate Client");
+                Logger.LogTrace("calling GetPropertiesOfCertificates() on the Certificate Client");
                 inventory = CertClient.GetPropertiesOfCertificatesAsync();
 
-                logger.LogTrace($"got a pageable response");
+                Logger.LogTrace($"got a pageable response");
             }
             catch (Exception ex)
             {
-                logger.LogError($"Error performing inventory.  {ex.Message}", ex);
+                Logger.LogError($"Error performing inventory.  {ex.Message}", ex);
                 throw;
             }
 
-            logger.LogTrace("iterating over result pages for complete list..");
+            Logger.LogTrace("iterating over result pages for complete list..");
 
             var fullInventoryList = new List<CertificateProperties>();
             var failedCount = 0;
@@ -291,20 +290,20 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
             await foreach (var cert in inventory)
             {
-                logger.LogTrace($"adding cert with ID: {cert.Id} to the list.");
+                Logger.LogTrace($"adding cert with ID: {cert.Id} to the list.");
                 fullInventoryList.Add(cert); // convert to list from pages
             }
 
-            logger.LogTrace($"compiled full inventory list of {fullInventoryList.Count()} certificate(s)");
+            Logger.LogTrace($"compiled full inventory list of {fullInventoryList.Count} certificate(s)");
 
             foreach (var certificate in fullInventoryList)
             {
-                logger.LogTrace($"getting details for the individual certificate with id: {certificate.Id} and name: {certificate.Name}");
+                Logger.LogTrace($"getting details for the individual certificate with id: {certificate.Id} and name: {certificate.Name}");
                 try
                 {
                     var cert = await CertClient.GetCertificateAsync(certificate.Name);
-                    logger.LogTrace($"got certificate details");
-                    logger.LogTrace($"cert properties: {JsonConvert.SerializeObject(cert.Value?.Properties)}");
+                    Logger.LogTrace($"got certificate details");
+                    Logger.LogTrace($"cert properties: {JsonConvert.SerializeObject(cert.Value?.Properties)}");
                     var itemEntryParams = new Dictionary<string, object>();
 
                     if (cert.Value?.Properties?.Tags != null && cert.Value.Properties.Tags.Count > 0) { // set tags entry parameter to value
@@ -319,7 +318,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
                     itemEntryParams.Add(EntryParameters.PRESERVE_TAGS, null); // we can never know this; it's only evaluated on enrollment; set to null
 
-                    logger.LogTrace($"evaluated entry parameters to be returned: {JsonConvert.SerializeObject(itemEntryParams)}");
+                    Logger.LogTrace($"evaluated entry parameters to be returned: {JsonConvert.SerializeObject(itemEntryParams)}");
                     
                     inventoryItems.Add(new CurrentInventoryItem()
                     {
@@ -335,19 +334,19 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 {
                     failedCount++;
                     innerException = ex;
-                    logger.LogError($"Failed to retreive details for certificate {certificate.Name}.  Exception: {ex.Message}");
+                    Logger.LogError($"Failed to retreive details for certificate {certificate.Name}.  Exception: {ex.Message}");
                     // continuing with inventory instead of throwing, in case there's an issue with a single certificate
                 }
             }
 
-            if (failedCount == fullInventoryList.Count() && failedCount > 0)
+            if (failedCount == fullInventoryList.Count && failedCount > 0)
             {
                 throw new Exception("Unable to retreive details for certificates.", innerException);
             }
 
             if (failedCount > 0)
             {
-                logger.LogWarning($"{failedCount} of {fullInventoryList.Count()} certificates were not able to be retreieved.  Please review the errors.");
+                Logger.LogWarning($"{failedCount} of {fullInventoryList.Count} certificates were not able to be retreieved.  Please review the errors.");
             }
 
             return inventoryItems;
@@ -362,28 +361,28 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
             try
             {
-                if (VaultProperties.TenantIdsForDiscovery == null || VaultProperties.TenantIdsForDiscovery.Count() < 1)
+                if (VaultProperties.TenantIdsForDiscovery == null || VaultProperties.TenantIdsForDiscovery.Count < 1)
                 {
                     throw new Exception("no tenant ID's provided.");
                 }
                 VaultProperties.TenantIdsForDiscovery.ForEach(tenantId =>
                 {
                     searchTenantId = tenantId;
-                    logger.LogTrace($"getting ARM client for tenantId {tenantId}");
+                    Logger.LogTrace($"getting ARM client for tenantId {tenantId}");
 
                     var mgmtClient = getArmClient(tenantId);
 
-                    logger.LogTrace($"getting all available subscriptions in tenant with ID {tenantId}");
+                    Logger.LogTrace($"getting all available subscriptions in tenant with ID {tenantId}");
                     var allSubs = mgmtClient.GetSubscriptions();
 
-                    logger.LogTrace($"got {allSubs.Count()} subscriptions");
+                    Logger.LogTrace($"got {allSubs.Count()} subscriptions");
 
                     foreach (var sub in allSubs)
                     {
                         searchSubscription = sub.Id.SubscriptionId;
-                        logger.LogTrace($"searching for vaults in subscription with ID {sub.Data.SubscriptionId}");
+                        Logger.LogTrace($"searching for vaults in subscription with ID {sub.Data.SubscriptionId}");
                         var vaults = sub.GetKeyVaults();
-                        logger.LogTrace($"found {vaults.Count()} vaults.");
+                        Logger.LogTrace($"found {vaults.Count()} vaults.");
 
                         foreach (var vault in vaults)
                         {
@@ -393,7 +392,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                             var resourceGroupName = splitId[3];
                             var vaultName = splitId.Last();
                             var vaultStorePath = $"{subId}:{resourceGroupName}:{vaultName}";
-                            logger.LogTrace($"found keyvault, using storepath {vaultStorePath}");
+                            Logger.LogTrace($"found keyvault, using storepath {vaultStorePath}");
                             vaultNames.Add($"{subId}:{resourceGroupName}:{vaultName}");
                         }
                     }
@@ -401,10 +400,10 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             }
             catch (Exception ex)
             {
-                logger.LogTrace($"Exception thrown during discovery. Log warning and continue.");
+                Logger.LogTrace($"Exception thrown during discovery. Log warning and continue.");
                 var warning = $"Exception thrown performing discovery on tenantId {searchTenantId} and subscription ID {searchSubscription}.  Exception message: {ex.Message}";
 
-                logger.LogWarning(warning);
+                Logger.LogWarning(warning);
                 warnings.Add(warning);
             }
 
