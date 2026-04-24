@@ -51,15 +51,15 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             {
                 Logger.LogTrace("discovery completed with no warnings or errors.");
                 complete.Result = OrchestratorJobStatusJobResult.Success;
-                complete.FailureMessage = $"Discovery job completed successfully.  Found {keyVaults?.Count() ?? 0} KeyVaults.";
+                complete.FailureMessage = $"Discovery job completed successfully.  Found {keyVaults?.Count ?? 0} KeyVaults.";
             }
 
             // if there are warnings, but vaults were found, return Vaults and status of warn
-            if (warnings?.Count() > 0 && keyVaults.Count() > 0)
+            if (warnings?.Count > 0 && keyVaults.Count > 0)
             {
                 Logger.LogTrace("discovery completed with warnings.");
                 complete.Result = OrchestratorJobStatusJobResult.Warning;
-                complete.FailureMessage = $"Discovery job completed with errors.  Found {keyVaults?.Count() ?? 0} KeyVaults.\nThe following errors occurred: \n";
+                complete.FailureMessage = $"Discovery job completed with errors.  Found {keyVaults?.Count ?? 0} KeyVaults.\nThe following errors occurred: \n";
                 complete.FailureMessage = complete.FailureMessage + string.Join('\n', warnings);
                 if (complete.FailureMessage.Length > 4000)
                 {
@@ -69,7 +69,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
             // if there are warnings and no vaults were found, return status of error
 
-            if (warnings?.Count() > 0 && keyVaults?.Count() == 0)
+            if (warnings?.Count > 0 && keyVaults?.Count == 0)
             {
                 Logger.LogTrace("discovery completed with errors and no vaults found (failed).");
                 complete.Result = OrchestratorJobStatusJobResult.Failure;
