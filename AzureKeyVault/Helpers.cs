@@ -15,6 +15,8 @@ using System.Text.Json.Nodes;
 
 namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 {
+    public record Pkcs12ConversionResult(byte[] CertBytes, string KeyType, int? KeySize);
+
     public static class Helpers
     {
         public static bool IsValidJson(this string jsonString)
@@ -35,8 +37,6 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             }
             return true;
         }
-        public record Pkcs12ConversionResult(byte[] CertBytes, string KeyType, int? KeySize);
-
         public static Pkcs12ConversionResult ConvertPfxToPasswordlessPkcs12(string base64Pfx, string pfxPassword)
         {
             // Decode the Base64-encoded PFX data

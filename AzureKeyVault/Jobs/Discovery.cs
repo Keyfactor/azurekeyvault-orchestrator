@@ -78,7 +78,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             }
 
             // need to truncate failure message if it exceeds the max length of 4000
-            if (complete.FailureMessage.Length > 4000)
+            if (complete.Result != OrchestratorJobStatusJobResult.Success && complete.FailureMessage?.Length > 4000)
             {
                 Logger.LogTrace($"Failure message length of {complete.FailureMessage.Length} exceeds the maximum of 4000; truncating.");
                 complete.FailureMessage = complete.FailureMessage.Substring(0, 3500) + "\n results truncated.  Please see the Orchestrator logs for more details.";

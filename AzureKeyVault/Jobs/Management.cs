@@ -191,7 +191,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 }
                 catch (Exception ex)
                 {
-                    complete.FailureMessage = $"An error occured while adding {alias} to {ExtensionName}: " + ex.Message;
+                    complete.FailureMessage = $"An error occurred while adding {alias} to {ExtensionName}: " + ex.Message;
 
                     if (ex.InnerException != null)
                         complete.FailureMessage += " - " + ex.InnerException.Message;
@@ -235,7 +235,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
             catch (Exception ex)
             {
-                complete.FailureMessage = $"An error occured while removing {alias} from {ExtensionName}: " + ex.Message;
+                complete.FailureMessage = $"An error occurred while removing {alias} from {ExtensionName}: " + ex.Message;
             }
             return complete;
         }

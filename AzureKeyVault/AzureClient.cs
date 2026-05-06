@@ -340,19 +340,19 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 {
                     failedCount++;
                     innerException = ex;
-                    Logger.LogError($"Failed to retreive details for certificate {certificate.Name}.  Exception: {ex.Message}");
+                    Logger.LogError($"Failed to retrieve details for certificate {certificate.Name}.  Exception: {ex.Message}");
                     // continuing with inventory instead of throwing, in case there's an issue with a single certificate
                 }
             }
 
             if (failedCount == fullInventoryList.Count && failedCount > 0)
             {
-                throw new Exception("Unable to retreive details for certificates.", innerException);
+                throw new Exception("Unable to retrieve details for certificates.", innerException);
             }
 
             if (failedCount > 0)
             {
-                Logger.LogWarning($"{failedCount} of {fullInventoryList.Count} certificates were not able to be retreieved.  Please review the errors.");
+                Logger.LogWarning($"{failedCount} of {fullInventoryList.Count} certificates were not able to be retrieved.  Please review the errors.");
             }
 
             return inventoryItems;

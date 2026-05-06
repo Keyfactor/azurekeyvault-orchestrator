@@ -45,7 +45,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
             catch (Exception ex)
             {
-                Logger.LogTrace($"an error occured when performing inventory: {ex.Message}");
+                Logger.LogTrace($"an error occurred when performing inventory: {ex.Message}");
                 return new JobResult
                 {
                     Result = OrchestratorJobStatusJobResult.Failure,
