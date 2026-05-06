@@ -213,14 +213,20 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
                 Logger.LogTrace($"converting to pkcs12 without password for importing to keyvault");
 
-                var p12bytes = Helpers.ConvertPfxToPasswordlessPkcs12(contents, pfxPassword);
+                var pkcs12 = Helpers.ConvertPfxToPasswordlessPkcs12(contents, pfxPassword);
 
-                Logger.LogTrace($"got a byte array with length {p12bytes.Length}");
+                Logger.LogTrace($"got byte array of length {pkcs12.CertBytes.Length}, key type: {pkcs12.KeyType}, key size: {pkcs12.KeySize}");
 
                 Logger.LogTrace($"calling ImportCertificateAsync on the KeyVault certificate client to import certificate {certName}");
 
-                var options = new ImportCertificateOptions(certName, p12bytes);
-                options.Policy = new CertificatePolicy { Exportable = !nonExportable, ContentType = CertificateContentType.Pkcs12 };
+                var options = new ImportCertificateOptions(certName, pkcs12.CertBytes);
+                options.Policy = new CertificatePolicy
+                {
+                    Exportable = !nonExportable,
+                    ContentType = CertificateContentType.Pkcs12,
+                    KeyType = pkcs12.KeyType == "EC" ? CertificateKeyType.Ec : CertificateKeyType.Rsa,
+                    KeySize = pkcs12.KeyType == "RSA" ? pkcs12.KeySize : null
+                };
 
                 if (tags.Any())
                 {

@@ -6,6 +6,7 @@
 //  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
 //  and limitations under the License.
 
+using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Security;
 using System;
@@ -34,7 +35,9 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             }
             return true;
         }
-        public static byte[] ConvertPfxToPasswordlessPkcs12(string base64Pfx, string pfxPassword)
+        public record Pkcs12ConversionResult(byte[] CertBytes, string KeyType, int? KeySize);
+
+        public static Pkcs12ConversionResult ConvertPfxToPasswordlessPkcs12(string base64Pfx, string pfxPassword)
         {
             // Decode the Base64-encoded PFX data
             byte[] pfxBytes = Convert.FromBase64String(base64Pfx);
@@ -46,11 +49,26 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 store.Load(inputStream, pfxPassword.ToCharArray());
 
                 string alias = null;
+                string keyType = "RSA";
+                int? keySize = 2048;
+
                 foreach (string a in store.Aliases)
                 {
                     if (store.IsKeyEntry(a))
                     {
                         alias = a;
+                        var privateKey = store.GetKey(a).Key;
+
+                        if (privateKey is RsaKeyParameters rsaKey)
+                        {
+                            keyType = "RSA";
+                            keySize = rsaKey.Modulus.BitLength;
+                        }
+                        else if (privateKey is ECKeyParameters)
+                        {
+                            keyType = "EC";
+                            keySize = null;
+                        }
                         break;
                     }
                 }
@@ -81,7 +99,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
                     // Save the new PKCS#12 store without a password
                     newStore.Save(outputStream, null, new SecureRandom());
-                    return outputStream.ToArray();
+                    return new Pkcs12ConversionResult(outputStream.ToArray(), keyType, keySize);
                 }
             }
         }
