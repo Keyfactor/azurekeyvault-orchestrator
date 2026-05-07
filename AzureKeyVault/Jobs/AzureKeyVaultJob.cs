@@ -8,10 +8,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Keyfactor.Orchestrators.Extensions;
 using Keyfactor.Orchestrators.Extensions.Interfaces;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+
+[assembly: InternalsVisibleTo("Keyfactor.Extensions.Orchestrators.AKV.Tests")]
 
 namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 {
@@ -23,7 +26,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         internal protected IPAMSecretResolver PamSecretResolver { get; set; }
         internal protected ILogger Logger { get; set; }
 
-        public void InitializeStore(dynamic config)
+        public virtual void InitializeStore(dynamic config)
         {
             try
             {
