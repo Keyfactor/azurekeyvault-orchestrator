@@ -1,4 +1,4 @@
-- 3.3.3
+- 3.2.3
   - Bug fix: there was an issue where we were not passing the Key Size to Azure, and it was causing an error when the default didn't match
   - Now checking for empty vault name property to avoid overriding an existing value during Store Creation - [Issue 39](https://github.com/Keyfactor/azurekeyvault-orchestrator/issues/39#issuecomment-4298537246)
 
