@@ -22,7 +22,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         public string VaultRegion { get; set; }
         public bool PremiumSKU { get; set; }
         public List<string> TenantIdsForDiscovery { get; set; }
-        internal protected bool UseAzureManagedIdentity
+        internal bool UseAzureManagedIdentity
         {
             get
             {
@@ -36,7 +36,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
         public string PrivateEndpoint { get; set; }
 
-        internal protected string VaultEndpoint
+        internal string VaultEndpoint
         { //return the default endpoint suffix for the Azure Cloud instance of the KeyVault.
             get
             {
