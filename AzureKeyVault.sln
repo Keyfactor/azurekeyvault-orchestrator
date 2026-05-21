@@ -15,6 +15,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		rbac.md = rbac.md
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzureKeyVault.Tests", "AzureKeyVault.Tests\AzureKeyVault.Tests.csproj", "{1F688DB4-1CC6-4F69-BF6D-BE1BC1950DAA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -25,6 +27,10 @@ Global
 		{2CEC2ACF-E636-45DA-A0B5-3FC4D9F4EFCA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2CEC2ACF-E636-45DA-A0B5-3FC4D9F4EFCA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2CEC2ACF-E636-45DA-A0B5-3FC4D9F4EFCA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1F688DB4-1CC6-4F69-BF6D-BE1BC1950DAA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F688DB4-1CC6-4F69-BF6D-BE1BC1950DAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F688DB4-1CC6-4F69-BF6D-BE1BC1950DAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F688DB4-1CC6-4F69-BF6D-BE1BC1950DAA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
