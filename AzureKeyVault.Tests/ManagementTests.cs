@@ -6,6 +6,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Azure.ResourceManager.KeyVault;
 using Azure.Security.KeyVault.Certificates;
 using FluentAssertions;
 using Keyfactor.Logging;
@@ -41,6 +42,54 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault.Tests
         private const string Alias = "my-cert";
         private const string EmptyTags = "";
         private const long JobHistoryId = 42;
+
+        // ── Create ────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Regression test for: "The given key 'CertificateTags' was not present in the dictionary."
+        /// A Create operation does not supply entry parameters (Tags, PreserveTags, NonExportable)
+        /// in JobProperties. ProcessJob must not throw a KeyNotFoundException before reaching
+        /// PerformCreateVault.
+        /// </summary>
+        [Fact]
+        public void Create_EmptyJobProperties_DoesNotThrow_AndSucceeds()
+        {
+            var mockClient = new Mock<AzureClient>();
+            mockClient
+                .Setup(c => c.CreateVault())
+                .ReturnsAsync(BuildFakeKeyVaultResource("test-vault"));
+
+            var resolverMock = new Mock<IPAMSecretResolver>();
+            resolverMock.Setup(r => r.Resolve(It.IsAny<string>())).Returns<string>(s => s);
+
+            var job = new TestableManagement(resolverMock.Object)
+            {
+                AzClient = mockClient.Object,
+                Logger = LogHandler.GetClassLogger<Management>()
+            };
+
+            var config = new ManagementJobConfiguration
+            {
+                OperationType = CertStoreOperationType.Create,
+                JobHistoryId = JobHistoryId,
+                JobProperties = new Dictionary<string, object>(), // no entry parameters — intentionally empty
+                ServerUsername = "test-client-id",
+                ServerPassword = "test-client-secret",
+                CertificateStoreDetails = new CertificateStore
+                {
+                    StorePath = "00000000-0000-0000-0000-000000000000:test-rg:test-vault",
+                    ClientMachine = "00000000-0000-0000-0000-000000000001", // TenantId
+                    Properties = "{\"AzureCloud\":\"\",\"PrivateEndpoint\":\"\",\"SkuType\":\"Standard\",\"VaultRegion\":\"\",\"SubscriptionId\":\"\",\"ResourceGroupName\":\"\",\"VaultName\":\"\"}"
+                }
+            };
+
+            JobResult result = null;
+            var act = () => { result = job.ProcessJob(config); };
+
+            act.Should().NotThrow("ProcessJob must not throw a KeyNotFoundException when entry parameters are absent for a Create operation");
+            result.Should().NotBeNull();
+            result.Result.Should().Be(OrchestratorJobStatusJobResult.Success);
+        }
 
         // ── Add: success cases ────────────────────────────────────────────────
 
@@ -311,6 +360,22 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault.Tests
                 type = type.BaseType;
             }
             return null;
+        }
+
+        /// <summary>
+        /// Builds a minimal KeyVaultResource whose Id contains the vault name,
+        /// satisfying PerformCreateVault's success check.
+        /// </summary>
+        private static KeyVaultResource BuildFakeKeyVaultResource(string vaultName)
+        {
+            // KeyVaultResource cannot be newed directly; use a Mock so we can
+            // control the Id property that PerformCreateVault inspects.
+            var mock = new Mock<KeyVaultResource>();
+            var resourceId = Azure.Core.ResourceIdentifier.Parse(
+                $"/subscriptions/00000000-0000-0000-0000-000000000000" +
+                $"/resourceGroups/test-rg/providers/Microsoft.KeyVault/vaults/{vaultName}");
+            mock.Setup(r => r.Id).Returns(resourceId);
+            return mock.Object;
         }
     }
 }
