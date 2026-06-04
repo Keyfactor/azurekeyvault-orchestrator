@@ -378,6 +378,15 @@ Azure and clicking "Properties" in the left menu.
 > :warning: The identity you are using for authentication will need to have sufficient Azure permissions to be able to
 > create new Keyvaults.
 
+### Certificate Enrollment Alias Requirements
+
+Azure Keyvault has the following restrictions on certificate naming:
+- Must be alphanumeric characters and dashes
+- Must be < 127 characters
+- Must start with a letter
+
+If, during enrollment, an alias is provided that does not meet the above requirements; the job will fail with an error message indicating the reason.
+
 ---
 
 
@@ -477,7 +486,7 @@ the Keyfactor Command Portal
    ##### Advanced Tab
    | Attribute | Value | Description |
    | --------- | ----- | ----- |
-   | Supports Custom Alias | Optional | Determines if an individual entry within a store can have a custom Alias. |
+   | Supports Custom Alias | Required | Determines if an individual entry within a store can have a custom Alias. |
    | Private Key Handling | Optional | This determines if Keyfactor can send the private key associated with a certificate to the store. Required because IIS certificates without private keys would be invalid. |
    | PFX Password Style | Default | 'Default' - PFX password is randomly generated, 'Custom' - PFX password may be specified when the enrollment job is created (Requires the Allow Custom Password application setting to be enabled.) |
 
