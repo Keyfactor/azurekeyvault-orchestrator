@@ -1,3 +1,8 @@
+- 3.2.4
+  -	Bug fix: Fix for error during create job due to missing entry parameters
+  - Made 'alias' officially required for enrollment
+  - Documentation improvements and updates
+	
 - 3.2.3
   - Bug fix: there was an issue where we were not passing the Key Size to Azure, and it was causing an error when the default didn't match
   - Now checking for empty vault name property to avoid overriding an existing value during Store Creation - [Issue 39](https://github.com/Keyfactor/azurekeyvault-orchestrator/issues/39#issuecomment-4298537246)

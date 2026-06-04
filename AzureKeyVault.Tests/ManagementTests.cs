@@ -287,6 +287,79 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault.Tests
             result.FailureMessage.Should().Contain("vault unreachable");
         }
 
+        // ── Add: AKV alias validation (regression for cryptic AKV "invalid name" error) ─────
+
+        /// <summary>
+        /// Regression test: when the AKV SDK rejects an invalid alias with its
+        /// "The request URI contains an invalid name" error, PerformAddition should
+        /// translate that into a friendly message listing the AKV naming rules
+        /// rather than surfacing the raw SDK exception.
+        /// </summary>
+        [Theory]
+        [InlineData("linux01.kf.baah.net")]   // contains dots
+        [InlineData("my_cert")]               // contains underscore
+        [InlineData("1starts-with-digit")]    // starts with a digit
+        [InlineData("has spaces")]            // contains spaces
+        public void Add_InvalidAlias_ReturnsFriendlyErrorMessage(string invalidAlias)
+        {
+            var job = BuildJob(out var mockClient);
+
+            // Simulate the exact AKV SDK error message we're translating
+            var akvError = $"One or more errors occurred. (The request URI contains an invalid name: {invalidAlias} " +
+                           $"Status: 400 (Bad Request) ErrorCode: BadParameter Content: " +
+                           $"{{\"error\":{{\"code\":\"BadParameter\",\"message\":\"The request URI contains an invalid name: {invalidAlias}\"}}}})";
+            mockClient
+                .Setup(c => c.ImportCertificateAsync(
+                    invalidAlias, It.IsAny<string>(), It.IsAny<string>(),
+                    It.IsAny<Dictionary<string, string>>(), It.IsAny<bool>()))
+                .ThrowsAsync(new Exception(akvError));
+
+            var result = job.CallPerformAddition(
+                invalidAlias, CertificateFixtures.PfxPassword, CertificateFixtures.Rsa2048Base64,
+                EmptyTags, JobHistoryId, overwrite: true, preserveTags: false, nonExportable: false);
+
+            result.Result.Should().Be(OrchestratorJobStatusJobResult.Failure);
+
+            // Should NOT contain the raw SDK error noise
+            result.FailureMessage.Should().NotContain("Status: 400");
+            result.FailureMessage.Should().NotContain("BadParameter");
+            result.FailureMessage.Should().NotContain("request URI");
+
+            // Should explain the AKV alias rules
+            result.FailureMessage.Should().Contain("127",
+                "the message should mention the 127-character length limit");
+            result.FailureMessage.Should().Contain("alphanumeric",
+                "the message should mention the alphanumeric-only rule");
+            result.FailureMessage.Should().Contain("letter",
+                "the message should mention that the alias must start with a letter");
+        }
+
+        /// <summary>
+        /// Make sure the friendly-error branch is specific to the AKV "invalid name"
+        /// signature - other exceptions should still fall through to the generic
+        /// failure path so we don't mask unrelated problems.
+        /// </summary>
+        [Fact]
+        public void Add_GenericException_DoesNotReturnAliasValidationMessage()
+        {
+            var job = BuildJob(out var mockClient);
+            mockClient
+                .Setup(c => c.ImportCertificateAsync(
+                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                    It.IsAny<Dictionary<string, string>>(), It.IsAny<bool>()))
+                .ThrowsAsync(new Exception("unrelated network failure"));
+
+            var result = job.CallPerformAddition(
+                Alias, CertificateFixtures.PfxPassword, CertificateFixtures.Rsa2048Base64,
+                EmptyTags, JobHistoryId, overwrite: true, preserveTags: false, nonExportable: false);
+
+            result.Result.Should().Be(OrchestratorJobStatusJobResult.Failure);
+            result.FailureMessage.Should().Contain("unrelated network failure");
+            // The AKV-naming-rules text should NOT appear for unrelated errors
+            result.FailureMessage.Should().NotContain("127");
+            result.FailureMessage.Should().NotContain("alphanumeric");
+        }
+
         // ── Helpers ───────────────────────────────────────────────────────────
 
         private static TestableManagement BuildJob(out Mock<AzureClient> mockClient)
