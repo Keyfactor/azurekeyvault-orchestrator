@@ -32,7 +32,6 @@
     <PackageReference Include="Keyfactor.Orchestrators.Common" Version="3.3.0" />
     <PackageReference Include="Keyfactor.Orchestrators.IOrchestratorJobExtensions" Version="1.0.0" />
     <PackageReference Include="Keyfactor.Platform.IPAMProvider" Version="1.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 

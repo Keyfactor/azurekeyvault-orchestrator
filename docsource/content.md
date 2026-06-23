@@ -336,4 +336,13 @@ Azure and clicking "Properties" in the left menu.
 > :warning: The identity you are using for authentication will need to have sufficient Azure permissions to be able to
 > create new Keyvaults.
 
+### Certificate Enrollment Alias Requirements
+
+Azure Keyvault has the following restrictions on certificate naming:
+- Must be alphanumeric characters and dashes
+- Must be < 127 characters
+- Must start with a letter
+
+If, during enrollment, an alias is provided that does not meet the above requirements; the job will fail with an error message indicating the reason.
+
 ---

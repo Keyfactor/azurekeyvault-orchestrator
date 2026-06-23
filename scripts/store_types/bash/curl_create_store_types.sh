@@ -75,7 +75,7 @@ create_store_type() {
 create_store_type "AKV" '{
   "BlueprintAllowed": false,
   "Capability": "AKV",
-  "CustomAliasAllowed": "Optional",
+  "CustomAliasAllowed": "Required",
   "EntryParameters": [
     {
       "Name": "CertificateTags",
