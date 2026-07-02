@@ -72,7 +72,7 @@ The high level steps required to configure the Azure Keyvault Orchestrator exten
 
 1) [Install the Extension on the Orchestrator](#installation)
 
-1) [Create the Certificate Store](#add-a-new-or-existing-azure-keyvault-certificate-store)
+1) [Create the Certificate Store](#add-an-existing-azure-keyvault-certificate-store)
 
 > :warning: If you are still using the (deprecated) Windows Orchestrator, you can find instructions for migrating by searching previous versions of this README.
 
@@ -85,7 +85,7 @@ authenticate with a identity that has sufficient permissions to perform the jobs
 Based Access Control (RBAC) and the classic Access Policy method. RBAC is the preferred method, and currently the default used by Azure.
 It allows the assignment of granular level, inheretable access control on both the contents of the KeyVaults, as well as higher-level
 management operations. For more information and a comparison of the two access control strategies, refer
-to [this article](learn.microsoft.com/en-us/azure/key-vault/general/rbac-access-policy).
+to [this article](https://learn.microsoft.com/en-us/azure/key-vault/general/rbac-access-policy).
 
 ##### RBAC vs Access Policies
 
@@ -126,8 +126,9 @@ The Azure KeyVault orchestrator plugin supports several authentication options:
 
 Steps for setting up each option are detailed below.
 
-<details>
-  <summary><b>Authentication via Service Principal</b></summary>
+#### Authentication via Service Principal
+
+<details><summary>Click to expand</summary>
 
 For the Orchestrator to be able to interact with the instance of Azure Keyvault, we will need to create an entity in
 Azure that will encapsulate the permissions we would like to grant it. In Azure, these intermediate entities are
@@ -169,8 +170,11 @@ We will store these values securely in Keyfactor in subsequent steps.
 
 </details>
 
-<details>
-  <summary><b>Authentication via User Assigned Managed Identity</b></summary>
+#### Authentication via User Assigned Managed Identity
+
+<details><summary>Click to expand</summary>
+
+
 
 Authentication has been somewhat simplified with the introduction of Azure Managed Identities. If the orchestrator is
 running on an Azure Virtual Machine, Managed identities allow an Azure administrator to
@@ -195,8 +199,9 @@ Id field on the certificate store definition (the Client Secret can be left blan
 
 </details>
 
-<details>
-<summary><b>Authentication via System Assigned Managed Identity</b></summary>
+#### Authentication via System Assigned Managed Identity
+
+<details><summary>Click to expand</summary>
 
 In order to use a _System_ assigned managed identity, there is no need to enter the server credentials. If no server
 credentials are provided, the extension assumes authentication is via system assigned managed identity.
@@ -280,22 +285,19 @@ Follow these steps to store the values:
 
    ![Discovery Form](/Images/discovery-form-client-machine.png)
 
-1) Click "Change Credentials" to open up the Server Credentials form.
-
-   ![Change Credentials](/Images/change-credentials-form.png)
-
-1) Click "UPDATE SERVER USERNAME" and Enter the appropriate values based on the authentication type.
+1) Click "SET SERVER USERNAME" and Enter the appropriate values based on the authentication type.
 
    ![Set Username](/Images/server-creds-username.png)
 
 1) Enter again to confirm, and click save.
 
-1) Click "UPDATE SERVER PASSWORD" and update with the appropriate value (`<client secret>` or `managed`) following the
+1) Click "SET SERVER PASSWORD" and update with the appropriate value (`<client secret>` or `managed`) following the
    same steps as above.
+   ![Set Password](/Images/server-creds-password.png)
 
 1) Select a time to run the discovery job.
 
-1) Enter commma seperated list of tenant ID's in the "Directories to search" field.'
+1) Enter comma separated list of tenant ID's in the "Directories to search" field.'
 
 > :warning:
 > If nothing is entered here, the default Tenant ID included with the credentials will be used. For system managed
@@ -305,7 +307,7 @@ Follow these steps to store the values:
 
 ##### Approve the Certificate Store
 
-When the Discovery job runs successfully, it will list the existing Azure Keyvaults that are acessible by our service
+When the Discovery job runs successfully, it will list the existing Azure Keyvaults that are accessible by our service
 principal.
 
 In this example, our job returned these Azure Keyvaults.
