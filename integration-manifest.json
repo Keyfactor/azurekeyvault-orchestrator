@@ -73,14 +73,6 @@
           "PrivateKeyAllowed": "Optional",
           "Properties": [
             {
-              "Name": "TenantId",
-              "DisplayName": "Tenant Id",
-              "Description": "The ID of the primary Azure Tenant where the KeyVaults are hosted",
-              "Type": "String",
-              "DependsOn": "",
-              "Required": false
-            },
-            {
               "Name": "SkuType",
               "DisplayName": "SKU Type",
               "Description": "The SKU type for newly created KeyVaults (only needed if needing to create new KeyVaults in your Azure subscription via Command)",

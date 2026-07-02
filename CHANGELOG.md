@@ -1,6 +1,7 @@
 - 3.2.4
   -	Bug fix: Fix for error during create job due to missing entry parameters
   - Made 'alias' officially required for enrollment
+  - Removed TenantID Store property as it is unused (refer to ClientMachine)
   - Documentation improvements and updates
 	
 - 3.2.3
