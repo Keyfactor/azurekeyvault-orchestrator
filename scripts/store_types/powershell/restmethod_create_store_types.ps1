@@ -122,13 +122,6 @@ New-StoreType "AKV" @'
   "PrivateKeyAllowed": "Optional",
   "Properties": [
     {
-      "Name": "TenantId",
-      "DisplayName": "Tenant Id",
-      "Type": "String",
-      "DependsOn": "",
-      "Required": false
-    },
-    {
       "Name": "SkuType",
       "DisplayName": "SKU Type",
       "Type": "MultipleChoice",
