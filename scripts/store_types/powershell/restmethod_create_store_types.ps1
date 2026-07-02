@@ -68,7 +68,7 @@ New-StoreType "AKV" @'
 {
   "BlueprintAllowed": false,
   "Capability": "AKV",
-  "CustomAliasAllowed": "Optional",
+  "CustomAliasAllowed": "Required",
   "EntryParameters": [
     {
       "Name": "CertificateTags",

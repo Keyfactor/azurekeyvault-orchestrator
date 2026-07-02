@@ -53,7 +53,7 @@ Here are the steps for assigning this role.
    ![Select Principal](/Images/rg-role-select-principal.PNG)
 1) Click "Review and Assign" and save the role assignment.
 
-[^1]: If discovery and create store functionality are not neeeded, it is also possible to manage individual certificate
+[^1]: If discovery and create store functionality are not needed, it is also possible to manage individual certificate
 stores without the need to provide resource group level authority. The steps to do assign permissions for an individual
 Azure Keyvault are described [here](#assign-permissions-for-an-individual-key-vault-via-access-policy) for vaults using
 Access Policy based permissions and [here](#assign-permissions-for-an-individual-key-vault-via-rbac) for Individual Key
@@ -146,6 +146,6 @@ For authenticating to Azure via App Registration/Service Principal, we will need
 1) Click "Add".
 1) Copy the "Value" of the secret before navigating away.
 
-[Back to README](README.md#create-a-service-principal)
+[Back to README](README.md#authentication-via-service-principal)
  
 
