@@ -2,7 +2,7 @@
 ### Configure Role Based Access Control (RBAC)
 
 In order to illustrate the minimum permissions that the authenticating entity (service principal or managed identity)
-requires we have created 3 seperate custom role definitions that you can use as a reference when creating an RBAC role definition
+requires we have created 3 separate custom role definitions that you can use as a reference when creating an RBAC role definition
 in your Azure environment.
 
 The reason for 3 definitions is that certain orchestrator jobs, such as Create (new KeyVault) or Discovery require more
@@ -101,7 +101,7 @@ If you are working with a smaller number of KeyVaults and/or do not plan on util
 KeyVaults across your subscriptions, the permissions defined in this role are not necessary.
 
 - built-in
-  role: ["Key Vault Reader"](github.com/MicrosoftDocs/azure-docs/blob/main/articles/role-based-access-control/built-in-roles/security.md#key-vault-reader)
+  role: ["Key Vault Reader"](https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/role-based-access-control/built-in-roles/security.md#key-vault-reader)
 - lowest level scope - a resource group
 - custom role definition:
 
@@ -146,7 +146,7 @@ This set of permissions is the minimum required to support the basic operations 
 Add/Removal of certificates.
 
 - built-in
-  role: ["Key Vault Certificates Officer"](github.com/MicrosoftDocs/azure-docs/blob/main/articles/role-based-access-control/built-in-roles/security.md#key-vault-certificates-officer)
+  role: ["Key Vault Certificates Officer"](https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/role-based-access-control/built-in-roles/security.md#key-vault-certificates-officer)
 - lowest level scope - an individual keyvault
 - custom role definition:
 
@@ -200,9 +200,9 @@ the authenticating identity, it will be able to discover existing KeyVaults, Cre
 well as adding and removing certificates within the KeyVault.
 
 - minimally sufficient built-in roles (all are required):
-    - ["Key Vault Certificates Officer"](github.com/MicrosoftDocs/azure-docs/blob/main/articles/role-based-access-control/built-in-roles/security.md#key-vault-certificates-officer)
-    - ["Key Vault Contributor"](learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/security#key-vault-contributor)
-    - ["Key Vault Access Administrator"](learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/)
+    - ["Key Vault Certificates Officer"](https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/role-based-access-control/built-in-roles/security.md#key-vault-certificates-officer)
+    - ["Key Vault Contributor"](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/security#key-vault-contributor)
+    - ["Key Vault Access Administrator"](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/)
 - lowest level scope - an individual resource group
 - custom role definition:
 
@@ -231,7 +231,7 @@ well as adding and removing certificates within the KeyVault.
                     "Microsoft.Management/managementGroups/read",
                     "Microsoft.Resources/subscriptions/read",
                     "Microsoft.Authorization/roleAssignments/*",                     
-                    "Microsoft.KeyVault/operations/read"                                
+                    "Microsoft.KeyVault/operations/read",
                     "Microsoft.KeyVault/locations/*/read",
                     "Microsoft.KeyVault/vaults/*/read",
                 ],
@@ -252,7 +252,7 @@ well as adding and removing certificates within the KeyVault.
 ```
 </details>
 
-> :warning: You still may decide to split the capabilities into seperate roles in order to apply each of them to the
+> :warning: You still may decide to split the capabilities into separate roles in order to apply each of them to the
 > lowest level scope
 > required. We have tried to provide you with an absolute minimum set of required permissions necessary to perform each
 > operation. Refer to
