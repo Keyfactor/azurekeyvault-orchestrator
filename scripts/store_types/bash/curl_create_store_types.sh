@@ -75,7 +75,7 @@ create_store_type() {
 create_store_type "AKV" '{
   "BlueprintAllowed": false,
   "Capability": "AKV",
-  "CustomAliasAllowed": "Optional",
+  "CustomAliasAllowed": "Required",
   "EntryParameters": [
     {
       "Name": "CertificateTags",
@@ -128,13 +128,6 @@ create_store_type "AKV" '{
   "PowerShell": false,
   "PrivateKeyAllowed": "Optional",
   "Properties": [
-    {
-      "Name": "TenantId",
-      "DisplayName": "Tenant Id",
-      "Type": "String",
-      "DependsOn": "",
-      "Required": false
-    },
     {
       "Name": "SkuType",
       "DisplayName": "SKU Type",

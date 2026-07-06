@@ -68,7 +68,7 @@ New-StoreType "AKV" @'
 {
   "BlueprintAllowed": false,
   "Capability": "AKV",
-  "CustomAliasAllowed": "Optional",
+  "CustomAliasAllowed": "Required",
   "EntryParameters": [
     {
       "Name": "CertificateTags",
@@ -121,13 +121,6 @@ New-StoreType "AKV" @'
   "PowerShell": false,
   "PrivateKeyAllowed": "Optional",
   "Properties": [
-    {
-      "Name": "TenantId",
-      "DisplayName": "Tenant Id",
-      "Type": "String",
-      "DependsOn": "",
-      "Required": false
-    },
     {
       "Name": "SkuType",
       "DisplayName": "SKU Type",
