@@ -509,24 +509,28 @@ the Keyfactor Command Portal
    The SKU type for newly created KeyVaults (only needed if needing to create new KeyVaults in your Azure subscription via Command)
 
    ![AKV Custom Field - SkuType](docsource/images/AKV-custom-field-SkuType-dialog.svg)
+   ![AKV Custom Field - SkuType](docsource/images/AKV-custom-field-SkuType-validation-options-dialog.svg)
 
 
    ###### Vault Region
    The Azure Region to put newly created KeyVaults (only needed if needing to create new KeyVaults in your Azure subscription via Command)
 
    ![AKV Custom Field - VaultRegion](docsource/images/AKV-custom-field-VaultRegion-dialog.svg)
+   ![AKV Custom Field - VaultRegion](docsource/images/AKV-custom-field-VaultRegion-validation-options-dialog.svg)
 
 
    ###### Azure Cloud
    The Azure Cloud where the KeyVaults are located (only necessary if not using the standard Azure Public cloud)
 
    ![AKV Custom Field - AzureCloud](docsource/images/AKV-custom-field-AzureCloud-dialog.svg)
+   ![AKV Custom Field - AzureCloud](docsource/images/AKV-custom-field-AzureCloud-validation-options-dialog.svg)
 
 
    ###### Private KeyVault Endpoint
    The private endpoint of your vault instance (if a private endpoint is configured in Azure)
 
    ![AKV Custom Field - PrivateEndpoint](docsource/images/AKV-custom-field-PrivateEndpoint-dialog.svg)
+   ![AKV Custom Field - PrivateEndpoint](docsource/images/AKV-custom-field-PrivateEndpoint-validation-options-dialog.svg)
 
 
    ##### Entry Parameters Tab
@@ -544,18 +548,21 @@ the Keyfactor Command Portal
    If desired, tags can be applied to the KeyVault entries.  Provide them as a JSON string of key-value pairs ie: '{'tag-name': 'tag-content', 'other-tag-name': 'other-tag-content'}'
 
    ![AKV Entry Parameter - CertificateTags](docsource/images/AKV-entry-parameters-store-type-dialog-CertificateTags.svg)
+   ![AKV Entry Parameter - CertificateTags](docsource/images/AKV-entry-parameters-store-type-dialog-CertificateTags-validation-options.svg)
 
 
    ##### Preserve Existing Tags
    If true, this will perform a union of any tags provided with enrollment with the tags on the existing cert with the same alias and apply the result to the new certificate.
 
    ![AKV Entry Parameter - PreserveExistingTags](docsource/images/AKV-entry-parameters-store-type-dialog-PreserveExistingTags.svg)
+   ![AKV Entry Parameter - PreserveExistingTags](docsource/images/AKV-entry-parameters-store-type-dialog-PreserveExistingTags-validation-options.svg)
 
 
    ##### Non Exportable Private Key
    If true, this will mark the certificate as having a non-exportable private key when importing into Azure KeyVault
 
    ![AKV Entry Parameter - NonExportable](docsource/images/AKV-entry-parameters-store-type-dialog-NonExportable.svg)
+   ![AKV Entry Parameter - NonExportable](docsource/images/AKV-entry-parameters-store-type-dialog-NonExportable-validation-options.svg)
 
 
    </details>
@@ -572,11 +579,11 @@ the Keyfactor Command Portal
    | Between `11.0.0` and `11.5.1` (inclusive) | `net6.0` | | `net6.0` |
    | Between `11.0.0` and `11.5.1` (inclusive) | `net8.0` | `Disable` | `net6.0` |
    | Between `11.0.0` and `11.5.1` (inclusive) | `net8.0` | `LatestMajor` | `net8.0` |
-   | `11.6` _and_ newer | `net8.0` | | `net8.0` |
+   | Between `11.6.0` and `24.x` | `net8.0` | | `net8.0` |
 
     Unzip the archive containing extension assemblies to a known location.
 
-    > **Note** If you don't see an asset with a corresponding .NET version, you should always assume that it was compiled for `net6.0`.
+    > **Note** If you don't see an asset with a corresponding .NET version, you should always assume that it was compiled for `net8.0`.
 
 2. **Locate the Universal Orchestrator extensions directory.**
 
