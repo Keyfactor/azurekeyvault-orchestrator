@@ -49,9 +49,15 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
 
             Logger.LogTrace("parsing entry parameters.. ");
 
-            tagsJSON = config.JobProperties[EntryParameters.TAGS] as string ?? string.Empty;
-            preserveTags = config.JobProperties[EntryParameters.PRESERVE_TAGS] as bool? ?? true;
-            nonExportable = config.JobProperties[EntryParameters.NON_EXPORTABLE] as bool? ?? false;
+            tagsJSON = config.JobProperties.ContainsKey(EntryParameters.TAGS)
+                ? config.JobProperties[EntryParameters.TAGS] as string ?? string.Empty
+                : string.Empty;
+            preserveTags = config.JobProperties.ContainsKey(EntryParameters.PRESERVE_TAGS)
+                ? config.JobProperties[EntryParameters.PRESERVE_TAGS] as bool? ?? true
+                : true;
+            nonExportable = config.JobProperties.ContainsKey(EntryParameters.NON_EXPORTABLE)
+                ? config.JobProperties[EntryParameters.NON_EXPORTABLE] as bool? ?? false
+                : false;
 
             switch (config.OperationType)
             {
@@ -191,10 +197,26 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 }
                 catch (Exception ex)
                 {
-                    complete.FailureMessage = $"An error occurred while adding {alias} to {ExtensionName}: " + ex.Message;
+                    if (ex.Message.ToLowerInvariant().Contains("the request uri contains an invalid name"))
+                    {
+                        // The alias is not valid; return an error explaining the AKV naming rules.
+                        // Note: this branch is tied to AKV's current "invalid name" error string;
+                        // if AKV changes its error format we'll fall through to the generic branch.
+                        var errMsg = $"The alias '{alias}' was not allowed by Azure Key Vault. The alias must:\n" +
+                                     $"\t- be under 127 characters in length\n" +
+                                     $"\t- contain only alphanumeric characters and dashes\n" +
+                                     $"\t- begin with a letter\n" +
+                                     $"Please update the alias to meet these requirements.";
 
-                    if (ex.InnerException != null)
-                        complete.FailureMessage += " - " + ex.InnerException.Message;
+                        complete.FailureMessage = errMsg;
+                    }
+                    else
+                    {
+                        complete.FailureMessage = $"An error occurred while adding {alias} to {ExtensionName}: " + ex.Message;
+
+                        if (ex.InnerException != null)
+                            complete.FailureMessage += " - " + ex.InnerException.Message;
+                    }
                 }
             }
             else  // Non-PFX
