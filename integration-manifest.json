@@ -19,7 +19,7 @@
           "BlueprintAllowed": false,
           "Capability": "AKV",
           "ClientMachineDescription": "The GUID of the tenant ID of the Azure Keyvault instance; for example, '12345678-1234-1234-1234-123456789abc'.",
-          "CustomAliasAllowed": "Optional",
+          "CustomAliasAllowed": "Required",
           "EntryParameters": [
             {
               "Name": "CertificateTags",
@@ -72,14 +72,6 @@
           "PowerShell": false,
           "PrivateKeyAllowed": "Optional",
           "Properties": [
-            {
-              "Name": "TenantId",
-              "DisplayName": "Tenant Id",
-              "Description": "The ID of the primary Azure Tenant where the KeyVaults are hosted",
-              "Type": "String",
-              "DependsOn": "",
-              "Required": false
-            },
             {
               "Name": "SkuType",
               "DisplayName": "SKU Type",
