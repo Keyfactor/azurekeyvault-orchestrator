@@ -4,6 +4,7 @@
 // You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
 
 using System;
+using System.Collections.Generic;
 using FluentAssertions;
 using Org.BouncyCastle.Pkcs;
 using Xunit;
@@ -94,6 +95,73 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault.Tests
             }
 
             hasKeyEntry.Should().BeTrue("the private key should be preserved in the output");
+        }
+
+        // ── ConvertPfxToPasswordlessPkcs12: certificate chain order ─────────────
+        //
+        // Regression coverage for a support ticket where Azure Key Vault showed a
+        // different chain order for certs added via a Management > Add job than for
+        // certs exported manually and imported into AKV directly. These tests prove
+        // what ConvertPfxToPasswordlessPkcs12 itself does to chain order, independent
+        // of anything Azure Key Vault might do afterward: it re-derives the chain via
+        // Pkcs12Store.GetCertificateChain (a leaf-to-root walk using
+        // AuthorityKeyIdentifier / issuer-DN + signature verification), so the
+        // *physical* bag order of the output should always be leaf, intermediate,
+        // root - regardless of how the input PFX had them ordered.
+
+        [Fact]
+        public void ConvertPfx_ScrambledInputChainOrder_OutputIsCanonicalLeafToRoot()
+        {
+            var chain = ChainTestHelper.BuildChain();
+            byte[] inputPfx = ChainTestHelper.BuildPkcs12WithCertOrder(
+                chain, chain.Root, chain.Leaf, chain.Intermediate); // deliberately NOT leaf-first
+
+            var inputOrder = ChainTestHelper.GetPhysicalCertBagSubjectOrder(inputPfx);
+            inputOrder.Should().Equal(
+                chain.Root.SubjectDN.ToString(),
+                chain.Leaf.SubjectDN.ToString(),
+                chain.Intermediate.SubjectDN.ToString());
+
+            var result = Helpers.ConvertPfxToPasswordlessPkcs12(Convert.ToBase64String(inputPfx), "test");
+
+            var outputOrder = ChainTestHelper.GetPhysicalCertBagSubjectOrder(result.CertBytes);
+            outputOrder.Should().Equal(
+                new List<string>
+                {
+                    chain.Leaf.SubjectDN.ToString(),
+                    chain.Intermediate.SubjectDN.ToString(),
+                    chain.Root.SubjectDN.ToString()
+                },
+                "the output chain should be canonicalized to leaf, intermediate, root regardless of input order");
+        }
+
+        [Fact]
+        public void ConvertPfx_AlreadyCanonicalInputChainOrder_OutputStaysCanonical()
+        {
+            var chain = ChainTestHelper.BuildChain();
+            byte[] inputPfx = ChainTestHelper.BuildPkcs12WithCertOrder(
+                chain, chain.Leaf, chain.Intermediate, chain.Root); // already leaf-first
+
+            var result = Helpers.ConvertPfxToPasswordlessPkcs12(Convert.ToBase64String(inputPfx), "test");
+
+            var outputOrder = ChainTestHelper.GetPhysicalCertBagSubjectOrder(result.CertBytes);
+            outputOrder.Should().Equal(
+                chain.Leaf.SubjectDN.ToString(),
+                chain.Intermediate.SubjectDN.ToString(),
+                chain.Root.SubjectDN.ToString());
+        }
+
+        [Fact]
+        public void ConvertPfx_OutputContainsFullChain_NotJustLeaf()
+        {
+            var chain = ChainTestHelper.BuildChain();
+            byte[] inputPfx = ChainTestHelper.BuildPkcs12WithCertOrder(
+                chain, chain.Intermediate, chain.Root, chain.Leaf);
+
+            var result = Helpers.ConvertPfxToPasswordlessPkcs12(Convert.ToBase64String(inputPfx), "test");
+
+            var outputOrder = ChainTestHelper.GetPhysicalCertBagSubjectOrder(result.CertBytes);
+            outputOrder.Should().HaveCount(3, "the full chain must be preserved, not just the leaf");
         }
 
         [Fact]

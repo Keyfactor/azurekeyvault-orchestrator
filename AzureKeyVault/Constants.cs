@@ -17,6 +17,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         public const string TAGS = "CertificateTags";
         public const string PRESERVE_TAGS = "PreserveExistingTags";
         public const string NON_EXPORTABLE = "NonExportable";
+        public const string PRESERVE_CHAIN_ORDER = "PreserveChainOrder";
     }
 
     static class JobTypes

@@ -29,9 +29,9 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault.Tests
         public JobResult CallPerformAddition(
             string alias, string pfxPassword, string entryContents,
             string tagsJSON, long jobHistoryId, bool overwrite,
-            bool preserveTags, bool nonExportable)
+            bool preserveTags, bool nonExportable, bool preserveChainOrder = false)
             => PerformAddition(alias, pfxPassword, entryContents,
-                tagsJSON, jobHistoryId, overwrite, preserveTags, nonExportable);
+                tagsJSON, jobHistoryId, overwrite, preserveTags, nonExportable, preserveChainOrder);
 
         public JobResult CallPerformRemoval(string alias, string tagsJSON, long jobHistoryId)
             => PerformRemoval(alias, tagsJSON, jobHistoryId);
@@ -151,6 +151,76 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault.Tests
                     d.ContainsKey("env") && d["env"] == "prod" &&
                     d.ContainsKey("owner") && d["owner"] == "platform"),
                 false), Times.Once);
+        }
+
+        // ── Add: PreserveChainOrder entry parameter evaluation ──────────────────
+
+        /// <summary>
+        /// Verifies that the raw "PreserveChainOrder" entry parameter value Command
+        /// supplies in JobProperties is evaluated into the correct boolean and passed
+        /// through to AzureClient.ImportCertificateAsync, exercising the real
+        /// ProcessJob -> EntryParameterParser -> PerformAddition pipeline (not just
+        /// PerformAddition in isolation).
+        /// </summary>
+        [Theory]
+        [InlineData(true, true)]
+        [InlineData(false, false)]
+        public void Add_PreserveChainOrderProvided_EvaluatedAndPassedToImport(bool provided, bool expected)
+        {
+            var mockClient = new Mock<AzureClient>();
+            mockClient.Setup(c => c.GetCertificate(It.IsAny<string>())).ReturnsAsync((KeyVaultCertificateWithPolicy)null);
+            SetupImportSuccess(mockClient, Alias);
+
+            var job = BuildProcessJobReadyManagement(mockClient);
+            var config = BuildAddConfig(new Dictionary<string, object> { { "PreserveChainOrder", provided } });
+
+            var result = job.ProcessJob(config);
+
+            result.Result.Should().Be(OrchestratorJobStatusJobResult.Success);
+            mockClient.Verify(c => c.ImportCertificateAsync(
+                Alias, It.IsAny<string>(), CertificateFixtures.PfxPassword,
+                It.IsAny<Dictionary<string, string>>(), false, expected), Times.Once);
+        }
+
+        [Fact]
+        public void Add_PreserveChainOrderNotProvided_DefaultsToFalse_DoesNotThrow()
+        {
+            var mockClient = new Mock<AzureClient>();
+            mockClient.Setup(c => c.GetCertificate(It.IsAny<string>())).ReturnsAsync((KeyVaultCertificateWithPolicy)null);
+            SetupImportSuccess(mockClient, Alias);
+
+            var job = BuildProcessJobReadyManagement(mockClient);
+            var config = BuildAddConfig(new Dictionary<string, object>()); // entry parameter omitted entirely
+
+            var act = () => job.ProcessJob(config);
+
+            act.Should().NotThrow("an omitted, non-critical entry parameter must not throw");
+            var result = job.ProcessJob(config);
+            result.Result.Should().Be(OrchestratorJobStatusJobResult.Success);
+            mockClient.Verify(c => c.ImportCertificateAsync(
+                Alias, It.IsAny<string>(), CertificateFixtures.PfxPassword,
+                It.IsAny<Dictionary<string, string>>(), false, false), Times.AtLeastOnce);
+        }
+
+        [Fact]
+        public void Add_PreserveChainOrderWrongType_FallsBackToFalse()
+        {
+            // Command is expected to send a bool, but the parsing must not blow up
+            // if a different type shows up (mirrors the existing NonExportable/PreserveTags
+            // tolerance of "as bool? ?? default" rather than an unchecked cast).
+            var mockClient = new Mock<AzureClient>();
+            mockClient.Setup(c => c.GetCertificate(It.IsAny<string>())).ReturnsAsync((KeyVaultCertificateWithPolicy)null);
+            SetupImportSuccess(mockClient, Alias);
+
+            var job = BuildProcessJobReadyManagement(mockClient);
+            var config = BuildAddConfig(new Dictionary<string, object> { { "PreserveChainOrder", "not-a-bool" } });
+
+            var result = job.ProcessJob(config);
+
+            result.Result.Should().Be(OrchestratorJobStatusJobResult.Success);
+            mockClient.Verify(c => c.ImportCertificateAsync(
+                Alias, It.IsAny<string>(), CertificateFixtures.PfxPassword,
+                It.IsAny<Dictionary<string, string>>(), false, false), Times.Once);
         }
 
         // ── Add: failure / warning cases ──────────────────────────────────────
@@ -362,6 +432,45 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault.Tests
 
         // ── Helpers ───────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// Builds a job for tests that exercise the real ProcessJob (not just
+        /// PerformAddition), so InitializeStore + entry parameter parsing actually run.
+        /// </summary>
+        private static TestableManagement BuildProcessJobReadyManagement(Mock<AzureClient> mockClient)
+        {
+            var resolverMock = new Mock<IPAMSecretResolver>();
+            resolverMock.Setup(r => r.Resolve(It.IsAny<string>())).Returns<string>(s => s);
+
+            return new TestableManagement(resolverMock.Object)
+            {
+                AzClient = mockClient.Object,
+                Logger = LogHandler.GetClassLogger<Management>()
+            };
+        }
+
+        private static ManagementJobConfiguration BuildAddConfig(Dictionary<string, object> jobProperties) =>
+            new ManagementJobConfiguration
+            {
+                OperationType = CertStoreOperationType.Add,
+                JobHistoryId = JobHistoryId,
+                Overwrite = true,
+                JobCertificate = new ManagementJobCertificate
+                {
+                    Alias = Alias,
+                    PrivateKeyPassword = CertificateFixtures.PfxPassword,
+                    Contents = CertificateFixtures.Rsa2048Base64
+                },
+                JobProperties = jobProperties,
+                ServerUsername = "test-client-id",
+                ServerPassword = "test-client-secret",
+                CertificateStoreDetails = new CertificateStore
+                {
+                    StorePath = "00000000-0000-0000-0000-000000000000:test-rg:test-vault",
+                    ClientMachine = "00000000-0000-0000-0000-000000000001",
+                    Properties = "{\"AzureCloud\":\"\",\"PrivateEndpoint\":\"\",\"SkuType\":\"Standard\",\"VaultRegion\":\"\",\"SubscriptionId\":\"\",\"ResourceGroupName\":\"\",\"VaultName\":\"\"}"
+                }
+            };
+
         private static TestableManagement BuildJob(out Mock<AzureClient> mockClient)
         {
             mockClient = new Mock<AzureClient>();
@@ -409,7 +518,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault.Tests
             mockClient
                 .Setup(c => c.ImportCertificateAsync(
                     alias, It.IsAny<string>(), It.IsAny<string>(),
-                    It.IsAny<Dictionary<string, string>>(), It.IsAny<bool>()))
+                    It.IsAny<Dictionary<string, string>>(), It.IsAny<bool>(), It.IsAny<bool>()))
                 .ReturnsAsync(cert);
         }
 
