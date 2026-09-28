@@ -57,6 +57,19 @@ $Body = @'
         "OnRemove": false,
         "OnReenrollment": false
       }
+    },
+    {
+      "Name": "PreserveChainOrder",
+      "DisplayName": "Preserve Chain Order",
+      "Description": "By default, Azure Key Vault reorders the certificate chain on import (forcing the leaf certificate to index 0). If true, this tells Azure Key Vault to preserve the exact chain order provided instead of applying its own default reordering.",
+      "Type": "Bool",
+      "DefaultValue": "False",
+      "RequiredWhen": {
+        "HasPrivateKey": false,
+        "OnAdd": false,
+        "OnRemove": false,
+        "OnReenrollment": false
+      }
     }
   ],
   "JobProperties": [],

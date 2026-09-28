@@ -198,7 +198,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
             }
         }
 
-        public virtual async Task<KeyVaultCertificateWithPolicy> ImportCertificateAsync(string certName, string contents, string pfxPassword, Dictionary<string, string> tags, bool nonExportable)
+        public virtual async Task<KeyVaultCertificateWithPolicy> ImportCertificateAsync(string certName, string contents, string pfxPassword, Dictionary<string, string> tags, bool nonExportable, bool preserveChainOrder = false)
         {
             try
             {
@@ -227,6 +227,10 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                     KeyType = pkcs12.KeyType == "EC" ? CertificateKeyType.Ec : CertificateKeyType.Rsa,
                     KeySize = pkcs12.KeyType == "RSA" ? pkcs12.KeySize : null
                 };
+                // Azure Key Vault's default behavior (false) reorders the chain to force
+                // the leaf certificate to index 0 on import. Preserve the order the
+                // extension already assembled unless the caller explicitly opts in.
+                options.PreserveCertificateOrder = preserveChainOrder;
 
                 if (tags.Any())
                 {
@@ -323,6 +327,11 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                     }
 
                     itemEntryParams.Add(EntryParameters.PRESERVE_TAGS, null); // we can never know this; it's only evaluated on enrollment; set to null
+
+                    // unlike PreserveTags, Azure actually persists this value on the certificate
+                    // (KeyVaultCertificateWithPolicy.PreserveCertificateOrder), so we can report exactly
+                    // what was set at import time instead of returning null.
+                    itemEntryParams.Add(EntryParameters.PRESERVE_CHAIN_ORDER, cert.Value.PreserveCertificateOrder);
 
                     Logger.LogTrace($"evaluated entry parameters to be returned: {JsonConvert.SerializeObject(itemEntryParams)}");
                     
