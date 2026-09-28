@@ -43,21 +43,26 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 FailureMessage = "Invalid Management Operation"
             };
 
-            string tagsJSON;
-            bool preserveTags;
-            bool nonExportable;
-
             Logger.LogTrace("parsing entry parameters.. ");
 
-            tagsJSON = config.JobProperties.ContainsKey(EntryParameters.TAGS)
-                ? config.JobProperties[EntryParameters.TAGS] as string ?? string.Empty
-                : string.Empty;
-            preserveTags = config.JobProperties.ContainsKey(EntryParameters.PRESERVE_TAGS)
-                ? config.JobProperties[EntryParameters.PRESERVE_TAGS] as bool? ?? true
-                : true;
-            nonExportable = config.JobProperties.ContainsKey(EntryParameters.NON_EXPORTABLE)
-                ? config.JobProperties[EntryParameters.NON_EXPORTABLE] as bool? ?? false
-                : false;
+            var definitions = new[]
+            {
+                new EntryParameterDefinition(EntryParameters.TAGS, critical: false, defaultValue: string.Empty),
+                new EntryParameterDefinition(EntryParameters.PRESERVE_TAGS, critical: false, defaultValue: true),
+                new EntryParameterDefinition(EntryParameters.NON_EXPORTABLE, critical: false, defaultValue: false),
+                new EntryParameterDefinition(EntryParameters.PRESERVE_CHAIN_ORDER, critical: false, defaultValue: false),
+            };
+
+            if (!EntryParameterParser.TryParse(config.JobProperties, definitions, Logger, out var entryParams, out var entryParamError))
+            {
+                complete.FailureMessage = entryParamError;
+                return complete;
+            }
+
+            string tagsJSON = entryParams[EntryParameters.TAGS] as string ?? string.Empty;
+            bool preserveTags = entryParams[EntryParameters.PRESERVE_TAGS] as bool? ?? true;
+            bool nonExportable = entryParams[EntryParameters.NON_EXPORTABLE] as bool? ?? false;
+            bool preserveChainOrder = entryParams[EntryParameters.PRESERVE_CHAIN_ORDER] as bool? ?? false;
 
             switch (config.OperationType)
             {
@@ -68,7 +73,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                 case CertStoreOperationType.Add:
                     Logger.LogDebug($"Begin Management > Add...");
 
-                    complete = PerformAddition(config.JobCertificate.Alias, config.JobCertificate.PrivateKeyPassword, config.JobCertificate.Contents, tagsJSON, config.JobHistoryId, config.Overwrite, preserveTags, nonExportable);
+                    complete = PerformAddition(config.JobCertificate.Alias, config.JobCertificate.PrivateKeyPassword, config.JobCertificate.Contents, tagsJSON, config.JobHistoryId, config.Overwrite, preserveTags, nonExportable, preserveChainOrder);
                     break;
                 case CertStoreOperationType.Remove:
                     Logger.LogDebug($"Begin Management > Remove...");
@@ -110,7 +115,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
         #endregion
 
         #region Add
-        protected virtual JobResult PerformAddition(string alias, string pfxPassword, string entryContents, string tagsJSON, long jobHistoryId, bool overwrite, bool preserveTags, bool nonExportable)
+        protected virtual JobResult PerformAddition(string alias, string pfxPassword, string entryContents, string tagsJSON, long jobHistoryId, bool overwrite, bool preserveTags, bool nonExportable, bool preserveChainOrder)
         {
             var complete = new JobResult() { Result = OrchestratorJobStatusJobResult.Failure, JobHistoryId = jobHistoryId };
 
@@ -180,7 +185,7 @@ namespace Keyfactor.Extensions.Orchestrator.AzureKeyVault
                         }
                     }
 
-                    var cert = AzClient.ImportCertificateAsync(alias, entryContents, pfxPassword, tagDict, nonExportable).GetAwaiter().GetResult();
+                    var cert = AzClient.ImportCertificateAsync(alias, entryContents, pfxPassword, tagDict, nonExportable, preserveChainOrder).GetAwaiter().GetResult();
 
                     // Ensure the return object has a AKV version tag, and Thumbprint
                     if (!string.IsNullOrEmpty(cert.Properties.Version) &&

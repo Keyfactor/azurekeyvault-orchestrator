@@ -540,6 +540,7 @@ the Keyfactor Command Portal
    | CertificateTags | Certificate Tags | If desired, tags can be applied to the KeyVault entries.  Provide them as a JSON string of key-value pairs ie: '{'tag-name': 'tag-content', 'other-tag-name': 'other-tag-content'}' | string |  | 🔲 Unchecked | 🔲 Unchecked | 🔲 Unchecked | 🔲 Unchecked |
    | PreserveExistingTags | Preserve Existing Tags | If true, this will perform a union of any tags provided with enrollment with the tags on the existing cert with the same alias and apply the result to the new certificate. | Bool | False | 🔲 Unchecked | 🔲 Unchecked | 🔲 Unchecked | 🔲 Unchecked |
    | NonExportable | Non Exportable Private Key | If true, this will mark the certificate as having a non-exportable private key when importing into Azure KeyVault | Bool | False | 🔲 Unchecked | 🔲 Unchecked | 🔲 Unchecked | 🔲 Unchecked |
+   | PreserveChainOrder | Preserve Chain Order | By default, Azure Key Vault reorders the certificate chain on import (forcing the leaf certificate to index 0). If true, this tells Azure Key Vault to preserve the exact chain order provided instead of applying its own default reordering. | Bool | False | 🔲 Unchecked | 🔲 Unchecked | 🔲 Unchecked | 🔲 Unchecked |
 
    The Entry Parameters tab should look like this:
 
@@ -565,6 +566,13 @@ the Keyfactor Command Portal
    ![AKV Entry Parameter - NonExportable](docsource/images/AKV-entry-parameters-store-type-dialog-NonExportable-validation-options.svg)
 
 
+   ##### Preserve Chain Order
+   By default, Azure Key Vault reorders the certificate chain on import (forcing the leaf certificate to index 0). If true, this tells Azure Key Vault to preserve the exact chain order provided instead of applying its own default reordering.
+
+   ![AKV Entry Parameter - PreserveChainOrder](docsource/images/AKV-entry-parameters-store-type-dialog-PreserveChainOrder.svg)
+   ![AKV Entry Parameter - PreserveChainOrder](docsource/images/AKV-entry-parameters-store-type-dialog-PreserveChainOrder-validation-options.svg)
+
+
    </details>
 
 ## Installation
@@ -579,7 +587,7 @@ the Keyfactor Command Portal
    | Between `11.0.0` and `11.5.1` (inclusive) | `net6.0` | | `net6.0` |
    | Between `11.0.0` and `11.5.1` (inclusive) | `net8.0` | `Disable` | `net6.0` |
    | Between `11.0.0` and `11.5.1` (inclusive) | `net8.0` | `LatestMajor` | `net8.0` |
-   | Between `11.6.0` and `24.x` | `net8.0` | | `net8.0` |
+   | `11.6` _and_ newer | `net8.0` | | `net8.0` |
 
     Unzip the archive containing extension assemblies to a known location.
 
