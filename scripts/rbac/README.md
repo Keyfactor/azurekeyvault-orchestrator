@@ -81,13 +81,27 @@ the end rather than run for you.
 
 The sign-in happens in a temporary `AZURE_CONFIG_DIR`, so your own `az` session is not disturbed.
 
-> :warning: A `PASS` shows a permission is *sufficient*, not that it is *necessary*. Any Reader or
-> Contributor assignment the principal inherits from the subscription or a management group will make
-> every probe pass. Confirm the principal has nothing beyond the roles under test first:
->
-> ```powershell
-> az role assignment list --assignee <appId> --all -o table
-> ```
+Pass `-Capability` to match what you actually granted - the same values the provisioning script
+takes. The report then distinguishes four outcomes:
+
+| Status | Meaning |
+| --- | --- |
+| `PASS` | Granted, and the call succeeded. |
+| `FAIL` | Granted, but the call was denied - the role is missing something. |
+| `n/a` | Not granted, denied as expected. |
+| `EXTRA` | **Not granted, but the call succeeded anyway.** |
+
+`EXTRA` is the one to care about. It means the principal holds permissions from somewhere other than
+the roles under test - an older assignment, or Reader/Contributor inherited from the subscription or
+a management group - and that every `PASS` in the same run is therefore meaningless, because it may
+be satisfied by the inherited permission rather than the role you are testing. Find the others with:
+
+```powershell
+az role assignment list --assignee <objectId> --all --include-inherited -o table
+```
+
+> :warning: Even with no `EXTRA` rows, a `PASS` shows a permission is *sufficient*, not that it is
+> *necessary*. Proving necessity means removing an action and watching the probe turn to `FAIL`.
 
 Role assignments take a few minutes to propagate. A `FAIL` immediately after running the creation
 script usually just means you were too quick.

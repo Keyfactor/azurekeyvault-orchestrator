@@ -62,7 +62,13 @@ param(
 
     [string]$VaultName,
     [switch]$IncludeCreateVault,
-    [switch]$IncludeWriteTests
+    [switch]$IncludeWriteTests,
+
+    # Which capabilities were actually granted, matching -Capability on the provisioning script.
+    # Probes outside this set are expected to fail; if one passes, the principal holds permissions
+    # from somewhere else and the rest of this report cannot be trusted.
+    [ValidateSet('Certificates', 'Create', 'Discovery', 'All')]
+    [string[]]$Capability = @('All')
 )
 
 $ErrorActionPreference = 'Stop'
@@ -70,6 +76,19 @@ $ErrorActionPreference = 'Stop'
 $results = New-Object System.Collections.Generic.List[object]
 $probeVaultName = $null
 $probeAlias = 'kf-rbac-probe'
+
+if ($Capability -contains 'All') {
+    $Capability = @('Certificates', 'Create', 'Discovery')
+}
+
+# Which capability each job belongs to, so a probe can tell whether it is expected to succeed.
+$jobCapability = @{
+    'Discovery' = 'Discovery'
+    'Create'    = 'Create'
+    'Inventory' = 'Certificates'
+    'Add'       = 'Certificates'
+    'Remove'    = 'Certificates'
+}
 
 function Add-Result {
     param(
@@ -87,9 +106,38 @@ function Add-Result {
 
     $colour = 'Green'
     if ($Status -eq 'FAIL') { $colour = 'Red' }
-    if ($Status -eq 'SKIP') { $colour = 'DarkGray' }
+    if ($Status -eq 'EXTRA') { $colour = 'Magenta' }
+    if ($Status -eq 'SKIP' -or $Status -eq 'n/a') { $colour = 'DarkGray' }
     Write-Host ("  {0,-6} {1,-14} {2}" -f $Status, $Job, $Expected) -ForegroundColor $colour
     if ($Detail) { Write-Host "         $Detail" -ForegroundColor DarkGray }
+}
+
+function Invoke-AzCapture {
+    <#
+        Runs az and returns stdout and stderr as one string, without letting stderr become a
+        terminating error.
+
+        PowerShell 5.1 wraps every stderr line from a native command in an ErrorRecord, so with
+        $ErrorActionPreference = 'Stop' a mere warning from az - "this certificate will be moved to
+        the soft deleted state", for instance - aborts the script. Dropping to 'Continue' for the
+        call and flattening ErrorRecords to strings keeps the text (we need it to spot the
+        authorization message) without the control flow.
+    #>
+    param([Parameter(Mandatory)][string[]]$Arguments)
+
+    $previousPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $raw = & az @Arguments 2>&1
+    }
+    finally {
+        $ErrorActionPreference = $previousPreference
+    }
+
+    $lines = foreach ($item in $raw) {
+        if ($item -is [System.Management.Automation.ErrorRecord]) { $item.ToString() } else { $item }
+    }
+    return ($lines -join "`n")
 }
 
 function Test-Probe {
@@ -105,10 +153,18 @@ function Test-Probe {
     )
 
     Write-Verbose "az $($Arguments -join ' ')"
-    $output = (& az @Arguments 2>&1 | Out-String)
+    $output = Invoke-AzCapture -Arguments $Arguments
+
+    $granted = $jobCapability[$Job] -in $Capability
 
     if ($LASTEXITCODE -eq 0) {
-        Add-Result -Job $Job -Expected $Expected -Status 'PASS'
+        if ($granted) {
+            Add-Result -Job $Job -Expected $Expected -Status 'PASS'
+        }
+        else {
+            Add-Result -Job $Job -Expected $Expected -Status 'EXTRA' `
+                -Detail "succeeded although $($jobCapability[$Job]) was not granted - the principal has permissions from elsewhere"
+        }
         return $true
     }
 
@@ -118,6 +174,10 @@ function Test-Probe {
     if ($output -match 'AuthorizationFailed|does not have authorization|not authorized|Forbidden|ForbiddenByRbac') {
         $detail = 'denied'
         if ($deniedAction) { $detail = "denied action: $deniedAction" }
+        if (-not $granted) {
+            Add-Result -Job $Job -Expected $Expected -Status 'n/a' -Detail "denied as expected ($($jobCapability[$Job]) not granted)"
+            return $false
+        }
         Add-Result -Job $Job -Expected $Expected -Status 'FAIL' -Detail $detail
         return $false
     }
@@ -139,11 +199,11 @@ $env:AZURE_CONFIG_DIR = $configDir
 
 try {
     Write-Host "Signing in as service principal $AppId (isolated session)" -ForegroundColor DarkGray
-    & az login --service-principal -u $AppId -p $ClientSecret --tenant $TenantId --only-show-errors | Out-Null
+    Invoke-AzCapture -Arguments @('login', '--service-principal', '-u', $AppId, '-p', $ClientSecret, '--tenant', $TenantId, '--only-show-errors') | Out-Null
     if ($LASTEXITCODE -ne 0) {
         throw 'Sign-in failed. Check the application ID, secret and tenant.'
     }
-    & az account set --subscription $SubscriptionId --only-show-errors | Out-Null
+    Invoke-AzCapture -Arguments @('account', 'set', '--subscription', $SubscriptionId, '--only-show-errors') | Out-Null
     if ($LASTEXITCODE -ne 0) {
         # For a service principal this nearly always means no role assignment is visible on the
         # subscription yet, rather than a wrong id - a fresh assignment can take a few minutes, and
@@ -177,7 +237,7 @@ try {
         -Arguments @('keyvault', 'list', '-g', $ResourceGroupName, '-o', 'none') | Out-Null
 
     if ($IncludeCreateVault) {
-        $location = (& az group show -n $ResourceGroupName --query location -o tsv 2>&1 | Out-String).Trim()
+        $location = (Invoke-AzCapture -Arguments @('group', 'show', '-n', $ResourceGroupName, '--query', 'location', '-o', 'tsv')).Trim()
         if ($LASTEXITCODE -ne 0 -or -not $location) {
             Add-Result -Job 'Create' -Expected 'Microsoft.KeyVault/vaults/write' -Status 'SKIP' `
                 -Detail "could not read the location of resource group '$ResourceGroupName' - resourceGroups/read probe above explains why"
@@ -239,7 +299,7 @@ try {
     }
 }
 finally {
-    & az logout --only-show-errors 2>&1 | Out-Null
+    Invoke-AzCapture -Arguments @('logout', '--only-show-errors') | Out-Null
     $env:AZURE_CONFIG_DIR = $previousConfigDir
     if (Test-Path $configDir) { Remove-Item $configDir -Recurse -Force -ErrorAction SilentlyContinue }
 }
@@ -250,6 +310,16 @@ $results | Format-Table -AutoSize
 
 $failed = @($results | Where-Object { $_.Status -eq 'FAIL' })
 $errored = @($results | Where-Object { $_.Status -eq 'ERROR' })
+$extra = @($results | Where-Object { $_.Status -eq 'EXTRA' })
+
+if ($extra.Count -gt 0) {
+    Write-Host ''
+    Write-Host "$($extra.Count) probe(s) succeeded for capabilities that were not granted." -ForegroundColor Magenta
+    Write-Host 'This principal holds permissions beyond the roles under test, so the PASS results' -ForegroundColor Magenta
+    Write-Host 'above do not show that those roles are sufficient. Find the other assignments with:' -ForegroundColor Magenta
+    Write-Host "  az role assignment list --assignee $AppId --all --include-inherited -o table" -ForegroundColor Magenta
+    Write-Host 'Then retest with a principal that has nothing else.' -ForegroundColor Magenta
+}
 
 if ($probeVaultName) {
     Write-Host "A probe vault was created and left in place. To remove it:" -ForegroundColor Yellow
