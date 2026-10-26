@@ -107,7 +107,8 @@ function Add-Result {
     $colour = 'Green'
     if ($Status -eq 'FAIL') { $colour = 'Red' }
     if ($Status -eq 'EXTRA') { $colour = 'Magenta' }
-    if ($Status -eq 'SKIP' -or $Status -eq 'n/a') { $colour = 'DarkGray' }
+    if ($Status -eq 'ERROR') { $colour = 'Yellow' }
+    if ($Status -eq 'SKIP' -or $Status -eq 'n/a' -or $Status -eq 'INFO') { $colour = 'DarkGray' }
     Write-Host ("  {0,-6} {1,-14} {2}" -f $Status, $Job, $Expected) -ForegroundColor $colour
     if ($Detail) { Write-Host "         $Detail" -ForegroundColor DarkGray }
 }
@@ -149,16 +150,45 @@ function Test-Probe {
     param(
         [Parameter(Mandatory)][string]$Job,
         [Parameter(Mandatory)][string]$Expected,
-        [Parameter(Mandatory)][string[]]$Arguments
+        [Parameter(Mandatory)][string[]]$Arguments,
+
+        # Some ARM list operations filter by what the caller can read rather than returning 403, so
+        # exit code 0 does not mean the permission is present. Where that is the case, give the
+        # string the output must contain for the probe to count as a pass.
+        [string]$RequireOutputMatch,
+
+        # The action cannot be attributed to a specific role. GET /subscriptions returns every
+        # subscription in which the principal holds any assignment at all; ARM list operations
+        # filter to readable resources instead of denying; provider reads are available to any
+        # authenticated principal. Probes like these succeed whatever role is under test, so they
+        # are reported as INFO and never counted as evidence either way.
+        [switch]$NotIsolatable
     )
 
     Write-Verbose "az $($Arguments -join ' ')"
     $output = Invoke-AzCapture -Arguments $Arguments
 
+    # A lost session makes every later probe fail identically and tells us nothing, so stop.
+    if ($output -match "Please run 'az login'|not recognized") {
+        throw "The isolated az session was lost while probing '$Expected'. Everything after this point would report the same error, so the run is aborted."
+    }
+
     $granted = $jobCapability[$Job] -in $Capability
 
     if ($LASTEXITCODE -eq 0) {
-        if ($granted) {
+        if ($RequireOutputMatch -and ($output -notmatch [regex]::Escape($RequireOutputMatch))) {
+            # The call was allowed but returned nothing for the target, which is how a missing
+            # read permission shows up on a filtered list operation.
+            Add-Result -Job $Job -Expected $Expected -Status 'FAIL' `
+                -Detail 'call allowed but the target was not in the results - no read access at this scope'
+            return $false
+        }
+
+        if ($NotIsolatable) {
+            Add-Result -Job $Job -Expected $Expected -Status 'INFO' `
+                -Detail 'succeeded, but this action is not gated by the role under test - proves nothing either way'
+        }
+        elseif ($granted) {
             Add-Result -Job $Job -Expected $Expected -Status 'PASS'
         }
         else {
@@ -182,8 +212,12 @@ function Test-Probe {
         return $false
     }
 
-    $firstLine = ($output -split "`n" | Where-Object { $_.Trim() } | Select-Object -First 1)
-    Add-Result -Job $Job -Expected $Expected -Status 'ERROR' -Detail $firstLine.Trim()
+    # Prefer the actual error line: az often emits a client-side WARNING first, which otherwise
+    # becomes the reported detail and hides the real cause.
+    $lines = @($output -split "`n" | Where-Object { $_.Trim() })
+    $errorLine = $lines | Where-Object { $_ -match 'ERROR:|\(Conflict\)|\(NotFound\)|\(BadRequest\)' } | Select-Object -First 1
+    if (-not $errorLine) { $errorLine = $lines | Select-Object -First 1 }
+    Add-Result -Job $Job -Expected $Expected -Status 'ERROR' -Detail $errorLine.Trim()
     return $false
 }
 
@@ -222,19 +256,32 @@ try {
 
     Write-Host ''
     Write-Host 'Discovery job' -ForegroundColor Cyan
+    # GET /subscriptions is the call ArmClient.GetSubscriptions() makes. Do not use
+    # "az account list" here: it reads the local CLI cache rather than ARM, so it proves nothing -
+    # and "az account list --refresh" tears down a service principal's session outright, making
+    # every later probe fail with "Please run 'az login'".
+    # ARM returns the subscriptions the caller can read instead of denying the request, so the
+    # probe has to check that the target subscription is actually in the response.
     Test-Probe -Job 'Discovery' -Expected 'Microsoft.Resources/subscriptions/read' `
-        -Arguments @('account', 'list', '--refresh', '-o', 'none') | Out-Null
+        -Arguments @('rest', '--method', 'get',
+        '--url', 'https://management.azure.com/subscriptions?api-version=2022-12-01',
+        '--query', "value[?subscriptionId=='$SubscriptionId'].subscriptionId", '-o', 'tsv') `
+        -RequireOutputMatch $SubscriptionId -NotIsolatable | Out-Null
+
     Test-Probe -Job 'Discovery' -Expected 'Microsoft.KeyVault/vaults/read (subscription)' `
-        -Arguments @('keyvault', 'list', '--subscription', $SubscriptionId, '-o', 'none') | Out-Null
+        -Arguments @('keyvault', 'list', '--subscription', $SubscriptionId, '--query', '[].name', '-o', 'tsv') `
+        -NotIsolatable | Out-Null
 
     Write-Host ''
     Write-Host 'Create job' -ForegroundColor Cyan
     Test-Probe -Job 'Create' -Expected 'Microsoft.Resources/subscriptions/resourceGroups/read' `
         -Arguments @('group', 'show', '-n', $ResourceGroupName, '-o', 'none') | Out-Null
     Test-Probe -Job 'Create' -Expected 'Microsoft.Resources/subscriptions/providers/read' `
-        -Arguments @('provider', 'show', '--namespace', 'Microsoft.Resources', '-o', 'none') | Out-Null
+        -Arguments @('provider', 'show', '--namespace', 'Microsoft.Resources', '-o', 'none') `
+        -NotIsolatable | Out-Null
     Test-Probe -Job 'Create' -Expected 'Microsoft.KeyVault/vaults/read (resource group)' `
-        -Arguments @('keyvault', 'list', '-g', $ResourceGroupName, '-o', 'none') | Out-Null
+        -Arguments @('keyvault', 'list', '-g', $ResourceGroupName, '-o', 'none') `
+        -NotIsolatable | Out-Null
 
     if ($IncludeCreateVault) {
         $location = (Invoke-AzCapture -Arguments @('group', 'show', '-n', $ResourceGroupName, '--query', 'location', '-o', 'tsv')).Trim()
@@ -282,15 +329,46 @@ try {
                     Remove-Item -Path ("Cert:\CurrentUser\My\" + $cert.Thumbprint) -Force -ErrorAction SilentlyContinue
                 }
 
+                # Probe in the order the extension itself works: it checks for a soft-deleted alias
+                # and recovers it before importing. Probing import first fails with a name conflict
+                # whenever a previous run left the alias soft-deleted, which says nothing about
+                # permissions.
+                $deleted = Invoke-AzCapture -Arguments @('keyvault', 'certificate', 'list-deleted',
+                    '--vault-name', $VaultName, '--query', "[?name=='$probeAlias'].name", '-o', 'tsv')
+
+                if ($LASTEXITCODE -eq 0 -and $deleted -match [regex]::Escape($probeAlias)) {
+                    $recovered = Test-Probe -Job 'Add' -Expected 'Microsoft.KeyVault/vaults/certificates/recover/action' `
+                        -Arguments @('keyvault', 'certificate', 'recover', '--vault-name', $VaultName, '-n', $probeAlias, '-o', 'none')
+
+                    if ($recovered) {
+                        # Recovery is asynchronous and az does not wait for it. The extension does
+                        # (RecoverDeletedCertificateOperation.WaitForCompletionAsync) before
+                        # importing; without the same wait the import below fails with
+                        # "currently being recovered and cannot be re-created".
+                        $waitedSeconds = 0
+                        while ($waitedSeconds -lt 60) {
+                            Invoke-AzCapture -Arguments @('keyvault', 'certificate', 'show',
+                                '--vault-name', $VaultName, '-n', $probeAlias, '-o', 'none') | Out-Null
+                            if ($LASTEXITCODE -eq 0) { break }
+                            Start-Sleep -Seconds 3
+                            $waitedSeconds += 3
+                        }
+                        Write-Verbose "waited ${waitedSeconds}s for recovery to complete"
+                        if ($waitedSeconds -ge 60) {
+                            Write-Host '         recovery did not complete within 60s; the import probe may report a conflict' -ForegroundColor DarkGray
+                        }
+                    }
+                }
+                else {
+                    Add-Result -Job 'Add' -Expected 'Microsoft.KeyVault/vaults/certificates/recover/action' -Status 'SKIP' `
+                        -Detail "no soft-deleted '$probeAlias' to recover; the delete probe below leaves one, so a second run exercises it"
+                }
+
                 Test-Probe -Job 'Add' -Expected 'Microsoft.KeyVault/vaults/certificates/import/action' `
                     -Arguments @('keyvault', 'certificate', 'import', '--vault-name', $VaultName, '-n', $probeAlias, '--file', $pfxPath, '--password', $pfxPassword, '-o', 'none') | Out-Null
 
                 Test-Probe -Job 'Remove' -Expected 'Microsoft.KeyVault/vaults/certificates/delete' `
                     -Arguments @('keyvault', 'certificate', 'delete', '--vault-name', $VaultName, '-n', $probeAlias, '-o', 'none') | Out-Null
-
-                # the extension recovers a soft-deleted alias before re-importing it
-                Test-Probe -Job 'Add' -Expected 'Microsoft.KeyVault/vaults/certificates/recover/action' `
-                    -Arguments @('keyvault', 'certificate', 'recover', '--vault-name', $VaultName, '-n', $probeAlias, '-o', 'none') | Out-Null
             }
         }
         else {
@@ -311,6 +389,14 @@ $results | Format-Table -AutoSize
 $failed = @($results | Where-Object { $_.Status -eq 'FAIL' })
 $errored = @($results | Where-Object { $_.Status -eq 'ERROR' })
 $extra = @($results | Where-Object { $_.Status -eq 'EXTRA' })
+$info = @($results | Where-Object { $_.Status -eq 'INFO' })
+
+if ($info.Count -gt 0) {
+    Write-Host ''
+    Write-Host "$($info.Count) probe(s) reported INFO: the action is not gated by the role under test." -ForegroundColor DarkGray
+    Write-Host 'Those succeed for any principal holding any assignment in the subscription, so they can' -ForegroundColor DarkGray
+    Write-Host 'be neither confirmed nor ruled out from the outside.' -ForegroundColor DarkGray
+}
 
 if ($extra.Count -gt 0) {
     Write-Host ''
@@ -332,11 +418,22 @@ if ($IncludeWriteTests -and $VaultName) {
 }
 
 if ($errored.Count -gt 0) {
-    Write-Host "$($errored.Count) probe(s) failed for reasons other than authorization - check the detail column." -ForegroundColor Yellow
+    Write-Host ''
+    Write-Host "$($errored.Count) probe(s) failed for reasons other than authorization - see the detail column." -ForegroundColor Yellow
+    Write-Host 'Those probes tested nothing, so this run is inconclusive for them.' -ForegroundColor Yellow
 }
 if ($failed.Count -gt 0) {
+    Write-Host ''
     Write-Host "$($failed.Count) permission(s) missing." -ForegroundColor Red
+}
+
+# An ERROR or an EXTRA invalidates the run just as surely as a FAIL, so none of them may report
+# success. Earlier versions printed "All probed permissions are present" after listing nine errors.
+if ($failed.Count -gt 0 -or $errored.Count -gt 0 -or $extra.Count -gt 0) {
     exit 1
 }
 
-Write-Host 'All probed permissions are present.' -ForegroundColor Green
+$passed = @($results | Where-Object { $_.Status -eq 'PASS' })
+Write-Host ''
+Write-Host "All $($passed.Count) probed permission(s) present, and nothing succeeded that should not have." -ForegroundColor Green
+exit 0
