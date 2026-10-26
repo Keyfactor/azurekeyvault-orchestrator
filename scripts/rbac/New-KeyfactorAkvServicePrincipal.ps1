@@ -51,6 +51,11 @@
     Creates a service principal that can additionally create new vaults in my-rg and discover
     vaults across the subscription.
 
+.PARAMETER AppId
+    Target an existing app registration by its application (client) id instead of looking it up by
+    display name. Required when more than one app registration shares the same display name -
+    Microsoft Graph does not return them in a stable order, so the script refuses to choose.
+
 .PARAMETER SkipCredential
     Do not create a client secret. Use when the identity already has a usable credential, or when
     you intend to authenticate with a managed identity or a certificate instead.
@@ -76,6 +81,10 @@ param(
     [string]$ResourceGroupName,
 
     [string]$DisplayName = 'keyfactor-akv',
+
+    # Target an existing app registration by application (client) id, bypassing the display-name
+    # lookup. Required when more than one app registration shares -DisplayName.
+    [string]$AppId,
 
     [ValidateSet('Certificates', 'Create', 'Discovery', 'All')]
     [string[]]$Capability = @('Certificates'),
@@ -273,32 +282,67 @@ foreach ($role in $plannedRoles) {
 
 # --- app registration and service principal ------------------------------------------------------
 
-$appId = Invoke-Az @('ad', 'app', 'list', '--display-name', $DisplayName, '--query', '[0].appId', '-o', 'tsv') -AllowFailure
-$appExisted = -not [string]::IsNullOrWhiteSpace($appId)
+if ($AppId) {
+    # An explicit app id was supplied, so no display-name lookup is needed or wanted.
+    $resolvedName = Invoke-Az @('ad', 'app', 'show', '--id', $AppId, '--query', 'displayName', '-o', 'tsv') -AllowFailure
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($resolvedName)) {
+        throw "App registration '$AppId' was not found, or you lack directory permission to read it."
+    }
+    $targetAppId = $AppId.Trim()
+    $appExisted = $true
+    Write-Host "Using app registration '$($resolvedName.Trim())' ($targetAppId)." -ForegroundColor DarkGray
+}
+else {
+    # -o tsv with a flat --query gives one id per line. Piping multi-line JSON through
+    # ConvertFrom-Json returns the array as a single pipeline object, so @() does not flatten it
+    # and .Count reads 1 no matter how many apps matched.
+    $idLines = Invoke-Az @('ad', 'app', 'list', '--display-name', $DisplayName, '--query', '[].appId', '-o', 'tsv')
+    $matchingAppIds = @(($idLines -join "`n") -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+
+    if ($matchingAppIds.Count -gt 1) {
+        # Graph does not guarantee a stable order, so picking one would be a coin toss - and the
+        # loser is the registration whose credentials get touched. Make the caller choose.
+        Write-Host ''
+        Write-Host "$($matchingAppIds.Count) app registrations are named '$DisplayName':" -ForegroundColor Red
+        Write-Host ''
+        Invoke-Az @('ad', 'app', 'list', '--display-name', $DisplayName,
+            '--query', '[].{displayName:displayName,appId:appId,created:createdDateTime}', '-o', 'table') | Write-Host
+        Write-Host ''
+        Write-Host 'This script will not choose for you. Re-run with -AppId <application id> to name' -ForegroundColor Yellow
+        Write-Host 'the one to use, or -DisplayName to create a new, unambiguous registration.' -ForegroundColor Yellow
+        throw "Ambiguous app registration name '$DisplayName'."
+    }
+
+    $targetAppId = $null
+    if ($matchingAppIds.Count -eq 1) { $targetAppId = $matchingAppIds[0] }
+    $appExisted = -not [string]::IsNullOrWhiteSpace($targetAppId)
+}
 
 if (-not $appExisted) {
     if ($PSCmdlet.ShouldProcess($DisplayName, 'Create app registration and service principal')) {
-        $appId = Invoke-Az @('ad', 'app', 'create', '--display-name', $DisplayName, '--query', 'appId', '-o', 'tsv')
-        Invoke-Az @('ad', 'sp', 'create', '--id', $appId) | Out-Null
-        Write-Host "Created app registration '$DisplayName' ($appId)." -ForegroundColor Green
+        $targetAppId = Invoke-Az @('ad', 'app', 'create', '--display-name', $DisplayName, '--query', 'appId', '-o', 'tsv')
+        Invoke-Az @('ad', 'sp', 'create', '--id', $targetAppId) | Out-Null
+        Write-Host "Created app registration '$DisplayName' ($targetAppId)." -ForegroundColor Green
     }
 }
 else {
-    Write-Host "App registration '$DisplayName' already exists ($appId), reusing it." -ForegroundColor Yellow
+    if (-not $AppId) {
+        Write-Host "App registration '$DisplayName' already exists ($targetAppId), reusing it." -ForegroundColor Yellow
+    }
     if (-not $SkipCredential) {
         Write-Host "  A new secret will be APPENDED to it. Credentials already on this app registration" -ForegroundColor Yellow
-        Write-Host "  stay valid, so anything already authenticating as '$DisplayName' keeps working." -ForegroundColor Yellow
+        Write-Host "  stay valid, so anything already authenticating as it keeps working." -ForegroundColor Yellow
         Write-Host "  Pass -SkipCredential if you do not need a new secret." -ForegroundColor Yellow
     }
 }
 
-if ([string]::IsNullOrWhiteSpace($appId)) {
+if ([string]::IsNullOrWhiteSpace($targetAppId)) {
     Write-Host 'No app registration was created (-WhatIf). Stopping before role assignment.' -ForegroundColor DarkGray
     return
 }
 
 # role assignments need the service principal's OBJECT id, not the application (client) id
-$objectId = Invoke-Az @('ad', 'sp', 'show', '--id', $appId, '--query', 'id', '-o', 'tsv')
+$objectId = Invoke-Az @('ad', 'sp', 'show', '--id', $targetAppId, '--query', 'id', '-o', 'tsv')
 
 # --- role assignments ----------------------------------------------------------------------------
 
@@ -324,13 +368,13 @@ if (-not $SkipCredential -and $PSCmdlet.ShouldProcess($DisplayName, 'Create clie
     # password and key on the app registration, which silently breaks anything already
     # authenticating as this identity. On a freshly created app there is nothing to append to, so
     # passing it unconditionally is safe.
-    $secret = Invoke-Az @('ad', 'app', 'credential', 'reset', '--id', $appId, '--append', '--display-name', 'keyfactor-orchestrator', '--query', 'password', '-o', 'tsv')
+    $secret = Invoke-Az @('ad', 'app', 'credential', 'reset', '--id', $targetAppId, '--append', '--display-name', 'keyfactor-orchestrator', '--query', 'password', '-o', 'tsv')
 }
 
 Write-Host ''
 Write-Host 'Store configuration values for Command:' -ForegroundColor Cyan
 Write-Host "  Tenant ID (ClientMachine) : $($accountInfo.tenantId)"
-Write-Host "  Application (client) ID   : $appId"
+Write-Host "  Application (client) ID   : $targetAppId"
 Write-Host "  Service principal objectId: $objectId"
 
 if ($SkipCredential) {
@@ -368,7 +412,7 @@ elseif ($secret) {
 
     Write-Host ''
     Write-Host 'The secret was not written to disk and cannot be retrieved again. To issue another:' -ForegroundColor Yellow
-    Write-Host "  az ad app credential reset --id $appId --append" -ForegroundColor Yellow
+    Write-Host "  az ad app credential reset --id $targetAppId --append" -ForegroundColor Yellow
     Write-Host '  (omitting --append revokes every existing credential on this app registration)' -ForegroundColor Yellow
 }
 

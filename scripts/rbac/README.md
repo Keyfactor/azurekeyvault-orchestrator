@@ -41,6 +41,15 @@ If an app registration with the same display name already exists it is reused, a
 **appended** - existing credentials keep working. Pass `-SkipCredential` if the identity already has
 a usable secret and you only want the roles created and assigned.
 
+If **more than one** app registration shares the display name, the script stops and lists them
+rather than picking one. Microsoft Graph does not return them in a stable order, so choosing would
+be arbitrary - and the registration it did not choose is the one whose credentials get touched.
+Re-run with `-AppId <application id>` to say which to use:
+
+```powershell
+az ad app list --display-name keyfactor-akv --query "[].{name:displayName,appId:appId,created:createdDateTime}" -o table
+```
+
 > :warning: `az ad app credential reset` **without** `--append` clears every password and key on an
 > app registration. If you issue secrets by hand rather than through this script, always pass
 > `--append` unless you intend to revoke the existing ones.
