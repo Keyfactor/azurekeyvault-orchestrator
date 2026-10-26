@@ -51,10 +51,21 @@
     Creates a service principal that can additionally create new vaults in my-rg and discover
     vaults across the subscription.
 
+.PARAMETER SkipCredential
+    Do not create a client secret. Use when the identity already has a usable credential, or when
+    you intend to authenticate with a managed identity or a certificate instead.
+
+.PARAMETER ShowSecret
+    Print the client secret to the console. By default it is copied to the clipboard and not shown,
+    so it does not survive in scrollback, screenshots or pasted terminal output.
+
 .NOTES
-    The client secret is printed once and never written to disk. Copy it into Command's store
-    configuration before closing the window; if you lose it, reset it with
-    az ad app credential reset --id <appId>.
+    The client secret is never written to disk and cannot be retrieved again afterwards.
+
+    If the app registration already exists it is reused, and the new secret is APPENDED - existing
+    credentials keep working. This matters because "az ad app credential reset" without --append
+    clears every password and key on the app registration, which silently breaks any other
+    integration authenticating as the same identity.
 #>
 [CmdletBinding(SupportsShouldProcess)]
 param(
@@ -69,7 +80,15 @@ param(
     [ValidateSet('Certificates', 'Create', 'Discovery', 'All')]
     [string[]]$Capability = @('Certificates'),
 
-    [string]$RoleNameSuffix = ''
+    [string]$RoleNameSuffix = '',
+
+    # Do not create a client secret at all. Use when the identity already has a usable credential,
+    # or when you intend to use a managed identity or certificate credential instead.
+    [switch]$SkipCredential,
+
+    # Print the client secret to the console. Off by default: the secret is copied to the clipboard
+    # instead, so it does not end up in scrollback, a screenshot, a support ticket or a chat paste.
+    [switch]$ShowSecret
 )
 
 $ErrorActionPreference = 'Stop'
@@ -255,8 +274,9 @@ foreach ($role in $plannedRoles) {
 # --- app registration and service principal ------------------------------------------------------
 
 $appId = Invoke-Az @('ad', 'app', 'list', '--display-name', $DisplayName, '--query', '[0].appId', '-o', 'tsv') -AllowFailure
+$appExisted = -not [string]::IsNullOrWhiteSpace($appId)
 
-if ([string]::IsNullOrWhiteSpace($appId)) {
+if (-not $appExisted) {
     if ($PSCmdlet.ShouldProcess($DisplayName, 'Create app registration and service principal')) {
         $appId = Invoke-Az @('ad', 'app', 'create', '--display-name', $DisplayName, '--query', 'appId', '-o', 'tsv')
         Invoke-Az @('ad', 'sp', 'create', '--id', $appId) | Out-Null
@@ -265,6 +285,11 @@ if ([string]::IsNullOrWhiteSpace($appId)) {
 }
 else {
     Write-Host "App registration '$DisplayName' already exists ($appId), reusing it." -ForegroundColor Yellow
+    if (-not $SkipCredential) {
+        Write-Host "  A new secret will be APPENDED to it. Credentials already on this app registration" -ForegroundColor Yellow
+        Write-Host "  stay valid, so anything already authenticating as '$DisplayName' keeps working." -ForegroundColor Yellow
+        Write-Host "  Pass -SkipCredential if you do not need a new secret." -ForegroundColor Yellow
+    }
 }
 
 if ([string]::IsNullOrWhiteSpace($appId)) {
@@ -292,20 +317,61 @@ foreach ($role in $plannedRoles) {
 
 # --- credential ------------------------------------------------------------------------------------
 
-if ($PSCmdlet.ShouldProcess($DisplayName, 'Create client secret')) {
-    $secret = Invoke-Az @('ad', 'app', 'credential', 'reset', '--id', $appId, '--query', 'password', '-o', 'tsv')
-    $tenantId = ($account | ConvertFrom-Json).tenantId
+$secret = $null
+
+if (-not $SkipCredential -and $PSCmdlet.ShouldProcess($DisplayName, 'Create client secret')) {
+    # --append is deliberate. Without it, "az ad app credential reset" clears every existing
+    # password and key on the app registration, which silently breaks anything already
+    # authenticating as this identity. On a freshly created app there is nothing to append to, so
+    # passing it unconditionally is safe.
+    $secret = Invoke-Az @('ad', 'app', 'credential', 'reset', '--id', $appId, '--append', '--display-name', 'keyfactor-orchestrator', '--query', 'password', '-o', 'tsv')
+}
+
+Write-Host ''
+Write-Host 'Store configuration values for Command:' -ForegroundColor Cyan
+Write-Host "  Tenant ID (ClientMachine) : $($accountInfo.tenantId)"
+Write-Host "  Application (client) ID   : $appId"
+Write-Host "  Service principal objectId: $objectId"
+
+if ($SkipCredential) {
+    Write-Host '  Client secret             : not created (-SkipCredential)'
+}
+elseif ($secret) {
+    if ($ShowSecret) {
+        Write-Host "  Client secret             : $secret"
+        Write-Host ''
+        Write-Host 'The secret is above because you passed -ShowSecret. Treat the console scrollback as' -ForegroundColor Yellow
+        Write-Host 'sensitive: do not paste it into a ticket, chat or screenshot.' -ForegroundColor Yellow
+    }
+    else {
+        $copied = $false
+        try {
+            Set-Clipboard -Value $secret -ErrorAction Stop
+            $copied = $true
+        }
+        catch {
+            $copied = $false
+        }
+
+        if ($copied) {
+            Write-Host '  Client secret             : copied to clipboard (not shown)'
+            Write-Host ''
+            Write-Host 'Paste it straight into the store configuration in Command, then clear your clipboard.' -ForegroundColor Yellow
+        }
+        else {
+            Write-Host "  Client secret             : $secret"
+            Write-Host ''
+            Write-Host 'Could not reach the clipboard, so the secret is shown above. Treat the console' -ForegroundColor Yellow
+            Write-Host 'scrollback as sensitive: do not paste it into a ticket, chat or screenshot.' -ForegroundColor Yellow
+        }
+    }
 
     Write-Host ''
-    Write-Host 'Store configuration values for Command:' -ForegroundColor Cyan
-    Write-Host "  Tenant ID (ClientMachine) : $tenantId"
-    Write-Host "  Application (client) ID   : $appId"
-    Write-Host "  Service principal objectId: $objectId"
-    Write-Host "  Client secret             : $secret"
-    Write-Host ''
-    Write-Host 'The secret is shown once and was not written to disk. If you lose it, run:' -ForegroundColor Yellow
-    Write-Host "  az ad app credential reset --id $appId" -ForegroundColor Yellow
-    Write-Host ''
-    Write-Host 'Role assignments can take several minutes to propagate before data plane calls succeed.' -ForegroundColor DarkGray
-    Write-Host 'Verify with Test-KeyfactorAkvPermissions.ps1 before configuring the store in Command.' -ForegroundColor DarkGray
+    Write-Host 'The secret was not written to disk and cannot be retrieved again. To issue another:' -ForegroundColor Yellow
+    Write-Host "  az ad app credential reset --id $appId --append" -ForegroundColor Yellow
+    Write-Host '  (omitting --append revokes every existing credential on this app registration)' -ForegroundColor Yellow
 }
+
+Write-Host ''
+Write-Host 'Role assignments can take several minutes to propagate before data plane calls succeed.' -ForegroundColor DarkGray
+Write-Host 'Verify with Test-KeyfactorAkvPermissions.ps1 before configuring the store in Command.' -ForegroundColor DarkGray

@@ -37,7 +37,18 @@ Run with `-WhatIf` first to see what it would create. You need Owner or User Acc
 the subscription, because creating role definitions and role assignments both require
 `Microsoft.Authorization/*/write`.
 
-The client secret is printed once and is not written to disk.
+If an app registration with the same display name already exists it is reused, and the new secret is
+**appended** - existing credentials keep working. Pass `-SkipCredential` if the identity already has
+a usable secret and you only want the roles created and assigned.
+
+> :warning: `az ad app credential reset` **without** `--append` clears every password and key on an
+> app registration. If you issue secrets by hand rather than through this script, always pass
+> `--append` unless you intend to revoke the existing ones.
+
+By default the client secret is copied to the clipboard and not printed, so it does not end up in
+scrollback, a screenshot or a pasted terminal transcript. Pass `-ShowSecret` to print it instead.
+The secret is never written to disk and cannot be retrieved again - issue a new one with
+`az ad app credential reset --id <appId> --append`.
 
 ## Test-KeyfactorAkvPermissions.ps1
 
