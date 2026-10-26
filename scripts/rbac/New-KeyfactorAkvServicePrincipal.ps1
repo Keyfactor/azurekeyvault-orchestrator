@@ -141,12 +141,51 @@ $account = Invoke-Az @('account', 'show', '-o', 'json') -AllowFailure
 if ($LASTEXITCODE -ne 0) {
     throw 'Not signed in to the Azure CLI. Run az login first.'
 }
-$currentUser = ($account | ConvertFrom-Json).user.name
-Write-Host "Signed in as $currentUser" -ForegroundColor DarkGray
+$accountInfo = $account | ConvertFrom-Json
+Write-Host "Signed in as $($accountInfo.user.name) (tenant $($accountInfo.tenantId))" -ForegroundColor DarkGray
+
+# Resolve the subscription before selecting it, so that "doesn't exist in cloud" becomes an
+# actionable message rather than a raw CLI failure. The usual cause is being signed in to the
+# wrong tenant, not a wrong subscription id.
+$visibleSubscriptions = Invoke-Az @('account', 'list', '--all', '-o', 'json') | ConvertFrom-Json
+$target = $visibleSubscriptions | Where-Object { $_.id -eq $SubscriptionId }
+
+if (-not $target) {
+    Write-Host ''
+    Write-Host "Subscription $SubscriptionId is not visible to $($accountInfo.user.name)." -ForegroundColor Red
+    Write-Host ''
+    if ($visibleSubscriptions) {
+        Write-Host 'Subscriptions this account can see:' -ForegroundColor Yellow
+        $visibleSubscriptions | Select-Object name, id, tenantId, state | Format-Table -AutoSize | Out-String | Write-Host
+    }
+    else {
+        Write-Host 'This account cannot see any subscriptions.' -ForegroundColor Yellow
+    }
+    Write-Host 'If the subscription belongs to a different tenant, sign in to that tenant first:' -ForegroundColor Yellow
+    Write-Host '  az login --tenant <tenant id>' -ForegroundColor Yellow
+    throw "Subscription $SubscriptionId is not available to the signed-in account."
+}
+
+if ($target.state -ne 'Enabled') {
+    Write-Host "Subscription '$($target.name)' is in state '$($target.state)'." -ForegroundColor Yellow
+}
 
 Invoke-Az @('account', 'set', '--subscription', $SubscriptionId) | Out-Null
+Write-Host "Target subscription: $($target.name) ($SubscriptionId)" -ForegroundColor DarkGray
 
-$rgId = Invoke-Az @('group', 'show', '-n', $ResourceGroupName, '--query', 'id', '-o', 'tsv')
+$rgId = Invoke-Az @('group', 'show', '-n', $ResourceGroupName, '--query', 'id', '-o', 'tsv') -AllowFailure
+if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($rgId)) {
+    Write-Host ''
+    Write-Host "Resource group '$ResourceGroupName' was not found in subscription '$($target.name)'." -ForegroundColor Red
+    Write-Host ''
+    $groups = Invoke-Az @('group', 'list', '--query', '[].name', '-o', 'tsv') -AllowFailure
+    if ($LASTEXITCODE -eq 0 -and $groups) {
+        Write-Host 'Resource groups in this subscription:' -ForegroundColor Yellow
+        $groups -split "`n" | Where-Object { $_.Trim() } | ForEach-Object { Write-Host "  $($_.Trim())" -ForegroundColor Yellow }
+    }
+    throw "Resource group '$ResourceGroupName' not found."
+}
+
 $subscriptionScope = "/subscriptions/$SubscriptionId"
 Write-Host "Target resource group: $rgId" -ForegroundColor DarkGray
 

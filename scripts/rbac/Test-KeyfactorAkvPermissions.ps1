@@ -144,6 +144,21 @@ try {
         throw 'Sign-in failed. Check the application ID, secret and tenant.'
     }
     & az account set --subscription $SubscriptionId --only-show-errors | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        # For a service principal this nearly always means no role assignment is visible on the
+        # subscription yet, rather than a wrong id - a fresh assignment can take a few minutes, and
+        # an assignment scoped below the subscription will not make it selectable here.
+        Write-Host ''
+        Write-Host "The service principal cannot select subscription $SubscriptionId." -ForegroundColor Red
+        Write-Host 'Usual causes, in order of likelihood:' -ForegroundColor Yellow
+        Write-Host '  1. The role assignment has not propagated yet - wait a few minutes and retry.' -ForegroundColor Yellow
+        Write-Host '  2. The principal has no assignment at or above subscription scope.' -ForegroundColor Yellow
+        Write-Host '  3. The subscription belongs to a different tenant than -TenantId.' -ForegroundColor Yellow
+        Write-Host ''
+        Write-Host 'Check what the principal actually holds (from your own session, not this one):' -ForegroundColor Yellow
+        Write-Host "  az role assignment list --assignee $AppId --all -o table" -ForegroundColor Yellow
+        throw "Service principal cannot access subscription $SubscriptionId."
+    }
 
     Write-Host ''
     Write-Host 'Discovery job' -ForegroundColor Cyan
@@ -162,10 +177,16 @@ try {
         -Arguments @('keyvault', 'list', '-g', $ResourceGroupName, '-o', 'none') | Out-Null
 
     if ($IncludeCreateVault) {
-        $probeVaultName = 'kf-rbac-probe-' + (Get-Random -Minimum 10000 -Maximum 99999)
-        $location = (& az group show -n $ResourceGroupName --query location -o tsv)
-        Test-Probe -Job 'Create' -Expected 'Microsoft.KeyVault/vaults/write' `
-            -Arguments @('keyvault', 'create', '-n', $probeVaultName, '-g', $ResourceGroupName, '-l', $location, '-o', 'none') | Out-Null
+        $location = (& az group show -n $ResourceGroupName --query location -o tsv 2>&1 | Out-String).Trim()
+        if ($LASTEXITCODE -ne 0 -or -not $location) {
+            Add-Result -Job 'Create' -Expected 'Microsoft.KeyVault/vaults/write' -Status 'SKIP' `
+                -Detail "could not read the location of resource group '$ResourceGroupName' - resourceGroups/read probe above explains why"
+        }
+        else {
+            $probeVaultName = 'kf-rbac-probe-' + (Get-Random -Minimum 10000 -Maximum 99999)
+            Test-Probe -Job 'Create' -Expected 'Microsoft.KeyVault/vaults/write' `
+                -Arguments @('keyvault', 'create', '-n', $probeVaultName, '-g', $ResourceGroupName, '-l', $location, '-o', 'none') | Out-Null
+        }
     }
     else {
         Add-Result -Job 'Create' -Expected 'Microsoft.KeyVault/vaults/write' -Status 'SKIP' -Detail 'pass -IncludeCreateVault to probe this'
