@@ -29,6 +29,10 @@ with our custom role definitions that limit permissions to the specific actions 
 The custom role definitions are derived from the Azure SDK calls this extension actually makes, and each entry is
 annotated with the job step that needs it.
 
+The scripts in [scripts/rbac](scripts/rbac/README.md) will create these role definitions, a service principal and the
+role assignments for you, and verify the result by replaying the calls the extension makes - useful if you would rather
+confirm the lists below than take them on trust.
+
 <details>
   <summary><b>Create Vault permissions</b></summary>
 
