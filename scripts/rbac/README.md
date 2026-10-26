@@ -59,6 +59,14 @@ scrollback, a screenshot or a pasted terminal transcript. Pass `-ShowSecret` to 
 The secret is never written to disk and cannot be retrieved again - issue a new one with
 `az ad app credential reset --id <appId> --append`.
 
+> :memo: The clipboard is easily lost - copying anything else, including this script's own output,
+> overwrites it. Use the secret before you copy anything else. For an unattended run, capture it
+> into a variable instead and never let it reach the clipboard or the console:
+>
+> ```powershell
+> $s = az ad app credential reset --id <appId> --append --query password -o tsv
+> ```
+
 ## Test-KeyfactorAkvPermissions.ps1
 
 Signs in as the service principal and replays the Azure calls the extension makes, one per

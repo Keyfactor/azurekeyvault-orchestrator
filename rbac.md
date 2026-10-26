@@ -33,6 +33,36 @@ The scripts in [scripts/rbac](scripts/rbac/README.md) will create these role def
 role assignments for you, and verify the result by replaying the calls the extension makes - useful if you would rather
 confirm the lists below than take them on trust.
 
+#### What has been verified, and what has not
+
+Each role below was assigned to a service principal holding no other role assignment, and each permission probed with
+the call the extension actually makes.
+
+| Permission | Evidence |
+| --- | --- |
+| `vaults/certificates/read` | Granted: succeeds. Not granted: denied. |
+| `vaults/certificates/import/action` | Granted: succeeds. Not granted: denied. |
+| `vaults/certificates/delete` | Granted: succeeds. Not granted: denied. |
+| `vaults/certificates/recover/action` | Granted: succeeds. Not granted: denied. |
+| `Microsoft.KeyVault/vaults/read` | Granted: succeeds. Not granted: denied. |
+| `Microsoft.Resources/subscriptions/resourceGroups/read` | Granted: succeeds. Not granted: denied. |
+| `Microsoft.KeyVault/vaults/write` | Granted: succeeds. Necessity not tested. |
+| `Microsoft.Resources/subscriptions/read` | **Succeeds even when not granted.** |
+| `Microsoft.Resources/subscriptions/providers/read` | **Succeeds even when not granted.** |
+| `Microsoft.KeyVault/locations/operationResults/read` | **Cannot be isolated.** |
+| `Microsoft.KeyVault/register/action` | **Cannot be isolated.** |
+
+The last four are kept in the definitions deliberately. `subscriptions/read` and `providers/read` turn out to succeed
+for any principal holding any assignment in the subscription, so granting them changes nothing in practice - but that is
+undocumented Azure Resource Manager behaviour rather than a guarantee, and both are harmless read actions, so removing
+them would trade a real risk for no benefit. `locations/operationResults/read` only comes into play if vault creation
+returns a long-running operation to poll, and `register/action` only on a subscription where the Microsoft.KeyVault
+provider is not yet registered; neither condition can be forced, so neither can be confirmed or ruled out.
+
+> :memo: A permission proven sufficient is not the same as one proven necessary. Where the table says "not granted:
+> denied", a principal without that permission was observed being refused the call, which establishes both. Where it
+> does not, only sufficiency was shown.
+
 <details>
   <summary><b>Create Vault permissions</b></summary>
 
