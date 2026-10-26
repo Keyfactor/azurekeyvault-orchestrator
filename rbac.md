@@ -26,6 +26,9 @@ security requirements.
 For each job type performed by this orchestrator, we've included the minimally sufficient built-in role name(s) along
 with our custom role definitions that limit permissions to the specific actions and scopes necessary.
 
+The custom role definitions are derived from the Azure SDK calls this extension actually makes, and each entry is
+annotated with the job step that needs it.
+
 <details>
   <summary><b>Create Vault permissions</b></summary>
 
@@ -33,21 +36,14 @@ In order to allow for the ability to create new Azure KeyVaults from within comm
 necessary permissions to do so. If you will never be creating new Azure KeyVaults from within Command, then it is
 unnecessary to provide the authenticating entity with these permissions.
 
-- built-in roles (both are required):
-    - ["Key Vault Contributor"](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/security#key-vault-contributor)
-    - ["Key Vault Access Administrator"](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/security#key-vault-data-access-administrator)
+- built-in role: ["Key Vault Contributor"](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/security#key-vault-contributor)
 
 - lowest level scope required - a resource group that will contain the new KeyVault.
 
-- condition:
-
-```js
-"((!(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})) OR (@Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals{a4417e6f-fecd-4de8-b567-7b0420556985})) AND ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})) OR (@Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals{a4417e6f-fecd-4de8-b567-7b0420556985}))"
-```
-
-the above condition limits the ability to assign roles to a single role only (Key Vault Certificates Officer). This is
-more restrictive than the condition on the built-in role
-of [Key Vault Access Administrator](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/security#key-vault-data-access-administrator).
+> :warning: Creating a KeyVault does not grant the authenticating entity any access to the certificates inside it, and
+> this extension does not create role assignments or access policies on the vaults it creates. Assign the certificate
+> permissions below at **resource group** scope so that newly created vaults inherit them, otherwise an Inventory or Add
+> job against a freshly created vault will fail with a permissions error.
 
 - custom role definition:
 
@@ -55,7 +51,7 @@ of [Key Vault Access Administrator](https://learn.microsoft.com/en-us/azure/role
 {
     "properties": {
         "roleName": "KeyfactorVaultCreator",
-        "description": "This role contains all of the necessary permissions to perform Inventory, Add and Remove operations on certificates on All KeyVaults within a Resource Group.  It also contains sufficient permissions to create a new KeyVault within the resource group.",
+        "description": "This role contains the necessary permissions to create a new KeyVault within the scope.  It does not grant access to the certificates within any KeyVault.",
         "assignableScopes": [
           "/subscriptions/{subscriptionId1}", // allow to be applied to a specific subscription
           "/subscriptions/{subscriptionId2}", // and another.. etc.
@@ -66,23 +62,16 @@ of [Key Vault Access Administrator](https://learn.microsoft.com/en-us/azure/role
         "permissions": [
             {
                 "actions": [
-                    "Microsoft.KeyVault/vaults/*",
-                    "Microsoft.Authorization/*/read",                                        
-                    "Microsoft.KeyVault/register/action",                    
-                    "Microsoft.KeyVault/checkNameAvailability/read",
-                    "Microsoft.KeyVault/vaults/accessPolicies/*",
-                    "Microsoft.KeyVault/locations/*/read",
-                    "Microsoft.Resources/subscriptions/resourceGroups/read",
-                    "Microsoft.Management/managementGroups/read",
-                    "Microsoft.Resources/subscriptions/read",
-                    "Microsoft.Authorization/roleAssignments/*",                     
-                    "Microsoft.KeyVault/operations/read"                    
+                    "Microsoft.KeyVault/vaults/write", // create the vault
+                    "Microsoft.KeyVault/vaults/read", // read the vault back after creating it
+                    "Microsoft.KeyVault/locations/operationResults/read", // poll the result of the create operation
+                    "Microsoft.Resources/subscriptions/resourceGroups/read", // resolve the target resource group
+                    "Microsoft.Resources/subscriptions/providers/read", // only used when no Vault Region is supplied, to select a default location
+                    "Microsoft.KeyVault/register/action" // only needed if Microsoft.KeyVault is not already registered on the subscription
                 ],
                 "notActions": [],
                 "dataActions": [],
-                "notDataActions": [],
-                "conditionVersion": "2.0",
-                "condition": "((!(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})) OR (@Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals{a4417e6f-fecd-4de8-b567-7b0420556985})) AND ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})) OR (@Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals{a4417e6f-fecd-4de8-b567-7b0420556985}))"
+                "notDataActions": []
             }
         ]
     }
@@ -101,7 +90,8 @@ KeyVaults across your subscriptions, the permissions defined in this role are no
 
 - built-in
   role: ["Key Vault Reader"](https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/role-based-access-control/built-in-roles/security.md#key-vault-reader)
-- lowest level scope - a resource group
+- lowest level scope - a subscription. The Discovery job enumerates the subscriptions available to the identity and then
+  lists the vaults in each one, so a resource group scoped assignment will not return results.
 - custom role definition:
 
 ```js
@@ -112,19 +102,13 @@ KeyVaults across your subscriptions, the permissions defined in this role are no
         "assignableScopes": [
           "/subscriptions/{subscriptionId1}", // allow to be applied to a specific subscription
           "/subscriptions/{subscriptionId2}", // and another.. etc.
-          "/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}", // allow to be scoped to a specific resource group
-          "/subscriptions/{subscriptionId2}/resourcegroups/{resourceGroupName2}", // and another.. 
           "/providers/Microsoft.Management/managementGroups/{groupId1}" // allow to be applied for all resources under management group           
         ],
         "permissions": [
             {
               "actions": [
-                "Microsoft.Authorization/*/read",
-                "Microsoft.Resources/subscriptions/resourceGroups/read",
-                "Microsoft.KeyVault/checkNameAvailability/read",
-                "Microsoft.KeyVault/locations/*/read",
-                "Microsoft.KeyVault/vaults/read",
-                "Microsoft.KeyVault/operations/read"
+                "Microsoft.Resources/subscriptions/read", // list the subscriptions to be searched
+                "Microsoft.KeyVault/vaults/read" // list the vaults within each subscription
                ],
                "notActions": [],
                "dataActions": [        
@@ -143,6 +127,10 @@ KeyVaults across your subscriptions, the permissions defined in this role are no
 
 This set of permissions is the minimum required to support the basic operations of performing an Inventory and
 Add/Removal of certificates.
+
+These are all data plane operations. The extension addresses the vault directly at
+`https://{vaultName}.{vaultEndpoint}/` rather than looking it up through Azure Resource Manager, so no control plane
+(`actions`) permissions are required for these jobs at all.
 
 - built-in
   role: ["Key Vault Certificates Officer"](https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/role-based-access-control/built-in-roles/security.md#key-vault-certificates-officer)
@@ -165,20 +153,13 @@ Add/Removal of certificates.
         ],
          "permissions": [
            {
-             "actions": [
-               "Microsoft.Authorization/*/read",
-               "Microsoft.Resources/subscriptions/resourceGroups/read",
-               "Microsoft.KeyVault/checkNameAvailability/read",
-               "Microsoft.KeyVault/locations/*/read",
-               "Microsoft.KeyVault/vaults/*/read",
-               "Microsoft.KeyVault/operations/read",               
-             ],
+             "actions": [], // no control plane access is used by these jobs
              "notActions": [],
              "dataActions": [
-               "Microsoft.KeyVault/vaults/certificates/*",
-               "Microsoft.KeyVault/vaults/certificatecas/*",
-               "Microsoft.KeyVault/vaults/keys/read", // read-only; no job calls the keys endpoints, included only to mirror the built-in "Key Vault Certificate User" role
-               "Microsoft.KeyVault/vaults/secrets/readMetadata/action"
+               "Microsoft.KeyVault/vaults/certificates/read", // Inventory, and the existence check performed before an Add
+               "Microsoft.KeyVault/vaults/certificates/import/action", // Add
+               "Microsoft.KeyVault/vaults/certificates/delete", // Remove
+               "Microsoft.KeyVault/vaults/certificates/recover/action" // Add, when the alias exists in the soft-deleted state
              ],
              "notDataActions": []
            }
@@ -186,6 +167,9 @@ Add/Removal of certificates.
   }
 }
 ```
+
+> :memo: Only the public certificate is read back during Inventory, so no secret or key permissions are required. If you
+> later need Command to retrieve the private key from the vault, that is a separate `secrets/getSecret/action` grant.
 
 </details>
 
@@ -197,11 +181,10 @@ this integration. The minimum scope allowable is an individual resource group. I
 the authenticating identity, it will be able to discover existing KeyVaults, Create new ones, and perform inventory as
 well as adding and removing certificates within the KeyVault.
 
-- minimally sufficient built-in roles (all are required):
+- minimally sufficient built-in roles (both are required):
     - ["Key Vault Certificates Officer"](https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/role-based-access-control/built-in-roles/security.md#key-vault-certificates-officer)
     - ["Key Vault Contributor"](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/security#key-vault-contributor)
-    - ["Key Vault Access Administrator"](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/)
-- lowest level scope - an individual resource group
+- lowest level scope - a subscription, if the Discovery job is used; otherwise an individual resource group.
 - custom role definition:
 
 ```js
@@ -219,29 +202,22 @@ well as adding and removing certificates within the KeyVault.
         "permissions": [
             {
                 "actions": [
-                    "Microsoft.KeyVault/vaults/*",
-                    "Microsoft.Authorization/*/read",                                        
-                    "Microsoft.KeyVault/register/action",                    
-                    "Microsoft.KeyVault/checkNameAvailability/read",
-                    "Microsoft.KeyVault/vaults/accessPolicies/*",
-                    "Microsoft.Resources/subscriptions/resourceGroups/read",
-                    "Microsoft.Management/managementGroups/read",
-                    "Microsoft.Resources/subscriptions/read",
-                    "Microsoft.Authorization/roleAssignments/*",                     
-                    "Microsoft.KeyVault/operations/read",
-                    "Microsoft.KeyVault/locations/*/read",
-                    "Microsoft.KeyVault/vaults/*/read",
+                    "Microsoft.KeyVault/vaults/write", // Create
+                    "Microsoft.KeyVault/vaults/read", // Create, Discovery
+                    "Microsoft.KeyVault/locations/operationResults/read", // Create - poll the result of the create operation
+                    "Microsoft.Resources/subscriptions/read", // Discovery - list the subscriptions to be searched
+                    "Microsoft.Resources/subscriptions/resourceGroups/read", // Create - resolve the target resource group
+                    "Microsoft.Resources/subscriptions/providers/read", // Create - only used when no Vault Region is supplied
+                    "Microsoft.KeyVault/register/action" // only needed if Microsoft.KeyVault is not already registered on the subscription
                 ],
                 "notActions": [],
                 "dataActions": [
-                   "Microsoft.KeyVault/vaults/certificates/*",
-                   "Microsoft.KeyVault/vaults/certificatecas/*",
-                   "Microsoft.KeyVault/vaults/keys/read", // read-only; no job calls the keys endpoints, included only to mirror the built-in "Key Vault Certificate User" role
-                   "Microsoft.KeyVault/vaults/secrets/*"
+                   "Microsoft.KeyVault/vaults/certificates/read", // Inventory, and the existence check performed before an Add
+                   "Microsoft.KeyVault/vaults/certificates/import/action", // Add
+                   "Microsoft.KeyVault/vaults/certificates/delete", // Remove
+                   "Microsoft.KeyVault/vaults/certificates/recover/action" // Add, when the alias exists in the soft-deleted state
              ],
-                "notDataActions": [],
-                "conditionVersion": "2.0",
-                "condition": "((!(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})) OR (@Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals{a4417e6f-fecd-4de8-b567-7b0420556985})) AND ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})) OR (@Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals{a4417e6f-fecd-4de8-b567-7b0420556985}))"
+                "notDataActions": []
             }
         ]
     }
