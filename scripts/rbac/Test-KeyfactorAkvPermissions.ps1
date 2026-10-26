@@ -176,11 +176,19 @@ function Test-Probe {
     $granted = $jobCapability[$Job] -in $Capability
 
     if ($LASTEXITCODE -eq 0) {
-        if ($RequireOutputMatch -and ($output -notmatch [regex]::Escape($RequireOutputMatch))) {
-            # The call was allowed but returned nothing for the target, which is how a missing
-            # read permission shows up on a filtered list operation.
-            Add-Result -Job $Job -Expected $Expected -Status 'FAIL' `
-                -Detail 'call allowed but the target was not in the results - no read access at this scope'
+        # A filtered list operation reports success and simply omits what the caller cannot read,
+        # so an empty result for the target is the real denial signal.
+        $filteredOut = $RequireOutputMatch -and ($output -notmatch [regex]::Escape($RequireOutputMatch))
+
+        if ($filteredOut -and -not $NotIsolatable) {
+            if ($granted) {
+                Add-Result -Job $Job -Expected $Expected -Status 'FAIL' `
+                    -Detail 'call allowed but the target was not in the results - no read access at this scope'
+            }
+            else {
+                Add-Result -Job $Job -Expected $Expected -Status 'n/a' `
+                    -Detail "target filtered out, as expected ($($jobCapability[$Job]) not granted)"
+            }
             return $false
         }
 
@@ -268,9 +276,18 @@ try {
         '--query', "value[?subscriptionId=='$SubscriptionId'].subscriptionId", '-o', 'tsv') `
         -RequireOutputMatch $SubscriptionId -NotIsolatable | Out-Null
 
-    Test-Probe -Job 'Discovery' -Expected 'Microsoft.KeyVault/vaults/read (subscription)' `
-        -Arguments @('keyvault', 'list', '--subscription', $SubscriptionId, '--query', '[].name', '-o', 'tsv') `
-        -NotIsolatable | Out-Null
+    # A subscription-wide vault list is filtered, not denied, so the probe asks whether the known
+    # vault actually comes back. Without -VaultName there is nothing to look for and the result
+    # would be meaningless.
+    if ($VaultName) {
+        Test-Probe -Job 'Discovery' -Expected 'Microsoft.KeyVault/vaults/read (subscription)' `
+            -Arguments @('keyvault', 'list', '--subscription', $SubscriptionId, '--query', "[?name=='$VaultName'].name", '-o', 'tsv') `
+            -RequireOutputMatch $VaultName | Out-Null
+    }
+    else {
+        Add-Result -Job 'Discovery' -Expected 'Microsoft.KeyVault/vaults/read (subscription)' -Status 'SKIP' `
+            -Detail 'pass -VaultName so the probe has a known vault to look for'
+    }
 
     Write-Host ''
     Write-Host 'Create job' -ForegroundColor Cyan
@@ -279,9 +296,16 @@ try {
     Test-Probe -Job 'Create' -Expected 'Microsoft.Resources/subscriptions/providers/read' `
         -Arguments @('provider', 'show', '--namespace', 'Microsoft.Resources', '-o', 'none') `
         -NotIsolatable | Out-Null
-    Test-Probe -Job 'Create' -Expected 'Microsoft.KeyVault/vaults/read (resource group)' `
-        -Arguments @('keyvault', 'list', '-g', $ResourceGroupName, '-o', 'none') `
-        -NotIsolatable | Out-Null
+    # "keyvault show" is a GET on one resource and returns 403 without vaults/read, unlike
+    # "keyvault list", which succeeds and quietly returns nothing.
+    if ($VaultName) {
+        Test-Probe -Job 'Create' -Expected 'Microsoft.KeyVault/vaults/read (resource group)' `
+            -Arguments @('keyvault', 'show', '-n', $VaultName, '-g', $ResourceGroupName, '-o', 'none') | Out-Null
+    }
+    else {
+        Add-Result -Job 'Create' -Expected 'Microsoft.KeyVault/vaults/read (resource group)' -Status 'SKIP' `
+            -Detail 'pass -VaultName so the probe can read a specific vault'
+    }
 
     if ($IncludeCreateVault) {
         $location = (Invoke-AzCapture -Arguments @('group', 'show', '-n', $ResourceGroupName, '--query', 'location', '-o', 'tsv')).Trim()
