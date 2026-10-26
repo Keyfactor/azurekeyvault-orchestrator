@@ -71,7 +71,6 @@ of [Key Vault Access Administrator](https://learn.microsoft.com/en-us/azure/role
                     "Microsoft.KeyVault/register/action",                    
                     "Microsoft.KeyVault/checkNameAvailability/read",
                     "Microsoft.KeyVault/vaults/accessPolicies/*",
-                    "Microsoft.Resources/deployments/*",
                     "Microsoft.KeyVault/locations/*/read",
                     "Microsoft.Resources/subscriptions/resourceGroups/read",
                     "Microsoft.Management/managementGroups/read",
@@ -168,7 +167,6 @@ Add/Removal of certificates.
            {
              "actions": [
                "Microsoft.Authorization/*/read",
-               "Microsoft.Resources/deployments/*",
                "Microsoft.Resources/subscriptions/resourceGroups/read",
                "Microsoft.KeyVault/checkNameAvailability/read",
                "Microsoft.KeyVault/locations/*/read",
@@ -179,7 +177,7 @@ Add/Removal of certificates.
              "dataActions": [
                "Microsoft.KeyVault/vaults/certificates/*",
                "Microsoft.KeyVault/vaults/certificatecas/*",
-               "Microsoft.KeyVault/vaults/keys/*",
+               "Microsoft.KeyVault/vaults/keys/read", // read-only; no job calls the keys endpoints, included only to mirror the built-in "Key Vault Certificate User" role
                "Microsoft.KeyVault/vaults/secrets/readMetadata/action"
              ],
              "notDataActions": []
@@ -226,7 +224,6 @@ well as adding and removing certificates within the KeyVault.
                     "Microsoft.KeyVault/register/action",                    
                     "Microsoft.KeyVault/checkNameAvailability/read",
                     "Microsoft.KeyVault/vaults/accessPolicies/*",
-                    "Microsoft.Resources/deployments/*",
                     "Microsoft.Resources/subscriptions/resourceGroups/read",
                     "Microsoft.Management/managementGroups/read",
                     "Microsoft.Resources/subscriptions/read",
@@ -239,7 +236,7 @@ well as adding and removing certificates within the KeyVault.
                 "dataActions": [
                    "Microsoft.KeyVault/vaults/certificates/*",
                    "Microsoft.KeyVault/vaults/certificatecas/*",
-                   "Microsoft.KeyVault/vaults/keys/*",
+                   "Microsoft.KeyVault/vaults/keys/read", // read-only; no job calls the keys endpoints, included only to mirror the built-in "Key Vault Certificate User" role
                    "Microsoft.KeyVault/vaults/secrets/*"
              ],
                 "notDataActions": [],
