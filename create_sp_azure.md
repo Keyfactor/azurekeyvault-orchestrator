@@ -36,18 +36,41 @@
 
 #### Assign Permissions
 
-In order to be able to discover and create new Azure Keyvault certificate stores, the app principal that we created must
-be provided with the "Keyvault Administrator" role at the _Resource Group_ level.[^1]
-_If there are multiple resource groups that will contain Key Vaults to be managed, you should repeat for each._
+The app principal we created needs permission on the Key Vaults it will manage. There are two ways to provide it:
 
-Here are the steps for assigning this role.
+- **Least privilege (recommended).** Use the custom role definitions in [rbac.md](rbac.md), which contain only the
+  actions this extension actually calls. The scripts in [scripts/rbac](scripts/rbac/README.md) will create those roles,
+  the service principal and the role assignments for you, and then verify them by replaying the calls the extension
+  makes.
+- **Built-in roles.** Quicker to set up through the portal, but broader than necessary. The steps below use these.
+
+> :warning: Earlier versions of this guide used the "Key Vault Administrator" role. That role grants every data plane
+> operation on certificates, keys **and** secrets - including sign, decrypt, delete and purge - against every object in
+> scope. "Key Vault Certificates Officer" is sufficient for Inventory, Add and Remove, and is what the steps below now
+> use.
+
+Which roles you need depends on the job types you intend to run:
+
+| Job types | Built-in role | Scope |
+| --- | --- | --- |
+| Inventory, Add, Remove | Key Vault Certificates Officer | Resource group, or an individual vault |
+| Create new Key Vaults | Key Vault Contributor | Resource group |
+| Discovery | Key Vault Reader | Subscription |
+
+_If there are multiple resource groups that will contain Key Vaults to be managed, you should repeat for each._[^1]
+
+> :memo: This extension does not create role assignments or access policies on the vaults it creates. If operators will
+> create new Key Vaults from Command, assign the certificate permissions at **resource group** scope so that new vaults
+> inherit them - otherwise the first Inventory or Add job against a newly created vault will fail.
+
+Here are the steps for assigning a role.
 
 1) Navigate to the Azure portal and select a resource group that will contain the Keyvaults we would like to manage.
 1) Select "Access control (IAM)" from the left menu.
 1) Click "Add", then "Add Role Assignment" to create a new role assignment
 
    ![Resource Group Add Role](/Images/resource-group-add-role.PNG)
-1) Search and Select the "Key Vault Administrator" role.
+1) Search and Select the "Key Vault Certificates Officer" role.
 1) Search and Select the principal we created.
 
    ![Select Principal](/Images/rg-role-select-principal.PNG)
@@ -62,8 +85,8 @@ Vaults using Role-Based Access Control (RBAC).
 #### Assign Permissions for an Individual Key Vault via RBAC
 
 If you only need to manage a single instance of a Key Vault and do not require creation and discovery of new Key Vaults,
-you can provision access to the specific instance without needing to provide the service principal the "Keyvault
-Administrator" role at the resource group level.
+you can provision access to the specific instance without needing to grant the service principal any permission at the
+resource group level.
 
 Follow the below steps in order to provide management access for our service principal to a specific instance of a Key
 Vault:
@@ -76,9 +99,12 @@ Vault:
 
    ![Vault RBAC](/Images/vault-rbac.png)
 
-1) Find the Keyvault Administrator role in the list. Select it and click "Next"
+1) Find the "Key Vault Certificates Officer" role in the list. Select it and click "Next"
 
    ![Vault RBAC KVAdmin](/Images/vault-rbac-kvadmin.png)
+
+   _The screenshot above predates this guidance and shows "Key Vault Administrator" selected. Select "Key Vault
+   Certificates Officer" instead - it is sufficient for Inventory, Add and Remove._
 
 1) On the next screen, click "Select members" and then search for the service principal we created above.
 
@@ -90,8 +116,7 @@ Vault:
 
    ![Vault RBAC final](/Images/vault-rbac-final.png)
 
-1) Click "Review + assign" to finish assigning the role of Keyvault Administrator for this Key Vault to our service
-   principal account.
+1) Click "Review + assign" to finish assigning the role for this Key Vault to our service principal account.
 
 #### Assign Permissions for an Individual Key Vault via Access Policy
 
@@ -116,6 +141,10 @@ manage and the Key Vault(s) are using RBAC, the below steps are not necessary.
    permissions.
 
    ![Permission List](/Images/cert-mgmt-perm-list.PNG)
+
+   _"Certificate Management" grants more than this extension uses. The minimum is **Get**, **List**, **Import**,
+   **Delete** and **Recover** - no key or secret permissions are needed, since only the public certificate is read back
+   during Inventory._
 
 1) Click "Select Principal" to open the search pane.
 

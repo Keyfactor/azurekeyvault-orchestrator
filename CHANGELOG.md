@@ -1,3 +1,6 @@
+- 3.3.1
+  - Updated documentation to reflect bare minimum RBAC permissions required for the orchestrator to function properly.
+	
 - 3.3.0
   - Added an optional entry parameter to specify that chain order should be preserved, and not automatically altered by the Azure KeyVault API.
   - Changed the way we handle optional entry parameters to log a warning instead of throwing an exception/error if they are not defined in the parameters passed from Command.
